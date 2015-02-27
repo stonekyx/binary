@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-env = Environment()
+Import('baseEnv')
+
+env = baseEnv.Clone()
 
 env.Append(CCFLAGS='-g -Wall -Wextra'.split(' '))
 
@@ -13,4 +15,4 @@ env.Program(target='elfsh',
         LIBS=['elfsh64'],
         CPPDEFINES=['ERESI64'])
 
-# SConscript('a/SConscript', exports='env', duplicate=0)
+SConscript('frontend/SConscript', duplicate=1)

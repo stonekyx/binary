@@ -2,3 +2,4 @@
 .*.swp
 _build
 cscope.out
+*.pro.user

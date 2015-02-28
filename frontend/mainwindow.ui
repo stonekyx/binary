@@ -55,7 +55,7 @@
    <sender>pushButton</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>close()</slot>
+   <slot>print()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>109</x>

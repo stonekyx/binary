@@ -1,0 +1,7 @@
+#!/usr/bin/python
+
+Import('baseEnv')
+
+env = baseEnv.Clone()
+
+env.Program(target='basic', source=Glob('*.cpp'))

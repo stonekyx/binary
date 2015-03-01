@@ -1,0 +1,22 @@
+#!/usr/bin/python
+
+Import('baseEnv')
+
+env = baseEnv.Clone()
+
+#env.Program(target='main',
+#        source=['main.c'],
+#        LIBS=['elf'])
+#
+#env.Program(target='elfsh',
+#        source=['elfsh.c'],
+#        LIBS=['elfsh64'],
+#        CPPDEFINES=['ERESI64'])
+#
+env.Append(LIBS=['elf', 'elfsh64'])
+
+env.SharedLibrary(target='backend', source=Glob('*.cpp')+Glob('*.c'))
+
+Export('env')
+
+SConscript('test/SConscript', duplicate=1)

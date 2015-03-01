@@ -8,6 +8,8 @@ qtdir = '/usr'
 baseEnv = Environment()
 #...further customization of base env
 
+baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
+
 # Clone Qt environment
 qtEnv = baseEnv.Clone()
 # Set QT4DIR and PKG_CONFIG_PATH

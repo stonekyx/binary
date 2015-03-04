@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "common.h"
+#include "PluginManager.h"
 #include <QMainWindow>
 
 BEGIN_BIN_NAMESPACE(frontend)
@@ -24,9 +25,11 @@ public:
 
 public slots:
     void openFile();
+    void loadPlugin();
 
 private:
     Ui::MainWindow *ui;
+    PluginManager *_pm;
 };
 
 #endif // MAINWINDOW_H

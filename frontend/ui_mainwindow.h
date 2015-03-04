@@ -1,6 +1,8 @@
 #ifndef UI_MAINWINDOW_H
 #define UI_MAINWINDOW_H
 
+#include <vector>
+
 #include <QtCore/QVariant>
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
@@ -24,11 +26,15 @@ class Ui_MainWindow
 public:
     QAction *actionFileOpen;
     QAction *actionFileQuit;
+    QAction *actionPluginLoad;
     QWidget *centralWidget;
     QLabel *labelHome;
     QMenuBar *menuBar;
     QMenu *menuFile;
+    QMenu *menuPlugin;
     QGridLayout *centralLayout;
+
+    std::vector<QAction*> pluginActions;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -42,6 +48,9 @@ public:
         actionFileQuit = new QAction(MainWindow);
         actionFileQuit->setObjectName(QString::fromUtf8("actionFileQuit"));
 
+        actionPluginLoad = new QAction(MainWindow);
+        actionPluginLoad->setObjectName(QString::fromUtf8("actionPluginLoad"));
+
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
 
@@ -54,6 +63,7 @@ public:
         labelHome->setSizePolicy(sizePolicy);
 
         centralLayout = new QGridLayout(centralWidget);
+        centralLayout->setObjectName(QString::fromUtf8("centralLayout"));
         centralLayout->addWidget(labelHome);
         centralLayout->setAlignment(labelHome, Qt::AlignCenter);
 
@@ -62,19 +72,26 @@ public:
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 400, 22));
+        MainWindow->setMenuBar(menuBar);
 
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
-        MainWindow->setMenuBar(menuBar);
-
         menuBar->addAction(menuFile->menuAction());
+
         menuFile->addAction(actionFileOpen);
         menuFile->addSeparator();
         menuFile->addAction(actionFileQuit);
 
+        menuPlugin = new QMenu(menuBar);
+        menuPlugin->setObjectName(QString::fromUtf8("menuPlugin"));
+        menuBar->addAction(menuPlugin->menuAction());
+
+        menuPlugin->addAction(actionPluginLoad);
+
         retranslateUi(MainWindow);
         QObject::connect(actionFileQuit, SIGNAL(triggered()), MainWindow, SLOT(close()));
         QObject::connect(actionFileOpen, SIGNAL(triggered()), MainWindow, SLOT(openFile()));
+        QObject::connect(actionPluginLoad, SIGNAL(triggered()), MainWindow, SLOT(loadPlugin()));
 
         QMetaObject::connectSlotsByName(MainWindow);
     } // setupUi
@@ -84,8 +101,10 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0, QApplication::UnicodeUTF8));
         actionFileOpen->setText(QApplication::translate("MainWindow", "&Open", 0, QApplication::UnicodeUTF8));
         actionFileQuit->setText(QApplication::translate("MainWindow", "&Quit", 0, QApplication::UnicodeUTF8));
+        actionPluginLoad->setText(QApplication::translate("MainWindow", "&Load", 0, QApplication::UnicodeUTF8));
         labelHome->setText(QApplication::translate("MainWindow", "Binary Analyzer for ELF", 0, QApplication::UnicodeUTF8));
         menuFile->setTitle(QApplication::translate("MainWindow", "&File", 0, QApplication::UnicodeUTF8));
+        menuPlugin->setTitle(QApplication::translate("MainWindow", "&Plugin", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

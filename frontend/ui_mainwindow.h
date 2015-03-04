@@ -28,8 +28,6 @@ public:
     QLabel *labelHome;
     QMenuBar *menuBar;
     QMenu *menuFile;
-    QToolBar *mainToolBar;
-    QStatusBar *statusBar;
     QGridLayout *centralLayout;
 
     void setupUi(QMainWindow *MainWindow)
@@ -49,7 +47,6 @@ public:
 
         labelHome = new QLabel(centralWidget);
         labelHome->setObjectName(QString::fromUtf8("labelHome"));
-        //labelHome->setGeometry(QRect(170, 110, 69, 17));
         QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -61,19 +58,14 @@ public:
         centralLayout->setAlignment(labelHome, Qt::AlignCenter);
 
         MainWindow->setCentralWidget(centralWidget);
+
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 400, 22));
+
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
         MainWindow->setMenuBar(menuBar);
-        mainToolBar = new QToolBar(MainWindow);
-        mainToolBar->setObjectName(QString::fromUtf8("mainToolBar"));
-        MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
-        MainWindow->insertToolBarBreak(mainToolBar);
-        statusBar = new QStatusBar(MainWindow);
-        statusBar->setObjectName(QString::fromUtf8("statusBar"));
-        MainWindow->setStatusBar(statusBar);
 
         menuBar->addAction(menuFile->menuAction());
         menuFile->addAction(actionFileOpen);

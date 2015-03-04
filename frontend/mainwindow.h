@@ -1,13 +1,20 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "common.h"
 #include <QMainWindow>
+
+BEGIN_BIN_NAMESPACE(frontend)
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
+class MainWindow;
+
+END_BIN_NAMESPACE
+
+class binary::frontend::MainWindow : public QMainWindow
 {
     Q_OBJECT
 
@@ -16,7 +23,7 @@ public:
     ~MainWindow();
 
 public slots:
-    void print();
+    void openFile();
 
 private:
     Ui::MainWindow *ui;

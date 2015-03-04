@@ -9,6 +9,7 @@ baseEnv = Environment()
 #...further customization of base env
 
 baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
+baseEnv.Append(CPPPATH='#inc')
 
 # Clone Qt environment
 qtEnv = baseEnv.Clone()

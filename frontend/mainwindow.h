@@ -5,6 +5,8 @@
 #include "PluginManager.h"
 #include <QMainWindow>
 
+#include "backend/Backend.h"
+
 BEGIN_BIN_NAMESPACE(frontend)
 
 namespace Ui {
@@ -30,6 +32,7 @@ public slots:
 private:
     Ui::MainWindow *ui;
     PluginManager *_pm;
+    BIN_NAMESPACE(backend)::Backend *_backend;
 };
 
 #endif // MAINWINDOW_H

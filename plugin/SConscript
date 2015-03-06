@@ -2,6 +2,12 @@
 
 import os
 
+Import('baseEnv qtEnv')
+
+baseEnv.Append(CPPPATH=['#backend'], LIBS=['backend'],
+        LIBPATH=[Dir('../backend/').abspath])
+qtEnv.Append(CPPPATH=['#', '#frontend'])
+
 srcpath = Dir('.').srcnode().abspath
 
 for i in os.listdir(srcpath):

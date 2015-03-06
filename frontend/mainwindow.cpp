@@ -6,12 +6,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+USE_BIN_NAMESPACE(backend);
+
 BEGIN_BIN_NAMESPACE(frontend)
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    _pm(new PluginManager)
+    _pm(new PluginManager),
+    _backend(new Backend)
 {
     ui->setupUi(this);
 }
@@ -20,6 +23,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
     delete _pm;
+    delete _backend;
 }
 
 void MainWindow::openFile()
@@ -28,6 +32,7 @@ void MainWindow::openFile()
             "", tr("ELF files (*)"));
     if(!fileName.isEmpty()) {
         ui->labelHome->setText(fileName);
+        _backend->openFile(fileName.toUtf8().constData());
     }
 }
 

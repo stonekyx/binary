@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import os
+
 Import('qtEnv')
 
 env = qtEnv.Clone()
@@ -10,6 +12,9 @@ env.EnableQt4Modules([
     ])
 
 env.Append(LIBS=['dl'])
+env.Append(CPPPATH=['#'],
+        LIBS=['backend'], LIBPATH=[Dir('../backend').abspath],
+        RPATH=env.Literal(os.path.join('\\$$ORIGIN', os.pardir, 'backend')))
 
 # env.Uic4(Glob('*.ui'))
 env.Program('mainwindow', source=Glob('*.cpp'))

@@ -2,24 +2,23 @@
 #define PLUGIN_BASIC_VIEW_H
 
 #include <cstdlib>
+#include <map>
+#include <string>
 
 #include "common.h"
-#include "backend/Observer.h"
+#include "frontend/PluginView.h"
 #include "MainWindow.h"
 
 BEGIN_PLUG_NAMESPACE(basic)
 
-class View : public BIN_NAMESPACE(backend)::Observer {
+class View : public BIN_NAMESPACE(frontend)::PluginView {
 public:
+    View();
+    View(std::map<std::string, std::string>);
     ~View();
-    void init(QWidget *parent = NULL);
-    void deinit();
     virtual void update();
 
-    static View instance;
     MainWindow *_mainWindow;
-protected:
-    View();
 };
 
 END_PLUG_NAMESPACE

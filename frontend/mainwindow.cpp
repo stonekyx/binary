@@ -39,7 +39,10 @@ void MainWindow::openFile()
 void MainWindow::loadPlugin()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open plugin"),
-            "*.so", tr("Shared object (*.so)"));
+            QString(), tr("Shared object (*.so)"));
+    if(fileName.isNull()) {
+        return;
+    }
     QByteArray fileNameBytes = fileName.toUtf8();
     int idx = _pm->loadPlugin(fileNameBytes.constData());
     if(idx==-1) {
@@ -47,14 +50,7 @@ void MainWindow::loadPlugin()
                 tr("Error when loading or plugin has been loaded before."));
         return;
     }
-    void *sym = _pm->findSymbol(idx, "createAction");
-    if(!sym) {
-        QMessageBox::warning(this, tr("Error"),
-                tr("Error when initializing plugin."));
-        return;
-    }
-    typedef QAction *(*PluginActionCreator)(QWidget*);
-    QAction *pluginAction = ((PluginActionCreator)sym) (this);
+    QAction *pluginAction = _pm->createAction(idx, this);
     if(!pluginAction) {
         QMessageBox::warning(this, tr("Error"),
                 tr("Error occurred in plugin."));

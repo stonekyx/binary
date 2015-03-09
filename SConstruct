@@ -19,6 +19,7 @@ qtEnv['QT4DIR'] = qtdir
 # Add qt4 tool
 qtEnv.Tool('qt4')
 #...further customization of qt env
+qtEnv['QT4_AUTOSCAN'] = 0
 
 # Export environments
 Export('baseEnv qtEnv')

@@ -3,7 +3,10 @@
 
 #include <vector>
 
+#include <QtGui/QAction>
+
 #include "common.h"
+#include "Plugin.h"
 
 BEGIN_BIN_NAMESPACE(frontend)
 
@@ -11,10 +14,13 @@ class PluginManager {
 public:
     PluginManager();
     int loadPlugin(const char *);
+    QAction *createAction(int, QWidget *);
     void *findSymbol(int, const char *);
+    Plugin *getPlugin(const char *);
+    Plugin *getPlugin(int);
     ~PluginManager();
 private:
-    std::vector<void*> _plugins;
+    std::vector<Plugin*> _plugins;
 };
 
 END_BIN_NAMESPACE

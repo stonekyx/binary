@@ -10,4 +10,6 @@ qtEnv.EnableQt4Modules([
     'QtCore'
     ])
 
-qtEnv.SharedLibrary(target='basic', source=Glob('*.cpp'))
+qtEnv.Moc4('MainWindow.h')
+
+qtEnv.SharedLibrary(target='basic', source=Glob('*.cpp')+Glob('*.cc'))

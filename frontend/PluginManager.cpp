@@ -30,16 +30,32 @@ int PluginManager::loadPlugin(const char *name)
 {
     void *handle;
     DLASSERT(handle=dlopen(name, RTLD_LAZY), return -1);
-    for(vector<void*>::iterator it = _plugins.begin();
+    for(vector<Plugin*>::iterator it = _plugins.begin();
             it != _plugins.end(); it++)
     {
-        if(*it == handle) {
+        if((*it)->handle == handle) {
             DLASSERT(dlclose(handle), NOOP);
             return -1;
         }
     }
-    _plugins.push_back(handle);
+    void *sym;
+    DLASSERT(sym=dlsym(handle, "createPlugin"), return -1);
+    typedef Plugin *(*PluginCreator)();
+    Plugin *plugin = ((PluginCreator)sym)();
+    if(!plugin) {
+        return -1;
+    }
+    plugin->handle = handle;
+    _plugins.push_back(plugin);
     return _plugins.size()-1;
+}
+
+QAction *PluginManager::createAction(int idx, QWidget *parent)
+{
+    if(idx<0 || (unsigned)idx>=_plugins.size()) {
+        return NULL;
+    }
+    return _plugins[idx]->createAction(parent);
 }
 
 void *PluginManager::findSymbol(int idx,
@@ -49,17 +65,40 @@ void *PluginManager::findSymbol(int idx,
         return NULL;
     }
     void *sym;
-    DLASSERT(sym=dlsym(_plugins[idx], name), return NULL);
+    DLASSERT(sym=dlsym(_plugins[idx]->handle, name), return NULL);
     return sym;
+}
+
+Plugin *PluginManager::getPlugin(const char *name)
+{
+    for(vector<Plugin*>::iterator it = _plugins.begin();
+            it != _plugins.end(); it++)
+    {
+        if(!strcmp((*it)->getName(), name)) {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
+Plugin *PluginManager::getPlugin(int idx)
+{
+    if(idx<0 || (unsigned)idx>=_plugins.size()) {
+        return NULL;
+    }
+    return _plugins[idx];
 }
 
 PluginManager::~PluginManager()
 {
-    for(vector<void*>::iterator it = _plugins.begin();
+    for(vector<Plugin*>::iterator it = _plugins.begin();
             it != _plugins.end(); it++)
     {
-        DLASSERT(dlclose(*it), NOOP);
+        void *handle = (*it)->handle;
+        delete (*it);
+        DLASSERT(dlclose(handle), NOOP);
     }
+    _plugins.clear();
 }
 
 END_BIN_NAMESPACE

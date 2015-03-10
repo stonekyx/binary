@@ -34,7 +34,7 @@ public:
 
         retranslateUi(MainWindow);
 
-        QObject::connect(buttonQuit, SIGNAL(clicked()), MainWindow, SLOT(hide()));
+        QObject::connect(buttonQuit, SIGNAL(clicked()), MainWindow, SLOT(close()));
     }
     void retranslateUi(QMainWindow *MainWindow) {
         MainWindow->setWindowTitle(QApplication::translate("PluginBasicMainWindow", "Basic Information", 0, QApplication::UnicodeUTF8));

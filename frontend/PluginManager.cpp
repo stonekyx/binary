@@ -50,12 +50,12 @@ int PluginManager::loadPlugin(const char *name)
     return _plugins.size()-1;
 }
 
-QAction *PluginManager::createAction(int idx, QWidget *parent)
+QAction *PluginManager::getAction(int idx, QWidget *parent)
 {
     if(idx<0 || (unsigned)idx>=_plugins.size()) {
         return NULL;
     }
-    return _plugins[idx]->createAction(parent);
+    return _plugins[idx]->getAction(parent);
 }
 
 void *PluginManager::findSymbol(int idx,

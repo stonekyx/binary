@@ -2,6 +2,8 @@
 
 #include "MainWindow.h"
 
+using namespace std;
+
 BEGIN_PLUG_NAMESPACE(basic)
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -9,15 +11,22 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow())
 {
     ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
+    show();
+}
+
+MainWindow::MainWindow(map<string, string> param, QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow())
+{
+    ui->setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
+    show();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::update()
-{
 }
 
 END_PLUG_NAMESPACE

@@ -19,11 +19,6 @@ Backend::~Backend()
     closeFile();
 }
 
-void Backend::registerView(Observer *obs)
-{
-    _observers.push_back(obs);
-}
-
 void Backend::setBackendType(BackendType type)
 {
     _type = type;
@@ -38,21 +33,13 @@ File *Backend::openFile(const char *name)
     if(_file) {
         _file->setBackend(this);
     }
+    emit fileChanged(_file);
     return _file;
 }
 
 File *Backend::getFile()
 {
     return _file;
-}
-
-void Backend::updateAll()
-{
-    for(vector<Observer*>::iterator it = _observers.begin();
-            it != _observers.end(); it++)
-    {
-        (*it)->update();
-    }
 }
 
 void Backend::closeFile()
@@ -64,6 +51,7 @@ void Backend::closeFile()
         delete dynamic_cast<FileImplLibelf*>(_file);
     }
     _file = NULL;
+    emit fileChanged(_file);
 }
 
 END_BIN_NAMESPACE

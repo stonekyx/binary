@@ -14,7 +14,7 @@ class PluginManager {
 public:
     PluginManager();
     int loadPlugin(const char *);
-    QAction *createAction(int, QWidget *);
+    QAction *getAction(int, QWidget *);
     void *findSymbol(int, const char *);
     Plugin *getPlugin(const char *);
     Plugin *getPlugin(int);

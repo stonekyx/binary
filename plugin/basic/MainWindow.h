@@ -1,6 +1,9 @@
 #ifndef PLUGIN_BASIC_MAINWINDOW_H
 #define PLUGIN_BASIC_MAINWINDOW_H
 
+#include <map>
+#include <string>
+
 #include "common.h"
 
 #include <QMainWindow>
@@ -19,8 +22,9 @@ class binary::plugin::basic::MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = NULL);
+    explicit MainWindow(std::map<std::string, std::string>,
+            QWidget *parent = NULL);
     ~MainWindow();
-    void update();
 private:
     Ui::MainWindow *ui;
 };

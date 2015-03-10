@@ -2,14 +2,19 @@
 #define BACKEND_FILE_H
 
 #include <cstdlib>
+#include <QtCore/QObject>
 
 #include "common.h"
 
 BEGIN_BIN_NAMESPACE(backend)
 
 class Backend;
+class File;
 
-class File {
+END_BIN_NAMESPACE
+
+class binary::backend::File : public QObject {
+    Q_OBJECT
 public:
     virtual int getClass() = 0;
 
@@ -22,7 +27,5 @@ protected:
     File() : _backend(NULL) {}
     virtual ~File() {}
 };
-
-END_BIN_NAMESPACE
 
 #endif

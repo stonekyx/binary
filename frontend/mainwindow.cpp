@@ -50,7 +50,7 @@ void MainWindow::loadPlugin()
                 tr("Error when loading or plugin has been loaded before."));
         return;
     }
-    QAction *pluginAction = _pm->createAction(idx, this);
+    QAction *pluginAction = _pm->getAction(idx, this);
     if(!pluginAction) {
         QMessageBox::warning(this, tr("Error"),
                 tr("Error occurred in plugin."));

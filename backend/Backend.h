@@ -2,14 +2,19 @@
 #define BACKEND_BACKEND_H
 
 #include <vector>
+#include <QtCore/QObject>
 
 #include "File.h"
-#include "Observer.h"
 #include "common.h"
 
 BEGIN_BIN_NAMESPACE(backend)
 
-class Backend {
+class Backend;
+
+END_BIN_NAMESPACE
+
+class binary::backend::Backend : public QObject {
+    Q_OBJECT
 public:
     typedef enum {
         BACKEND_LIBELF,
@@ -19,19 +24,16 @@ public:
 
     Backend();
     ~Backend();
-    void registerView(Observer *);
     void setBackendType(BackendType);
     File *openFile(const char *);
     File *getFile();
-    void updateAll();
+signals:
+    void fileChanged(File *);
 private:
     BackendType _type;
-    std::vector<Observer*> _observers;
     File *_file;
 
     void closeFile();
 };
-
-END_BIN_NAMESPACE
 
 #endif

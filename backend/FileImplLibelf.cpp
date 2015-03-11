@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <exception>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -15,6 +16,13 @@ BEGIN_BIN_NAMESPACE(backend)
 FileImplLibelf::FileImplLibelf(const char *name,
         Elf_Cmd cmd)
 {
+    static bool needInit = true;
+    if(needInit) {
+        needInit = false;
+        if(elf_version(EV_CURRENT) == EV_NONE) {
+            throw std::exception();
+        }
+    }
     int flags = 0;
     if(ELF_C_READ == cmd) {
         flags = O_RDONLY;

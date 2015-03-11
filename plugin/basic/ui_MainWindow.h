@@ -7,13 +7,18 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QWidget>
 #include <QtGui/QApplication>
+#include <QtGui/QGridLayout>
+#include <QtGui/QLabel>
+#include <QtGui/QTreeView>
 
 BEGIN_PLUG_NAMESPACE(basic)
 
 class Ui_MainWindow {
 public:
     QWidget *centralWidget;
-    QPushButton *buttonQuit;
+    QGridLayout *gridLayout;
+    QTreeView *infoTree;
+    QLabel *defaultLabel;
 
     void setupUi(QMainWindow *MainWindow) {
         if(MainWindow->objectName().isEmpty())
@@ -24,21 +29,33 @@ public:
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         MainWindow->setCentralWidget(centralWidget);
 
-        buttonQuit = new QPushButton(centralWidget);
-        buttonQuit->setObjectName(QString::fromUtf8("buttonQuit"));
-        QSizePolicy buttonQuitSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-        buttonQuitSizePolicy.setHorizontalStretch(0);
-        buttonQuitSizePolicy.setVerticalStretch(0);
-        buttonQuitSizePolicy.setHeightForWidth(buttonQuit->sizePolicy().hasHeightForWidth());
-        buttonQuit->setSizePolicy(buttonQuitSizePolicy);
+        infoTree = new QTreeView(centralWidget);
+        infoTree->setObjectName(QString::fromUtf8("infoTree"));
+        QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+        sizePolicy.setHeightForWidth(infoTree->sizePolicy().hasHeightForWidth());
+        infoTree->setSizePolicy(sizePolicy);
+        infoTree->hide();
+
+        defaultLabel = new QLabel(centralWidget);
+        defaultLabel->setObjectName(QString::fromUtf8("defaultLabel"));
+        sizePolicy.setHeightForWidth(defaultLabel->sizePolicy().hasHeightForWidth());
+        defaultLabel->setSizePolicy(sizePolicy);
+        defaultLabel->show();
+
+        gridLayout = new QGridLayout(centralWidget);
+        gridLayout->setObjectName("gridLayout");
+        gridLayout->addWidget(infoTree);
+        gridLayout->addWidget(defaultLabel);
+        gridLayout->setAlignment(infoTree, Qt::AlignCenter);
+        gridLayout->setAlignment(defaultLabel, Qt::AlignCenter);
 
         retranslateUi(MainWindow);
-
-        QObject::connect(buttonQuit, SIGNAL(clicked()), MainWindow, SLOT(close()));
     }
     void retranslateUi(QMainWindow *MainWindow) {
         MainWindow->setWindowTitle(QApplication::translate("PluginBasicMainWindow", "Basic Information", 0, QApplication::UnicodeUTF8));
-        buttonQuit->setText(QApplication::translate("PluginBasicMainWindow", "Close", 0, QApplication::UnicodeUTF8));
+        defaultLabel->setText(QApplication::translate("PluginBasicMainWindow", "No file opened.", 0, QApplication::UnicodeUTF8));
     }
 };
 

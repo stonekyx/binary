@@ -21,7 +21,8 @@ BEGIN_BIN_NAMESPACE(frontend)
 
 #define NOOP
 
-PluginManager::PluginManager()
+PluginManager::PluginManager(BIN_NAMESPACE(backend)::Backend *backend) :
+    _backend(backend)
 {
     _plugins.clear();
 }
@@ -40,8 +41,8 @@ int PluginManager::loadPlugin(const char *name)
     }
     void *sym;
     DLASSERT(sym=dlsym(handle, "createPlugin"), return -1);
-    typedef Plugin *(*PluginCreator)();
-    Plugin *plugin = ((PluginCreator)sym)();
+    typedef Plugin *(*PluginCreator)(PluginManager *);
+    Plugin *plugin = ((PluginCreator)sym)(this);
     if(!plugin) {
         return -1;
     }
@@ -87,6 +88,11 @@ Plugin *PluginManager::getPlugin(int idx)
         return NULL;
     }
     return _plugins[idx];
+}
+
+BIN_NAMESPACE(backend)::Backend *PluginManager::getBackend()
+{
+    return _backend;
 }
 
 PluginManager::~PluginManager()

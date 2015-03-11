@@ -16,6 +16,7 @@ Backend::Backend() :
 
 Backend::~Backend()
 {
+    this->disconnect();
     closeFile();
 }
 

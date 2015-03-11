@@ -28,7 +28,7 @@ public:
     File *openFile(const char *);
     File *getFile();
 signals:
-    void fileChanged(File *);
+    void fileChanged(binary::backend::File *);
 private:
     BackendType _type;
     File *_file;

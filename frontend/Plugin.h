@@ -14,15 +14,19 @@
 BEGIN_BIN_NAMESPACE(frontend)
 
 class Plugin;
+class PluginManager;
 
 END_BIN_NAMESPACE
 
 class binary::frontend::Plugin : public QObject {
     Q_OBJECT
 public:
+    Plugin(PluginManager *manager) : manager(manager) {}
+    virtual ~Plugin() = 0;
     virtual const char *getName() = 0;
     virtual QAction *getAction(QWidget *) = 0;
     void *handle;
+    PluginManager * const manager;
 public slots:
     virtual void createView() = 0;
     virtual QObject *createView(std::map<std::string, std::string>) = 0;
@@ -30,15 +34,24 @@ private slots:
     virtual void removeDeadView(QObject *) = 0;
 };
 
+inline binary::frontend::Plugin::~Plugin() { }
+
 #define DEFINE_PLUGIN(name, viewClass, trContext, title) \
     class Plugin ## name : public BIN_NAMESPACE(frontend)::Plugin { \
     public: \
-        Plugin ## name() : _actionPlugin(NULL) {} \
+        Plugin ## name(BIN_NAMESPACE(frontend)::PluginManager *manager) : \
+            Plugin(manager), \
+            _actionPlugin(NULL) \
+        {} \
         ~Plugin ## name() { \
             for(std::set<QObject*>::iterator it = _views.begin(); \
                     it != _views.end(); it++) \
             { \
-                (*it)->deleteLater(); \
+                if(dynamic_cast<QWidget*>(*it)) { \
+                    dynamic_cast<QWidget*>(*it)->close(); \
+                } else { \
+                    (*it)->deleteLater(); \
+                } \
             } \
             _views.clear(); \
         } \
@@ -60,13 +73,13 @@ private slots:
             return _actionPlugin; \
         } \
         virtual void createView() { \
-            QObject *res = new viewClass(); \
+            QObject *res = new viewClass(this); \
             _views.insert(res); \
             QObject::connect(res, SIGNAL(destroyed(QObject *)), \
                     this, SLOT(removeDeadView(QObject *))); \
         } \
         virtual QObject *createView(std::map<std::string, std::string> param) { \
-            QObject *res = new viewClass(param); \
+            QObject *res = new viewClass(this, param); \
             _views.insert(res); \
             QObject::connect(res, SIGNAL(destroyed(QObject *)), \
                     this, SLOT(removeDeadView(QObject *))); \
@@ -80,9 +93,10 @@ private slots:
         std::set<QObject*> _views; \
     }; \
     extern "C" \
-    BIN_NAMESPACE(frontend)::Plugin *createPlugin() \
+    BIN_NAMESPACE(frontend)::Plugin \
+    *createPlugin(BIN_NAMESPACE(frontend)::PluginManager *manager) \
     { \
-        return new Plugin ## name; \
+        return new Plugin ## name(manager); \
     }
 
 #endif

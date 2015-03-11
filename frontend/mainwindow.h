@@ -31,8 +31,8 @@ public slots:
 
 private:
     Ui::MainWindow *ui;
-    PluginManager *_pm;
     BIN_NAMESPACE(backend)::Backend *_backend;
+    PluginManager *_pm;
 };
 
 #endif // MAINWINDOW_H

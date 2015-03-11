@@ -13,8 +13,8 @@ BEGIN_BIN_NAMESPACE(frontend)
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    _pm(new PluginManager),
-    _backend(new Backend)
+    _backend(new Backend),
+    _pm(new PluginManager(_backend))
 {
     ui->setupUi(this);
 }

@@ -11,7 +11,10 @@ BEGIN_BIN_NAMESPACE(backend)
 class FileImplLibelf : public File {
 public:
     FileImplLibelf(const char *, Elf_Cmd);
+    virtual bool isValid();
     virtual int getClass();
+    virtual ELFKind getKind();
+    virtual bool getEhdr(Elf64_Ehdr *);
     virtual ~FileImplLibelf();
 private:
     int _fd;

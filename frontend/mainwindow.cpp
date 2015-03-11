@@ -59,20 +59,36 @@ void MainWindow::loadPlugin(const QString &path)
     ui->menuPlugin->addAction(pluginAction);
 }
 
+void MainWindow::openFile(const QString &path)
+{
+    if(!path.isEmpty()) {
+        ui->labelHome->setText(path);
+        _backend->openFile(path.toUtf8().constData());
+    }
+}
+
 void MainWindow::openFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"),
-            "", tr("ELF files (*)"));
-    if(!fileName.isEmpty()) {
-        ui->labelHome->setText(fileName);
-        _backend->openFile(fileName.toUtf8().constData());
-    }
+    openFile(QFileDialog::getOpenFileName(this, tr("Open file"),
+            "", tr("ELF files (*)")));
 }
 
 void MainWindow::loadPlugin()
 {
     loadPlugin(QFileDialog::getOpenFileName(this, tr("Open plugin"),
             QString(), tr("Shared object (*.so)")));
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    switch(event->key()) {
+    case Qt::Key_Q:
+        if(event->modifiers() & Qt::ControlModifier)
+            QApplication::quit();
+        break;
+    default:
+        break;
+    }
 }
 
 END_BIN_NAMESPACE

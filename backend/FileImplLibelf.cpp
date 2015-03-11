@@ -37,9 +37,52 @@ FileImplLibelf::FileImplLibelf(const char *name,
     _elf = elf_begin(_fd, cmd, NULL);
 }
 
+bool FileImplLibelf::isValid()
+{
+    return _elf;
+}
+
 int FileImplLibelf::getClass()
 {
     return gelf_getclass(_elf);
+}
+
+File::ELFKind FileImplLibelf::getKind()
+{
+    Elf_Kind kind = elf_kind(_elf);
+    switch(kind) {
+    case ELF_K_AR:
+        return KIND_AR;
+    case ELF_K_ELF:
+        return KIND_ELF;
+    case ELF_K_COFF:
+        return KIND_COFF;
+    default:
+        return KIND_UNKNOWN;
+    }
+}
+
+bool FileImplLibelf::getEhdr(Elf64_Ehdr *dst)
+{
+    GElf_Ehdr ehdr;
+    if(!gelf_getehdr(_elf, &ehdr)) {
+        return false;
+    }
+    memcpy(&dst->e_ident, &ehdr.e_ident, sizeof(ehdr.e_ident));
+    dst->e_type = ehdr.e_type;
+    dst->e_machine = ehdr.e_machine;
+    dst->e_version = ehdr.e_version;
+    dst->e_entry = ehdr.e_entry;
+    dst->e_phoff = ehdr.e_phoff;
+    dst->e_shoff = ehdr.e_shoff;
+    dst->e_flags = ehdr.e_flags;
+    dst->e_ehsize = ehdr.e_ehsize;
+    dst->e_phentsize = ehdr.e_phentsize;
+    dst->e_phnum = ehdr.e_phnum;
+    dst->e_shentsize = ehdr.e_shentsize;
+    dst->e_shnum = ehdr.e_shnum;
+    dst->e_shstrndx = ehdr.e_shstrndx;
+    return true;
 }
 
 FileImplLibelf::~FileImplLibelf()

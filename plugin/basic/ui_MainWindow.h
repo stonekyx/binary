@@ -7,6 +7,7 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QWidget>
 #include <QtGui/QApplication>
+#include <QtGui/QVBoxLayout>
 #include <QtGui/QGridLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QTreeView>
@@ -16,6 +17,7 @@ BEGIN_PLUG_NAMESPACE(basic)
 class Ui_MainWindow {
 public:
     QWidget *centralWidget;
+    QVBoxLayout *vboxLayout;
     QGridLayout *gridLayout;
     QTreeView *infoTree;
     QLabel *defaultLabel;
@@ -23,7 +25,7 @@ public:
     void setupUi(QMainWindow *MainWindow) {
         if(MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("PluginBasicMainWindow"));
-        MainWindow->resize(400, 300);
+        MainWindow->resize(400, 360);
 
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
@@ -31,7 +33,7 @@ public:
 
         infoTree = new QTreeView(centralWidget);
         infoTree->setObjectName(QString::fromUtf8("infoTree"));
-        QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+        QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(infoTree->sizePolicy().hasHeightForWidth());
@@ -44,12 +46,16 @@ public:
         defaultLabel->setSizePolicy(sizePolicy);
         defaultLabel->show();
 
-        gridLayout = new QGridLayout(centralWidget);
+        gridLayout = new QGridLayout();
         gridLayout->setObjectName("gridLayout");
-        gridLayout->addWidget(infoTree);
-        gridLayout->addWidget(defaultLabel);
-        gridLayout->setAlignment(infoTree, Qt::AlignCenter);
-        gridLayout->setAlignment(defaultLabel, Qt::AlignCenter);
+        gridLayout->addWidget(infoTree, 0, 0, 1, 1);
+        gridLayout->addWidget(defaultLabel, 0, 0, 1, 1);
+
+        vboxLayout = new QVBoxLayout(centralWidget);
+        vboxLayout->setObjectName("vboxLayout");
+        vboxLayout->setContentsMargins(11, 11, 11, 11);
+        vboxLayout->setSpacing(6);
+        vboxLayout->addLayout(gridLayout);
 
         retranslateUi(MainWindow);
     }

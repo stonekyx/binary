@@ -5,6 +5,7 @@
 #include "PluginManager.h"
 #include <QMainWindow>
 #include <QtCore/QString>
+#include <QtGui/QKeyEvent>
 
 #include "backend/Backend.h"
 
@@ -27,10 +28,14 @@ public:
     ~MainWindow();
     void loadPlugins(const QString &);
     void loadPlugin(const QString &);
+    void openFile(const QString &);
 
 public slots:
     void openFile();
     void loadPlugin();
+
+protected:
+    virtual void keyPressEvent(QKeyEvent *);
 
 private:
     Ui::MainWindow *ui;

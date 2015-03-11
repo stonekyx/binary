@@ -133,6 +133,7 @@ void InfoModel::buildTree(const QStringList &data)
             }
             currentNode->addChild(newData);
             currentNode = currentNode->getChild(0);
+            currentLevel = lineLevel;
         } else {
             currentNode->getParent()->addChild(newData);
             currentNode = currentNode->nextSibling();

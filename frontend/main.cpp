@@ -16,6 +16,11 @@ int main(int argc, char *argv[])
         {
             w.loadPlugins(args.at(i+1));
         }
+        if(args.at(i) == QString::fromUtf8("--file") &&
+                i+1 < args.size())
+        {
+            w.openFile(args.at(i+1));
+        }
     }
     w.show();
 

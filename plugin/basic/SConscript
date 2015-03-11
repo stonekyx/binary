@@ -12,4 +12,5 @@ qtEnv.EnableQt4Modules([
 
 qtEnv.Moc4('MainWindow.h')
 
-qtEnv.SharedLibrary(target='basic', source=Glob('*.cpp')+Glob('*.cc'))
+pluginTarget = qtEnv.SharedLibrary(target='basic', source=Glob('*.cpp')+Glob('*.cc'))
+Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

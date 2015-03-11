@@ -14,11 +14,12 @@ env.EnableQt4Modules([
 env.Append(LIBS=['dl'])
 env.Append(CPPPATH=['#'],
         LIBS=['backend'], LIBPATH=[Dir('../backend').abspath],
-        RPATH=env.Literal(os.path.join('\\$$ORIGIN', os.pardir, 'backend')))
+        RPATH=env.Literal(os.path.join('\\$$ORIGIN', os.pardir, 'lib')))
 env.Append(LINKFLAGS=['-rdynamic'])
 
 env.Moc4('mainwindow.h')
 env.Moc4('Plugin.h')
 
 # env.Uic4(Glob('*.ui'))
-env.Program('mainwindow', source=Glob('*.cpp')+Glob('*.cc'))
+frontendTarget = env.Program('mainwindow', source=Glob('*.cpp')+Glob('*.cc'))
+Install(env['LOCAL_BINDIR'], frontendTarget)

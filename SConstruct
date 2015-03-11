@@ -10,6 +10,10 @@ baseEnv = Environment()
 
 baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
 baseEnv.Append(CPPPATH='#inc')
+baseEnv['LOCAL_INSTALLDIR'] = os.path.join(Dir('#').abspath, '_install')
+baseEnv['LOCAL_BINDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'bin')
+baseEnv['LOCAL_LIBDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'lib')
+baseEnv['LOCAL_DATADIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'share', 'binary')
 
 # Clone Qt environment
 qtEnv = baseEnv.Clone()

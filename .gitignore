@@ -1,5 +1,6 @@
 .sconsign.dblite
 .*.swp
 _build
+_install
 cscope.out
 *.pro.user

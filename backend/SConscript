@@ -13,7 +13,8 @@ env.EnableQt4Modules([
 env.Moc4('File.h')
 env.Moc4('Backend.h')
 
-env.SharedLibrary(target='backend', source=Glob('*.cpp')+Glob('*.c')+Glob('*.cc'))
+libbackend = env.SharedLibrary(target='backend', source=Glob('*.cpp')+Glob('*.c')+Glob('*.cc'))
+Install(env['LOCAL_LIBDIR'], libbackend)
 
 Export('env')
 

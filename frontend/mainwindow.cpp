@@ -26,25 +26,24 @@ MainWindow::~MainWindow()
     delete _backend;
 }
 
-void MainWindow::openFile()
+void MainWindow::loadPlugins(const QString &dirPath)
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"),
-            "", tr("ELF files (*)"));
-    if(!fileName.isEmpty()) {
-        ui->labelHome->setText(fileName);
-        _backend->openFile(fileName.toUtf8().constData());
+    QDir dir(dirPath);
+    QStringList nameFilters;
+    nameFilters << "*.so";
+    QFileInfoList files = dir.entryInfoList(nameFilters, QDir::Files);
+    foreach(QFileInfo f, files) {
+        loadPlugin(f.absoluteFilePath());
     }
 }
 
-void MainWindow::loadPlugin()
+void MainWindow::loadPlugin(const QString &path)
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open plugin"),
-            QString(), tr("Shared object (*.so)"));
-    if(fileName.isNull()) {
+    if(path.isNull()) {
         return;
     }
-    QByteArray fileNameBytes = fileName.toUtf8();
-    int idx = _pm->loadPlugin(fileNameBytes.constData());
+    QByteArray pathBytes = path.toUtf8();
+    int idx = _pm->loadPlugin(pathBytes.constData());
     if(idx==-1) {
         QMessageBox::warning(this, tr("Error"),
                 tr("Error when loading or plugin has been loaded before."));
@@ -58,6 +57,22 @@ void MainWindow::loadPlugin()
     }
     ui->pluginActions.push_back(pluginAction);
     ui->menuPlugin->addAction(pluginAction);
+}
+
+void MainWindow::openFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"),
+            "", tr("ELF files (*)"));
+    if(!fileName.isEmpty()) {
+        ui->labelHome->setText(fileName);
+        _backend->openFile(fileName.toUtf8().constData());
+    }
+}
+
+void MainWindow::loadPlugin()
+{
+    loadPlugin(QFileDialog::getOpenFileName(this, tr("Open plugin"),
+            QString(), tr("Shared object (*.so)")));
 }
 
 END_BIN_NAMESPACE

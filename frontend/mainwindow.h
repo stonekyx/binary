@@ -4,6 +4,7 @@
 #include "common.h"
 #include "PluginManager.h"
 #include <QMainWindow>
+#include <QtCore/QString>
 
 #include "backend/Backend.h"
 
@@ -24,6 +25,8 @@ class binary::frontend::MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void loadPlugins(const QString &);
+    void loadPlugin(const QString &);
 
 public slots:
     void openFile();

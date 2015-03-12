@@ -9,7 +9,7 @@
 
 #include "common.h"
 
-BEGIN_PLUG_NAMESPACE(basic)
+BEGIN_PLUG_NAMESPACE(plugin_framework)
 
 class InfoTree;
 

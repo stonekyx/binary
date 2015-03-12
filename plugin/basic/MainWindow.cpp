@@ -1,19 +1,17 @@
 #include <iostream>
 #include <cstdio>
 #include <elf.h>
-#include <QKeyEvent>
-#include <QtGui/QHeaderView>
 
 #include "frontend/PluginManager.h"
 #include "backend/Backend.h"
-
-#include "ui_MainWindow.h"
+#include "ui_MWTreeView.h"
 
 #include "MainWindow.h"
 
 using namespace std;
 
 USE_BIN_NAMESPACE(backend);
+USE_PLUG_NAMESPACE(plugin_framework);
 
 BEGIN_PLUG_NAMESPACE(basic)
 
@@ -38,38 +36,17 @@ static QString modelData =
 MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param,
         QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow()),
-    _plugin(plugin),
+    MWTreeView(new Ui::MWTreeView("PluginBasicMainWindow", "Basic information"),
+            plugin, param, parent),
     _infoModel(new InfoModel(modelData))
 {
-    ui->setupUi(this);
-    ui->infoTree->setModel(_infoModel);
-    ui->infoTree->header()->resizeSection(0, 180);
-    QObject::connect(_plugin->manager->getBackend(),
-            SIGNAL(fileChanged(binary::backend::File *)),
-            this, SLOT(updateInfo(binary::backend::File *)));
+    _ui->infoTree->setModel(_infoModel);
     updateInfo(_plugin->manager->getBackend()->getFile());
-    setAttribute(Qt::WA_DeleteOnClose);
-    show();
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
     delete _infoModel;
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    switch(event->key()) {
-    case Qt::Key_W:
-        if(event->modifiers() & Qt::ControlModifier)
-            close();
-        break;
-    default:
-        break;
-    }
 }
 
 #define SET(key) \
@@ -102,13 +79,7 @@ bool rangeCheck(T var, U lo, U hi) {
 
 void MainWindow::updateInfo(File *file)
 {
-    if(!file) {
-        ui->infoTree->hide();
-        ui->defaultLabel->show();
-        return;
-    }
-    ui->defaultLabel->hide();
-    ui->infoTree->show();
+    MWTreeView::updateInfo(file);
 
     const char *rawStr;
     QString rawQStr;

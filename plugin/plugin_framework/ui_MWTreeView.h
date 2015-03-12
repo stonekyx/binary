@@ -1,5 +1,5 @@
-#ifndef PLUGIN_BASIC_UI_MAINWINDOW_H
-#define PLUGIN_BASIC_UI_MAINWINDOW_H
+#ifndef PLUGIN_PLUGIN_FRAMEWORK_UI_MWTREEVIEW_H
+#define PLUGIN_PLUGIN_FRAMEWORK_UI_MWTREEVIEW_H
 
 #include "common.h"
 
@@ -12,9 +12,23 @@
 #include <QtGui/QLabel>
 #include <QtGui/QTreeView>
 
-BEGIN_PLUG_NAMESPACE(basic)
+BEGIN_PLUG_NAMESPACE(plugin_framework)
 
-class Ui_MainWindow {
+#define OBJNAME(widget) \
+        do{ widget->setObjectName(QString::fromUtf8(#widget)); }while(0)
+
+#define TRANS(raw) \
+        QApplication::translate(_context, raw, 0, QApplication::UnicodeUTF8)
+
+namespace Ui {
+    class MWTreeView;
+}
+
+class Ui::MWTreeView {
+private:
+    const char *_context;
+    const char *_title;
+
 public:
     QWidget *centralWidget;
     QVBoxLayout *vboxLayout;
@@ -22,17 +36,22 @@ public:
     QTreeView *infoTree;
     QLabel *defaultLabel;
 
+    MWTreeView(const char *context, const char *title) :
+        _context(context),
+        _title(title)
+    {}
+
     void setupUi(QMainWindow *MainWindow) {
         if(MainWindow->objectName().isEmpty())
-            MainWindow->setObjectName(QString::fromUtf8("PluginBasicMainWindow"));
+            MainWindow->setObjectName(QString::fromUtf8(_context));
         MainWindow->resize(400, 360);
 
         centralWidget = new QWidget(MainWindow);
-        centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
+        OBJNAME(centralWidget);
         MainWindow->setCentralWidget(centralWidget);
 
         infoTree = new QTreeView(centralWidget);
-        infoTree->setObjectName(QString::fromUtf8("infoTree"));
+        OBJNAME(infoTree);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -41,18 +60,19 @@ public:
         infoTree->hide();
 
         defaultLabel = new QLabel(centralWidget);
-        defaultLabel->setObjectName(QString::fromUtf8("defaultLabel"));
+        OBJNAME(defaultLabel);
         sizePolicy.setHeightForWidth(defaultLabel->sizePolicy().hasHeightForWidth());
         defaultLabel->setSizePolicy(sizePolicy);
+        defaultLabel->setAlignment(Qt::AlignCenter);
         defaultLabel->show();
 
         gridLayout = new QGridLayout();
-        gridLayout->setObjectName("gridLayout");
+        OBJNAME(gridLayout);
         gridLayout->addWidget(infoTree, 0, 0, 1, 1);
         gridLayout->addWidget(defaultLabel, 0, 0, 1, 1);
 
         vboxLayout = new QVBoxLayout(centralWidget);
-        vboxLayout->setObjectName("vboxLayout");
+        OBJNAME(vboxLayout);
         vboxLayout->setContentsMargins(11, 11, 11, 11);
         vboxLayout->setSpacing(6);
         vboxLayout->addLayout(gridLayout);
@@ -60,14 +80,13 @@ public:
         retranslateUi(MainWindow);
     }
     void retranslateUi(QMainWindow *MainWindow) {
-        MainWindow->setWindowTitle(QApplication::translate("PluginBasicMainWindow", "Basic Information", 0, QApplication::UnicodeUTF8));
-        defaultLabel->setText(QApplication::translate("PluginBasicMainWindow", "No file opened.", 0, QApplication::UnicodeUTF8));
+        MainWindow->setWindowTitle(TRANS(_title));
+        defaultLabel->setText(TRANS("No file opened."));
     }
 };
 
-namespace Ui {
-    class MainWindow : public Ui_MainWindow {};
-}
+#undef TRANS
+#undef OBJNAME
 
 END_PLUG_NAMESPACE
 

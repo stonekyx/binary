@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+Import('baseEnv qtEnv')
+
+qtEnv = qtEnv.Clone()
+
+qtEnv.EnableQt4Modules([
+    'QtGui',
+    'QtCore'
+    ])
+
+qtEnv.Moc4('MWTreeView.h')
+
+libTarget = qtEnv.SharedLibrary(target='plugin', source=Glob('*.cpp')+Glob('*.cc'))
+Install(qtEnv['LOCAL_LIBDIR'], libTarget)

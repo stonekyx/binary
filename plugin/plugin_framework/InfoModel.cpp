@@ -4,7 +4,7 @@
 
 #include "InfoModel.h"
 
-BEGIN_PLUG_NAMESPACE(basic)
+BEGIN_PLUG_NAMESPACE(plugin_framework)
 
 InfoModel::InfoModel(const QString &data, QObject *parent) :
     QAbstractItemModel(parent),

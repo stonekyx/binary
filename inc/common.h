@@ -22,4 +22,7 @@
 #define PLUG_NAMESPACE(x) \
     BIN_NAMESPACE(plugin)::x
 
+#define USE_PLUG_NAMESPACE(x) \
+    using namespace PLUG_NAMESPACE(x)
+
 #endif

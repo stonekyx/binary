@@ -5,12 +5,20 @@ import os
 Import('baseEnv qtEnv')
 
 baseEnv.Append(CPPPATH=['#backend'], LIBS=['backend'],
-        LIBPATH=[Dir('../backend/').abspath])
+        LIBPATH=[baseEnv['LOCAL_LIBDIR']])
 qtEnv.Append(CPPPATH=['#', '#frontend'])
+
+SConscript('plugin_framework/SConscript', duplicate=1)
+
+qtEnv.Append(CPPPATH=[Dir('plugin_framework').abspath],
+        LIBS=['plugin'], LIBPATH=[qtEnv['LOCAL_LIBDIR']],
+        RPATH=[qtEnv['LOCAL_LIBDIR']])
 
 srcpath = Dir('.').srcnode().abspath
 
 for i in os.listdir(srcpath):
     if not os.path.isdir(os.path.join(srcpath, i)):
+        continue
+    if i == 'plugin_framework':
         continue
     SConscript(os.path.join(i, 'SConscript'), duplicate=1)

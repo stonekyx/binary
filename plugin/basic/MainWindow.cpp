@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdio>
 #include <elf.h>
 #include <QKeyEvent>
 #include <QtGui/QHeaderView>
@@ -74,6 +75,15 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 #define SET(key) \
     _infoModel->setData(key, QApplication::translate("PluginBasicMainWindow", rawStr, 0, QApplication::UnicodeUTF8))
 
+#define SETQ(key) \
+    _infoModel->setData(key, rawQStr)
+
+#define SETHEX(key, val) \
+    do{ _infoModel->setData(key, QString("0x%1").arg(val, 0, 16)); }while(0)
+
+#define SETDEC(key, val) \
+    do{ _infoModel->setData(key, QString("%1").arg(val)); }while(0)
+
 #define RESET(key) \
     do{ rawStr="\002"key"\003"; SET(key); }while(0)
 
@@ -101,6 +111,8 @@ void MainWindow::updateInfo(File *file)
     ui->infoTree->show();
 
     const char *rawStr;
+    QString rawQStr;
+    size_t sizeVal;
 
     int elfClass = file->getClass();
     switch(elfClass){
@@ -231,6 +243,36 @@ void MainWindow::updateInfo(File *file)
             D("Unknown");
         }
         SET("INFO_FIELD_EHDR_VER");
+
+        SETHEX("INFO_FIELD_EHDR_ENTRY", ehdr.e_entry);
+        SETHEX("INFO_FIELD_EHDR_PHTOFF", ehdr.e_phoff);
+        SETHEX("INFO_FIELD_EHDR_SHTOFF", ehdr.e_shoff);
+        SETHEX("INFO_FIELD_EHDR_FLAGS", ehdr.e_flags);
+        SETHEX("INFO_FIELD_EHDR_HEADERSIZE", ehdr.e_ehsize);
+        SETHEX("INFO_FIELD_EHDR_PHTENTSIZE", ehdr.e_phentsize);
+
+        if(file->getPhdrNum(&sizeVal) != 0) {
+            rawQStr = QString("0x%1 (Unknown)").arg(ehdr.e_phnum, 0, 16);
+        } else {
+            rawQStr = QString("0x%1 (%2)").arg(ehdr.e_phnum, 0, 16).arg(sizeVal);
+        }
+        SETQ("INFO_FIELD_EHDR_PHTNUM");
+
+        SETHEX("INFO_FIELD_EHDR_SHTENTSIZE", ehdr.e_shentsize);
+
+        if(file->getShdrNum(&sizeVal) != 0) {
+            rawQStr = QString("0x%1 (Unknown)").arg(ehdr.e_shnum, 0, 16);
+        } else {
+            rawQStr = QString("0x%1 (%2)").arg(ehdr.e_shnum, 0, 16).arg(sizeVal);
+        }
+        SETQ("INFO_FIELD_EHDR_SHTNUM");
+
+        if(file->getShdrStrNdx(&sizeVal) != 0) {
+            rawQStr = QString("0x%1 (Unknown)").arg(ehdr.e_shstrndx, 0, 16);
+        } else {
+            rawQStr = QString("0x%1 (%2)").arg(ehdr.e_shstrndx, 0, 16).arg(sizeVal);
+        }
+        SETQ("INFO_FIELD_EHDR_STRNDX");
 
     } else {
         rawStr = "No";

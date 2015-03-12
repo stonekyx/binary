@@ -85,6 +85,21 @@ bool FileImplLibelf::getEhdr(Elf64_Ehdr *dst)
     return true;
 }
 
+int FileImplLibelf::getPhdrNum(size_t *dst)
+{
+    return elf_getphdrnum(_elf, dst);
+}
+
+int FileImplLibelf::getShdrNum(size_t *dst)
+{
+    return elf_getshdrnum(_elf, dst);
+}
+
+int FileImplLibelf::getShdrStrNdx(size_t *dst)
+{
+    return elf_getshdrstrndx(_elf, dst);
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     elf_end(_elf);

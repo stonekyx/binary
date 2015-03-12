@@ -88,7 +88,7 @@ QModelIndex InfoModel::parent(const QModelIndex &index) const
     if(node->getParent() == _root) {
         return _rootIndex;
     }
-    return createIndex(parent->getRow(), index.column(), parent);
+    return createIndex(parent->getRow(), 0, parent);
 }
 
 int InfoModel::rowCount(const QModelIndex &parent) const

@@ -15,6 +15,9 @@ public:
     virtual int getClass();
     virtual ELFKind getKind();
     virtual bool getEhdr(Elf64_Ehdr *);
+    virtual int getPhdrNum(size_t *);
+    virtual int getShdrNum(size_t *);
+    virtual int getShdrStrNdx(size_t *);
     virtual ~FileImplLibelf();
 private:
     int _fd;

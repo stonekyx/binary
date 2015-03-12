@@ -27,6 +27,9 @@ public:
     virtual int getClass() = 0;
     virtual ELFKind getKind() = 0;
     virtual bool getEhdr(Elf64_Ehdr *) = 0;
+    virtual int getPhdrNum(size_t *dst) = 0;
+    virtual int getShdrNum(size_t *dst) = 0;
+    virtual int getShdrStrNdx(size_t *dst) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

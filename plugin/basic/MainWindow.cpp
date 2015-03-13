@@ -80,6 +80,9 @@ bool rangeCheck(T var, U lo, U hi) {
 void MainWindow::updateInfo(File *file)
 {
     MWTreeView::updateInfo(file);
+    if(!file) {
+        return;
+    }
 
     const char *rawStr;
     QString rawQStr;

@@ -18,6 +18,7 @@ public:
     virtual int getPhdrNum(size_t *);
     virtual int getShdrNum(size_t *);
     virtual int getShdrStrNdx(size_t *);
+    virtual bool getPhdr(int, Elf64_Phdr *);
     virtual ~FileImplLibelf();
 private:
     int _fd;

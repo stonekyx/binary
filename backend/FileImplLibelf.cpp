@@ -100,6 +100,11 @@ int FileImplLibelf::getShdrStrNdx(size_t *dst)
     return elf_getshdrstrndx(_elf, dst);
 }
 
+bool FileImplLibelf::getPhdr(int idx, Elf64_Phdr *dst)
+{
+    return gelf_getphdr(_elf, idx, dst);
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     elf_end(_elf);

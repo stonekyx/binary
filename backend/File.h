@@ -30,6 +30,7 @@ public:
     virtual int getPhdrNum(size_t *dst) = 0;
     virtual int getShdrNum(size_t *dst) = 0;
     virtual int getShdrStrNdx(size_t *dst) = 0;
+    virtual bool getPhdr(int, Elf64_Phdr *) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

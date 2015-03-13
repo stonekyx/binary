@@ -73,6 +73,11 @@ void MainWindow::openFile()
             "", tr("ELF files (*)")));
 }
 
+void MainWindow::closeFile()
+{
+    _backend->closeFile();
+}
+
 void MainWindow::loadPlugin()
 {
     loadPlugin(QFileDialog::getOpenFileName(this, tr("Open plugin"),

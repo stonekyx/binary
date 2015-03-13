@@ -25,6 +25,7 @@ class Ui_MainWindow
 {
 public:
     QAction *actionFileOpen;
+    QAction *actionFileClose;
     QAction *actionFileQuit;
     QAction *actionPluginLoad;
     QWidget *centralWidget;
@@ -44,6 +45,9 @@ public:
 
         actionFileOpen = new QAction(MainWindow);
         actionFileOpen->setObjectName(QString::fromUtf8("actionFileOpen"));
+
+        actionFileClose = new QAction(MainWindow);
+        actionFileClose->setObjectName(QString::fromUtf8("actionFileClose"));
 
         actionFileQuit = new QAction(MainWindow);
         actionFileQuit->setObjectName(QString::fromUtf8("actionFileQuit"));
@@ -79,6 +83,7 @@ public:
         menuBar->addAction(menuFile->menuAction());
 
         menuFile->addAction(actionFileOpen);
+        menuFile->addAction(actionFileClose);
         menuFile->addSeparator();
         menuFile->addAction(actionFileQuit);
 
@@ -91,6 +96,7 @@ public:
         retranslateUi(MainWindow);
         QObject::connect(actionFileQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
         QObject::connect(actionFileOpen, SIGNAL(triggered()), MainWindow, SLOT(openFile()));
+        QObject::connect(actionFileClose, SIGNAL(triggered()), MainWindow, SLOT(closeFile()));
         QObject::connect(actionPluginLoad, SIGNAL(triggered()), MainWindow, SLOT(loadPlugin()));
 
         QMetaObject::connectSlotsByName(MainWindow);
@@ -100,6 +106,7 @@ public:
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0, QApplication::UnicodeUTF8));
         actionFileOpen->setText(QApplication::translate("MainWindow", "&Open", 0, QApplication::UnicodeUTF8));
+        actionFileClose->setText(QApplication::translate("MainWindow", "&Close", 0, QApplication::UnicodeUTF8));
         actionFileQuit->setText(QApplication::translate("MainWindow", "&Quit", 0, QApplication::UnicodeUTF8));
         actionPluginLoad->setText(QApplication::translate("MainWindow", "&Load", 0, QApplication::UnicodeUTF8));
         labelHome->setText(QApplication::translate("MainWindow", "Binary Analyzer for ELF", 0, QApplication::UnicodeUTF8));

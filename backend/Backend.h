@@ -26,14 +26,13 @@ public:
     ~Backend();
     void setBackendType(BackendType);
     File *openFile(const char *);
+    void closeFile();
     File *getFile();
 signals:
     void fileChanged(binary::backend::File *);
 private:
     BackendType _type;
     File *_file;
-
-    void closeFile();
 };
 
 #endif

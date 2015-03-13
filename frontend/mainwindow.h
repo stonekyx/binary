@@ -32,6 +32,7 @@ public:
 
 public slots:
     void openFile();
+    void closeFile();
     void loadPlugin();
 
 protected:

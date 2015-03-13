@@ -30,6 +30,9 @@ static bool isVariable(const QVariant &data)
 
 QVariant InfoModel::data(const QModelIndex &index, int role) const
 {
+    if(role == Qt::TextAlignmentRole) {
+        return Qt::AlignTop;
+    }
     if(role != Qt::DisplayRole) {
         return QVariant();
     }
@@ -116,6 +119,7 @@ void InfoModel::buildTree(const QStringList &data)
         QList<QVariant> newData;
         QStringList lineFields = line.split("\t", QString::SkipEmptyParts);
         foreach(QString s, lineFields) {
+            s.replace(QChar('\r'), QChar('\n'));
             newData << s;
         }
 

@@ -25,6 +25,9 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
 
 MainWindow::~MainWindow()
 {
+    if(_infoModel) {
+        delete _infoModel;
+    }
 }
 
 #define C(constant, value) \
@@ -112,7 +115,7 @@ void MainWindow::updateInfo(File *file)
         if(!file->getPhdr(i, &phdr)) {
             continue;
         }
-        if(i) {
+        if(!modelData.isEmpty()) {
             textStream << "\n";
         }
         textStream << "Entry " << i+1 << "\t" << typeText(phdr.p_type);

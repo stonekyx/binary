@@ -100,9 +100,50 @@ int FileImplLibelf::getShdrStrNdx(size_t *dst)
     return elf_getshdrstrndx(_elf, dst);
 }
 
-bool FileImplLibelf::getPhdr(int idx, Elf64_Phdr *dst)
+bool FileImplLibelf::getPhdr(size_t idx, Elf64_Phdr *dst)
 {
-    return gelf_getphdr(_elf, idx, dst);
+    GElf_Phdr phdr;
+    if(!gelf_getphdr(_elf, idx, &phdr)) {
+        return false;
+    }
+    dst->p_type = phdr.p_type;
+    dst->p_flags = phdr.p_flags;
+    dst->p_offset = phdr.p_offset;
+    dst->p_vaddr = phdr.p_vaddr;
+    dst->p_paddr = phdr.p_paddr;
+    dst->p_filesz = phdr.p_filesz;
+    dst->p_memsz = phdr.p_memsz;
+    dst->p_align = phdr.p_align;
+    return true;
+}
+
+bool FileImplLibelf::getShdr(size_t idx, Elf64_Shdr *dst)
+{
+    Elf_Scn *scn;
+    GElf_Shdr shdr;
+    if(!(scn=elf_getscn(_elf, idx)) || !gelf_getshdr(scn, &shdr)) {
+        return false;
+    }
+    dst->sh_name = shdr.sh_name;
+    dst->sh_type = shdr.sh_type;
+    dst->sh_flags = shdr.sh_flags;
+    dst->sh_addr = shdr.sh_addr;
+    dst->sh_offset = shdr.sh_offset;
+    dst->sh_size = shdr.sh_size;
+    dst->sh_link = shdr.sh_link;
+    dst->sh_info = shdr.sh_info;
+    dst->sh_addralign = shdr.sh_addralign;
+    dst->sh_entsize = shdr.sh_entsize;
+    return true;
+}
+
+const char *FileImplLibelf::getScnName(Elf64_Shdr *shdr)
+{
+    size_t shdrStrNdx;
+    if(getShdrStrNdx(&shdrStrNdx) != 0) {
+        return NULL;
+    }
+    return elf_strptr(_elf, shdrStrNdx, shdr->sh_name);
 }
 
 FileImplLibelf::~FileImplLibelf()

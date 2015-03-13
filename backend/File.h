@@ -30,7 +30,9 @@ public:
     virtual int getPhdrNum(size_t *dst) = 0;
     virtual int getShdrNum(size_t *dst) = 0;
     virtual int getShdrStrNdx(size_t *dst) = 0;
-    virtual bool getPhdr(int, Elf64_Phdr *) = 0;
+    virtual bool getPhdr(size_t, Elf64_Phdr *) = 0;
+    virtual bool getShdr(size_t, Elf64_Shdr *) = 0;
+    virtual const char *getScnName(Elf64_Shdr *) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

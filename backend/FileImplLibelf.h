@@ -18,7 +18,9 @@ public:
     virtual int getPhdrNum(size_t *);
     virtual int getShdrNum(size_t *);
     virtual int getShdrStrNdx(size_t *);
-    virtual bool getPhdr(int, Elf64_Phdr *);
+    virtual bool getPhdr(size_t, Elf64_Phdr *);
+    virtual bool getShdr(size_t, Elf64_Shdr *);
+    virtual const char *getScnName(Elf64_Shdr *);
     virtual ~FileImplLibelf();
 private:
     int _fd;

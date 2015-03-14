@@ -1,11 +1,9 @@
-#include <set>
-
-#include "frontend/Plugin.h"
+#include "frontend/ConcretePlugin.h"
 #include "common.h"
 #include "MainWindow.h"
 
 BEGIN_PLUG_NAMESPACE(basic)
 
-DEFINE_PLUGIN(Basic, MainWindow, "PluginBasicMainWindow", "Basic")
+DEFINE_PLUGIN(MainWindow, "Basic", "Basic", "PluginBasicMainWindow")
 
 END_PLUG_NAMESPACE

@@ -4,6 +4,9 @@ import os
 
 Import('baseEnv qtEnv')
 
+#baseEnv.Append(CCFLAGS=['-O3'])
+#qtEnv.Append(CCFLAGS=['-O3'])
+
 baseEnv.Append(CPPPATH=['#backend'], LIBS=['backend'],
         LIBPATH=[baseEnv['LOCAL_LIBDIR']])
 qtEnv.Append(CPPPATH=['#', '#frontend'])

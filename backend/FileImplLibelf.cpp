@@ -146,6 +146,31 @@ const char *FileImplLibelf::getScnName(Elf64_Shdr *shdr)
     return elf_strptr(_elf, shdrStrNdx, shdr->sh_name);
 }
 
+ssize_t FileImplLibelf::getScnData(size_t idx, void *buf, size_t bufsize)
+{
+    Elf_Scn *scn;
+    GElf_Shdr shdr;
+    if(!(scn=elf_getscn(_elf, idx)) || !gelf_getshdr(scn, &shdr)) {
+        return -1;
+    }
+    Elf_Data *data = NULL;
+    size_t n = 0;
+    while(n<shdr.sh_size && n<bufsize &&
+            (data = elf_getdata(scn, data)) != NULL)
+    {
+        if(!data->d_buf) {
+            break;
+        }
+        size_t copySize = data->d_size;
+        if(bufsize-n < copySize) {
+            copySize = bufsize-n;
+        }
+        memcpy((char*)buf+n, data->d_buf, copySize);
+        n += copySize;
+    }
+    return n;
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     elf_end(_elf);

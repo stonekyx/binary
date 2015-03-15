@@ -1,4 +1,5 @@
 #include <QtCore/QTextStream>
+#include <QtGui/QMenu>
 
 #include "frontend/PluginManager.h"
 #include "backend/Backend.h"
@@ -19,6 +20,12 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     MWTreeView(new Ui::MWTreeView("PluginShdrMainWindow", "Section header"), plugin, param, parent),
     _infoModel(NULL)
 {
+    _ui->infoTree->setContextMenuPolicy(Qt::CustomContextMenu);
+    QObject::connect(
+            _ui->infoTree,
+            SIGNAL(customContextMenuRequested(const QPoint &)),
+            this,
+            SLOT(ctxMenuTreeView(const QPoint &)));
     updateInfo(_plugin->manager->getBackend()->getFile());
 }
 
@@ -172,6 +179,30 @@ void MainWindow::updateInfo(File *file)
     }
     _infoModel = new InfoModel(modelData);
     _ui->infoTree->setModel(_infoModel);
+}
+
+void MainWindow::ctxMenuTreeView(const QPoint &pos)
+{
+    QMenu *menu = new QMenu;
+    menu->setAttribute(Qt::WA_DeleteOnClose);
+    QAction *actionShowData = menu->addAction(
+            tr("Show section data"),
+            this, SLOT(showSectionData()));
+    actionShowData->setData(pos);
+    actionShowData->setParent(menu);
+    menu->exec(_ui->infoTree->mapToGlobal(pos));
+}
+
+void MainWindow::showSectionData()
+{
+    QAction *actionShowData = dynamic_cast<QAction*>(sender());
+    if(!actionShowData) {
+        return;
+    }
+    QModelIndex index = _ui->infoTree->indexAt(actionShowData->data().toPoint());
+    map<string, string> param;
+    param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
+    _plugin->manager->getPlugin("ScnData")->createView(param);
 }
 
 #undef HEX

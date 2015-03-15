@@ -1,22 +1,25 @@
-#ifndef PLUGIN_SHDR_MAINWINDOW_H
-#define PLUGIN_SHDR_MAINWINDOW_H
+#ifndef PLUGIN_SCNDATA_MAINWINDOW_H
+#define PLUGIN_SCNDATA_MAINWINDOW_H
 
 #include "frontend/Plugin.h"
+#include "backend/File.h"
 #include "common.h"
-#include "MWTreeView.h"
-#include "InfoModel.h"
+#include "MWBase.h"
 
 #include <QtGui/QMainWindow>
 
-BEGIN_PLUG_NAMESPACE(shdr)
+BEGIN_PLUG_NAMESPACE(scndata)
+
+namespace Ui {
+    class MainWindow;
+}
 
 class MainWindow;
 
 END_PLUG_NAMESPACE
 
-class binary::plugin::shdr::MainWindow :
-    public binary::plugin::plugin_framework::MWTreeView {
-    Q_OBJECT
+class binary::plugin::scndata::MainWindow :
+    public PLUG_NAMESPACE(plugin_framework)::MWBase {
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -24,11 +27,9 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
-public slots:
-    void ctxMenuTreeView(const QPoint &);
-    void showSectionData();
 private:
-    PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
+    Ui::MainWindow *_ui;
+    size_t _scnIndex;
 };
 
 #endif

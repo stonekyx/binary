@@ -33,6 +33,7 @@ public:
     virtual bool getPhdr(size_t, Elf64_Phdr *) = 0;
     virtual bool getShdr(size_t, Elf64_Shdr *) = 0;
     virtual const char *getScnName(Elf64_Shdr *) = 0;
+    virtual ssize_t getScnData(size_t idx, void *, size_t bufsize) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

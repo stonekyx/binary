@@ -1,10 +1,4 @@
-#include <iostream>
-#include <cstdio>
-#include <QKeyEvent>
 #include <QtGui/QHeaderView>
-
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 
 #include "ui_MWTreeView.h"
 
@@ -20,35 +14,14 @@ MWTreeView::MWTreeView(Ui::MWTreeView *ui,
         BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param,
         QWidget *parent) :
-    QMainWindow(parent),
-    _ui(ui),
-    _plugin(plugin)
+    MWBase(ui, plugin, param, parent),
+    _ui(ui)
 {
-    _ui->setupUi(this);
     _ui->infoTree->header()->resizeSection(0, 180);
-    QObject::connect(_plugin->manager->getBackend(),
-            SIGNAL(fileChanged(binary::backend::File *)),
-            this, SLOT(updateInfo(binary::backend::File *)));
-    setAttribute(Qt::WA_DeleteOnClose);
-    show();
 }
 
 MWTreeView::~MWTreeView()
-{
-    delete _ui;
-}
-
-void MWTreeView::keyPressEvent(QKeyEvent *event)
-{
-    switch(event->key()) {
-    case Qt::Key_W:
-        if(event->modifiers() & Qt::ControlModifier)
-            close();
-        break;
-    default:
-        break;
-    }
-}
+{ }
 
 void MWTreeView::updateInfo(File *file)
 {

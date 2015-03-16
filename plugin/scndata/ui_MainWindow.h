@@ -1,6 +1,7 @@
 #ifndef PLUGIN_SCNDATA_UI_MAINWINDOW_H
 #define PLUGIN_SCNDATA_UI_MAINWINDOW_H
 
+#include <QtCore/QList>
 #include <QtGui/QTextEdit>
 #include <QtGui/QScrollBar>
 #include <QtGui/QAbstractSlider>
@@ -12,6 +13,48 @@ BEGIN_PLUG_NAMESPACE(scndata)
 namespace Ui {
     class MainWindow;
 }
+
+class ScnDataTextEdit : public QTextEdit {
+public:
+    ScnDataTextEdit(QWidget *parent = NULL) : QTextEdit(parent)
+    {}
+    void markCursor(int start, int end) {
+        QTextCursor bkp(textCursor());
+        if(!_mark.isNull()) {
+            setTextCursor(_mark);
+            setTextBackgroundColor(Qt::white);
+        }
+        _mark = bkp;
+        _mark.setPosition(start);
+        _mark.setPosition(end, QTextCursor::KeepAnchor);
+        setTextCursor(_mark);
+        setTextBackgroundColor(Qt::lightGray);
+        setTextCursor(bkp);
+    }
+    void unmarkCursor() {
+        QTextCursor bkp(textCursor());
+        if(!_mark.isNull()) {
+            setTextCursor(_mark);
+            setTextBackgroundColor(Qt::white);
+        }
+        setTextCursor(bkp);
+    }
+protected:
+    virtual void mousePressEvent(QMouseEvent *e) {
+        QTextCursor cursor(textCursor());
+        cursor.clearSelection();
+        setTextCursor(cursor);
+        QTextEdit::mousePressEvent(e);
+    }
+    virtual void focusOutEvent(QFocusEvent *e) {
+        bool oldState = blockSignals(true);
+        unmarkCursor();
+        blockSignals(oldState);
+        QTextEdit::focusOutEvent(e);
+    }
+private:
+    QTextCursor _mark;
+};
 
 #define OBJNAME(widget) \
         do{ widget->setObjectName(QString::fromUtf8(#widget)); }while(0)
@@ -25,28 +68,31 @@ class Ui::MainWindow :
 public:
     MainWindow() : MWBase("PluginScnDataMainWindow", "Section data") {}
 
-    QTextEdit *textEdit;
-    QTextEdit *rawTextEdit;
-    QTextEdit *addrTextEdit;
+    ScnDataTextEdit *hexTextEdit;
+    ScnDataTextEdit *rawTextEdit;
+    ScnDataTextEdit *addrTextEdit;
+    QList<ScnDataTextEdit*> textEdits;
 
     virtual void setupUi(QMainWindow *window) {
         MWBase::setupUi(window);
 
         window->resize(650, 360);
+        window->setMinimumWidth(650);
+        window->setMinimumHeight(360);
 
-        textEdit = new QTextEdit(centralWidget);
-        OBJNAME(textEdit);
+        hexTextEdit = new ScnDataTextEdit(centralWidget);
+        OBJNAME(hexTextEdit);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(5);
         sizePolicy.setVerticalStretch(5);
-        sizePolicy.setHeightForWidth(textEdit->sizePolicy().hasHeightForWidth());
-        textEdit->setSizePolicy(sizePolicy);
-        textEdit->setReadOnly(true);
-        textEdit->setTextInteractionFlags(
-                textEdit->textInteractionFlags() |
+        sizePolicy.setHeightForWidth(hexTextEdit->sizePolicy().hasHeightForWidth());
+        hexTextEdit->setSizePolicy(sizePolicy);
+        hexTextEdit->setReadOnly(true);
+        hexTextEdit->setTextInteractionFlags(
+                hexTextEdit->textInteractionFlags() |
                 Qt::TextSelectableByKeyboard);
 
-        rawTextEdit = new QTextEdit(centralWidget);
+        rawTextEdit = new ScnDataTextEdit(centralWidget);
         OBJNAME(rawTextEdit);
         sizePolicy.setHorizontalStretch(2);
         sizePolicy.setVerticalStretch(2);
@@ -57,7 +103,7 @@ public:
                 rawTextEdit->textInteractionFlags() |
                 Qt::TextSelectableByKeyboard);
 
-        addrTextEdit = new QTextEdit(centralWidget);
+        addrTextEdit = new ScnDataTextEdit(centralWidget);
         OBJNAME(addrTextEdit);
         sizePolicy.setHorizontalStretch(1);
         sizePolicy.setVerticalStretch(1);
@@ -69,24 +115,24 @@ public:
                 Qt::TextSelectableByKeyboard);
         addrTextEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-        gridLayout->addWidget(textEdit, 0, 1, 1, 1);
+        gridLayout->addWidget(hexTextEdit, 0, 1, 1, 1);
         gridLayout->addWidget(rawTextEdit, 0, 2, 1, 1);
         gridLayout->addWidget(addrTextEdit, 0, 0, 1, 1);
 
-        const QAbstractSlider *textEditSlider =
-            textEdit->verticalScrollBar();
-        const QAbstractSlider *rawTextEditSlider =
-            rawTextEdit->verticalScrollBar();
-        const QAbstractSlider *addrTextEditSlider =
-            addrTextEdit->verticalScrollBar();
-        QObject::connect(textEditSlider, SIGNAL(valueChanged(int)),
-                rawTextEditSlider, SLOT(setValue(int)));
-        QObject::connect(rawTextEditSlider, SIGNAL(valueChanged(int)),
-                textEditSlider, SLOT(setValue(int)));
-        QObject::connect(rawTextEditSlider, SIGNAL(valueChanged(int)),
-                addrTextEditSlider, SLOT(setValue(int)));
-        QObject::connect(addrTextEditSlider, SIGNAL(valueChanged(int)),
-                rawTextEditSlider, SLOT(setValue(int)));
+        textEdits.push_back(hexTextEdit);
+        textEdits.push_back(rawTextEdit);
+        textEdits.push_back(addrTextEdit);
+
+        for(int i=1; i<textEdits.size(); i++) {
+            QObject::connect(textEdits[i]->verticalScrollBar(),
+                    SIGNAL(valueChanged(int)),
+                    textEdits[i-1]->verticalScrollBar(),
+                    SLOT(setValue(int)));
+            QObject::connect(textEdits[i-1]->verticalScrollBar(),
+                    SIGNAL(valueChanged(int)),
+                    textEdits[i]->verticalScrollBar(),
+                    SLOT(setValue(int)));
+        }
     }
     virtual void retranslateUi(QMainWindow *window) {
         MWBase::retranslateUi(window);

@@ -19,7 +19,8 @@ class MainWindow;
 END_PLUG_NAMESPACE
 
 class binary::plugin::scndata::MainWindow :
-    public PLUG_NAMESPACE(plugin_framework)::MWBase {
+    public binary::plugin::plugin_framework::MWBase {
+    Q_OBJECT
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -27,9 +28,15 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+public slots:
+    virtual void updateHighlight();
 private:
     Ui::MainWindow *_ui;
     size_t _scnIndex;
+    Elf64_Off _scnOffset;
+    bool canUpdateHighlight;
+
+    Elf64_Off parseAddr(int);
 };
 
 #endif

@@ -142,7 +142,7 @@ void InfoModel::buildMore(const QString &line)
         _currentNode->getParent()->addChild(newData);
         _currentNode = _currentNode->nextSibling();
     }
-    if(_columnCount>1 && isVariable(newData[1])) {
+    if(_columnCount>1 && newData.size()>1 && isVariable(newData[1])) {
         QString key = lineFields[1].midRef(1, lineFields[1].length()-2).toString();
         QModelIndex value = createIndex(_currentNode->getRow(), 1, _currentNode);
         _variableMap.insert(key, value);
@@ -209,6 +209,9 @@ int InfoTree::getRow()
 
 QVariant InfoTree::data(int col)
 {
+    if(col>=_data.size()) {
+        return QVariant();
+    }
     return _data[col];
 }
 

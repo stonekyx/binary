@@ -42,12 +42,6 @@ public:
         setTextCursor(bkp);
     }
 protected:
-    virtual void mousePressEvent(QMouseEvent *e) {
-        QTextCursor cursor(textCursor());
-        cursor.clearSelection();
-        setTextCursor(cursor);
-        QTextEdit::mousePressEvent(e);
-    }
     virtual void focusOutEvent(QFocusEvent *e) {
         bool oldState = blockSignals(true);
         unmarkCursor();

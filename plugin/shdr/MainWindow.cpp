@@ -20,12 +20,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     MWTreeView(new Ui::MWTreeView("PluginShdrMainWindow", "Section header"), plugin, param, parent),
     _infoModel(NULL)
 {
-    _ui->infoTree->setContextMenuPolicy(Qt::CustomContextMenu);
-    QObject::connect(
-            _ui->infoTree,
-            SIGNAL(customContextMenuRequested(const QPoint &)),
-            this,
-            SLOT(ctxMenuTreeView(const QPoint &)));
+    ctxMenuTreeView();
     updateInfo(_plugin->manager->getBackend()->getFile());
 }
 
@@ -181,21 +176,16 @@ void MainWindow::updateInfo(File *file)
     _ui->infoTree->setModel(_infoModel);
 }
 
-void MainWindow::ctxMenuTreeView(const QPoint &pos)
+void MainWindow::ctxMenuTreeView()
 {
-    QMenu *menu = new QMenu;
-    menu->setAttribute(Qt::WA_DeleteOnClose);
-    QAction *actionShowData = menu->addAction(
+    QAction *actionShowData = _ui->ctxMenu->addAction(
             tr("Show section data"),
             this, SLOT(showSectionData()));
-    actionShowData->setData(pos);
-    actionShowData->setParent(menu);
-    QAction *actionShowStrTab = menu->addAction(
+    actionShowData->setParent(_ui->ctxMenu);
+    QAction *actionShowStrTab = _ui->ctxMenu->addAction(
             tr("Show as string table"),
             this, SLOT(showStringTable()));
-    actionShowStrTab->setData(pos);
-    actionShowStrTab->setParent(menu);
-    menu->exec(_ui->infoTree->mapToGlobal(pos));
+    actionShowStrTab->setParent(_ui->ctxMenu);
 }
 
 void MainWindow::showSectionData()

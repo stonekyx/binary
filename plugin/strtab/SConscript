@@ -10,5 +10,7 @@ qtEnv.EnableQt4Modules([
     'QtCore'
     ])
 
+qtEnv.Append(LIBS=['iberty'])
+
 pluginTarget = qtEnv.SharedLibrary(target='strtab', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

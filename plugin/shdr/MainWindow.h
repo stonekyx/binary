@@ -25,7 +25,7 @@ public:
 public:
     virtual void updateInfo(binary::backend::File *);
 public slots:
-    void ctxMenuTreeView(const QPoint &);
+    void ctxMenuTreeView();
     void showSectionData();
     void showStringTable();
 private:

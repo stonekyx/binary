@@ -7,6 +7,7 @@
 #include "ui_MWTreeView.h"
 
 #include "MainWindow.h"
+#include "wrap.h"
 
 using namespace std;
 
@@ -56,7 +57,7 @@ void MainWindow::updateInfo(File *file)
         close();
         return;
     }
-    if(!(shdr.sh_flags & SHF_STRINGS)) {
+    if(!(shdr.sh_flags & SHF_STRINGS) && shdr.sh_type != SHT_STRTAB) {
         if(QMessageBox::warning(this, tr("Warning"),
                 tr("This section may not contain nul-terminated strings!"
                     "\nDo you want to continue?"),
@@ -89,6 +90,9 @@ void MainWindow::updateInfo(File *file)
     for(size_t i=1; i<shdr.sh_size-1; i+=strlen(buf+i)+1) {
         BL(QString("Entry %1\t%2").arg(++entryCount).arg(QString(buf+i)));
         BL(QString("\tOffset\t%1").arg(i));
+        char *demangle = cplus_demangle(buf+i);
+        BL(QString("\tDemangle\t%1").arg(QString(demangle)));
+        free(demangle);
     }
     delete[] buf;
 

@@ -1,5 +1,3 @@
-#include <QtGui/QHeaderView>
-
 #include "ui_MWTreeView.h"
 
 #include "MWTreeView.h"
@@ -17,7 +15,6 @@ MWTreeView::MWTreeView(Ui::MWTreeView *ui,
     MWBase(ui, plugin, param, parent),
     _ui(ui)
 {
-    _ui->infoTree->header()->resizeSection(0, 180);
 }
 
 MWTreeView::~MWTreeView()

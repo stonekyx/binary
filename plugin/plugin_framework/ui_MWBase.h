@@ -12,17 +12,19 @@
 
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
+namespace Ui {
+    class MWBase;
+}
+
+END_PLUG_NAMESPACE
+
 #define OBJNAME(widget) \
         do{ widget->setObjectName(QString::fromUtf8(#widget)); }while(0)
 
 #define TRANS(raw) \
         QApplication::translate(_context, raw, 0, QApplication::UnicodeUTF8)
 
-namespace Ui {
-    class MWBase;
-}
-
-class Ui::MWBase {
+class binary::plugin::plugin_framework::Ui::MWBase : public QObject {
 private:
     const char *_context;
     const char *_title;
@@ -80,7 +82,5 @@ public:
 
 #undef TRANS
 #undef OBJNAME
-
-END_PLUG_NAMESPACE
 
 #endif

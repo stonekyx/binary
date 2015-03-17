@@ -15,7 +15,8 @@ class InfoTree;
 
 class InfoModel : public QAbstractItemModel {
 public:
-    InfoModel(const QString &data, QObject *parent = 0);
+    InfoModel(const QString &data, size_t colCount = 2,
+            QObject *parent = 0);
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual QVariant data(const QModelIndex &index,
             int role = Qt::DisplayRole ) const;
@@ -26,11 +27,17 @@ public:
             const QModelIndex &parent = QModelIndex()) const;
     virtual QModelIndex parent(const QModelIndex &index) const;
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+
+    void buildMore(const QString &line);
 private:
     void buildTree(const QStringList &data);
     InfoTree *_root;
     QModelIndex _rootIndex;
     QHash<QString, QModelIndex> _variableMap;
+    size_t _columnCount;
+
+    int _currentLevel;
+    InfoTree *_currentNode;
 };
 
 class InfoTree {

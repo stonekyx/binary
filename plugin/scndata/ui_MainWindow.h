@@ -18,7 +18,7 @@ class ScnDataTextEdit : public QTextEdit {
 public:
     ScnDataTextEdit(QWidget *parent = NULL) : QTextEdit(parent)
     {}
-    void markCursor(int start, int end) {
+    void markCursor(int start, int end, bool recover = false) {
         QTextCursor bkp(textCursor());
         if(!_mark.isNull()) {
             setTextCursor(_mark);
@@ -29,7 +29,9 @@ public:
         _mark.setPosition(end, QTextCursor::KeepAnchor);
         setTextCursor(_mark);
         setTextBackgroundColor(Qt::lightGray);
-        setTextCursor(bkp);
+        if(recover) {
+            setTextCursor(bkp);
+        }
     }
     void unmarkCursor() {
         QTextCursor bkp(textCursor());
@@ -72,6 +74,22 @@ public:
     ScnDataTextEdit *rawTextEdit;
     ScnDataTextEdit *addrTextEdit;
     QList<ScnDataTextEdit*> textEdits;
+
+    virtual bool switchMode(bool file) {
+        if(!file) {
+            foreach(ScnDataTextEdit *p, textEdits) {
+                p->hide();
+            }
+            defaultLabel->show();
+            return false;
+        }
+        defaultLabel->hide();
+        foreach(ScnDataTextEdit *p, textEdits) {
+            p->show();
+            p->clear();
+        }
+        return true;
+    }
 
     virtual void setupUi(QMainWindow *window) {
         MWBase::setupUi(window);
@@ -132,6 +150,9 @@ public:
                     SIGNAL(valueChanged(int)),
                     textEdits[i]->verticalScrollBar(),
                     SLOT(setValue(int)));
+        }
+        foreach(ScnDataTextEdit *p, textEdits) {
+            p->ensureCursorVisible();
         }
     }
     virtual void retranslateUi(QMainWindow *window) {

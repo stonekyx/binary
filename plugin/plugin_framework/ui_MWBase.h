@@ -39,6 +39,8 @@ public:
     {}
     virtual ~MWBase() {}
 
+    virtual bool switchMode(bool) = 0;
+
     virtual void setupUi(QMainWindow *MainWindow) {
         if(MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8(_context));

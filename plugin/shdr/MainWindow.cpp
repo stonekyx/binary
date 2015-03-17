@@ -132,8 +132,7 @@ static void flagsText(QTextStream &textStream, size_t indentLevel,
 
 void MainWindow::updateInfo(File *file)
 {
-    MWTreeView::updateInfo(file);
-    if(!file) {
+    if(!_ui->switchMode(file)) {
         return;
     }
 
@@ -161,6 +160,7 @@ void MainWindow::updateInfo(File *file)
             textStream << "(No name)";
         }
 
+        textStream << "\n\tName index\t" << DEC(shdr.sh_name);
         textStream << "\n\tType\t" << typeText(shdr.sh_type);
         textStream << "\n\tFlags\t" << HEX(shdr.sh_flags);
         flagsText(textStream, 2, shdr.sh_flags);
@@ -177,7 +177,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(modelData);
+    _infoModel = new InfoModel(modelData, 2, _ui->infoTree);
     _ui->infoTree->setModel(_infoModel);
 }
 
@@ -190,6 +190,11 @@ void MainWindow::ctxMenuTreeView(const QPoint &pos)
             this, SLOT(showSectionData()));
     actionShowData->setData(pos);
     actionShowData->setParent(menu);
+    QAction *actionShowStrTab = menu->addAction(
+            tr("Show as string table"),
+            this, SLOT(showStringTable()));
+    actionShowStrTab->setData(pos);
+    actionShowStrTab->setParent(menu);
     menu->exec(_ui->infoTree->mapToGlobal(pos));
 }
 
@@ -203,6 +208,18 @@ void MainWindow::showSectionData()
     map<string, string> param;
     param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
     _plugin->manager->getPlugin("ScnData")->createView(param);
+}
+
+void MainWindow::showStringTable()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    QModelIndex index = _ui->infoTree->indexAt(action->data().toPoint());
+    map<string, string> param;
+    param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
+    _plugin->manager->getPlugin("StrTab")->createView(param);
 }
 
 #undef HEX

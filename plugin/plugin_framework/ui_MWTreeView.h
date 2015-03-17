@@ -5,6 +5,7 @@
 #include "ui_MWBase.h"
 
 #include <QtGui/QTreeView>
+#include <QtGui/QPushButton>
 
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
@@ -21,11 +22,23 @@ namespace Ui {
 class Ui::MWTreeView : public Ui::MWBase {
 public:
     QTreeView *infoTree;
+    QPushButton *btnExpand;
 
     MWTreeView(const char *context, const char *title) :
         MWBase(context, title)
     {}
     virtual ~MWTreeView() {}
+
+    virtual bool switchMode(bool file) {
+        if(!file) {
+            infoTree->hide();
+            defaultLabel->show();
+            return false;
+        }
+        defaultLabel->hide();
+        infoTree->show();
+        return true;
+    }
 
     virtual void setupUi(QMainWindow *MainWindow) {
         MWBase::setupUi(MainWindow);

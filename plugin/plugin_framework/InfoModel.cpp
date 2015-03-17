@@ -6,17 +6,21 @@
 
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
-InfoModel::InfoModel(const QString &data, QObject *parent) :
+InfoModel::InfoModel(const QString &data, size_t colCount,
+        QObject *parent) :
     QAbstractItemModel(parent),
     _root(new InfoTree),
-    _rootIndex(createIndex(-1, -1, (void*)0))
+    _rootIndex(createIndex(-1, -1, (void*)0)),
+    _columnCount(colCount),
+    _currentLevel(-1),
+    _currentNode(_root)
 {
     buildTree(data.split("\n", QString::SkipEmptyParts));
 }
 
 int InfoModel::columnCount(const QModelIndex &) const
 {
-    return 2;
+    return _columnCount;
 }
 
 static bool isVariable(const QVariant &data)
@@ -110,43 +114,45 @@ static int indentLevel(const QString &line)
     return i;
 }
 
+void InfoModel::buildMore(const QString &line)
+{
+    QList<QVariant> newData;
+    QStringList lineFields = line.split("\t", QString::SkipEmptyParts);
+    foreach(QString s, lineFields) {
+        s.replace(QChar('\r'), QChar('\n'));
+        newData << s;
+    }
+
+    int lineLevel = indentLevel(line);
+    if(lineLevel<_currentLevel) {
+        while(_currentLevel>lineLevel) {
+            _currentLevel--;
+            _currentNode = _currentNode->getParent();
+        }
+        _currentNode->getParent()->addChild(newData);
+        _currentNode = _currentNode->nextSibling();
+    } else if(lineLevel>_currentLevel) {
+        if(lineLevel!=_currentLevel+1) {
+            throw std::exception();
+        }
+        _currentNode->addChild(newData);
+        _currentNode = _currentNode->getChild(0);
+        _currentLevel = lineLevel;
+    } else {
+        _currentNode->getParent()->addChild(newData);
+        _currentNode = _currentNode->nextSibling();
+    }
+    if(_columnCount>1 && isVariable(newData[1])) {
+        QString key = lineFields[1].midRef(1, lineFields[1].length()-2).toString();
+        QModelIndex value = createIndex(_currentNode->getRow(), 1, _currentNode);
+        _variableMap.insert(key, value);
+    }
+}
+
 void InfoModel::buildTree(const QStringList &data)
 {
-    int currentLevel = -1;
-    InfoTree *currentNode = _root;
     for(int i=0; i<data.size(); i++) {
-        const QString &line = data.at(i);
-        QList<QVariant> newData;
-        QStringList lineFields = line.split("\t", QString::SkipEmptyParts);
-        foreach(QString s, lineFields) {
-            s.replace(QChar('\r'), QChar('\n'));
-            newData << s;
-        }
-
-        int lineLevel = indentLevel(line);
-        if(lineLevel<currentLevel) {
-            while(currentLevel>lineLevel) {
-                currentLevel--;
-                currentNode = currentNode->getParent();
-            }
-            currentNode->getParent()->addChild(newData);
-            currentNode = currentNode->nextSibling();
-        } else if(lineLevel>currentLevel) {
-            if(lineLevel!=currentLevel+1) {
-                throw std::exception();
-            }
-            currentNode->addChild(newData);
-            currentNode = currentNode->getChild(0);
-            currentLevel = lineLevel;
-        } else {
-            currentNode->getParent()->addChild(newData);
-            currentNode = currentNode->nextSibling();
-        }
-        if(isVariable(newData[1])) {
-            QString key = lineFields[1].midRef(1, lineFields[1].length()-2).toString();
-            QModelIndex value = createIndex(currentNode->getRow(), 1, currentNode);
-            _variableMap.insert(key, value);
-        }
+        buildMore(data.at(i));
     }
 }
 

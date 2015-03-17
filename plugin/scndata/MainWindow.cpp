@@ -41,19 +41,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateInfo(File *file)
 {
-    if(!file) {
-        foreach(ScnDataTextEdit *p, _ui->textEdits) {
-            p->hide();
-        }
-        _ui->defaultLabel->show();
-        return;
-    }
     canUpdateHighlight = false;
 
-    _ui->defaultLabel->hide();
-    foreach(ScnDataTextEdit *p, _ui->textEdits) {
-        p->show();
-        p->clear();
+    if(!_ui->switchMode(file)) {
+        return;
     }
 
     QTextCursor cursor(_ui->hexTextEdit->textCursor());
@@ -168,7 +159,7 @@ void MainWindow::updateHighlight()
             lineCursor.movePosition(QTextCursor::StartOfLine);
             lineCursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
             _ui->addrTextEdit->markCursor(lineCursor.selectionStart(),
-                    lineCursor.selectionEnd());
+                    lineCursor.selectionEnd(), true);
         }
         {
             int hexStart = startLine*16*3;
@@ -197,7 +188,7 @@ void MainWindow::updateHighlight()
             startByteOff = startLineOff/3;
             endByteOff = endLineOff/3+1;
             _ui->hexTextEdit->markCursor((startLine*16+startByteOff)*3,
-                    (endLine*16+endByteOff)*3-1);
+                    (endLine*16+endByteOff)*3-1, true);
         }
         {
             QTextCursor addrCursor(_ui->addrTextEdit->document()->findBlockByLineNumber(startLine));
@@ -219,10 +210,10 @@ void MainWindow::updateHighlight()
         int endLineOff = end%17;
         if(start == end) {
             if((start+1)%17==0 || _ui->rawTextEdit->textCursor().atEnd()) {
-                _ui->rawTextEdit->markCursor(start-1, start);
+                _ui->rawTextEdit->markCursor(start-1, start, true);
                 startLineOff = (start-1)%17;
             } else {
-                _ui->rawTextEdit->markCursor(start, start+1);
+                _ui->rawTextEdit->markCursor(start, start+1, true);
                 endLineOff = (start+1)%17;
             }
         }

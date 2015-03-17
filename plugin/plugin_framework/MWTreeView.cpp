@@ -25,13 +25,7 @@ MWTreeView::~MWTreeView()
 
 void MWTreeView::updateInfo(File *file)
 {
-    if(!file) {
-        _ui->infoTree->hide();
-        _ui->defaultLabel->show();
-        return;
-    }
-    _ui->defaultLabel->hide();
-    _ui->infoTree->show();
+    _ui->switchMode(file);
 }
 
 END_PLUG_NAMESPACE

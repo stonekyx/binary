@@ -98,8 +98,7 @@ static const char *flagsText(Elf64_Word p_flags)
 
 void MainWindow::updateInfo(File *file)
 {
-    MWTreeView::updateInfo(file);
-    if(!file) {
+    if(!_ui->switchMode(file)) {
         return;
     }
 
@@ -134,7 +133,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(modelData);
+    _infoModel = new InfoModel(modelData, 2, _ui->infoTree);
     _ui->infoTree->setModel(_infoModel);
 }
 

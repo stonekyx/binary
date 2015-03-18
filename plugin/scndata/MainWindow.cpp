@@ -148,6 +148,7 @@ void MainWindow::updateHighlight()
     int end = cursor.selectionEnd();
     int hexEndMax = textEditEnd(_ui->hexTextEdit);
     int rawEndMax = textEditEnd(_ui->rawTextEdit);
+    int sliderPosBkp = widget->verticalScrollBar()->sliderPosition();
     if(start!=end) {
         widget->unmarkCursor();
     }
@@ -232,6 +233,7 @@ void MainWindow::updateHighlight()
         }
     }
     canUpdateHighlight = true;
+    widget->verticalScrollBar()->setSliderPosition(sliderPosBkp);
 }
 
 Elf64_Off MainWindow::parseAddr(int cursorPos)

@@ -4,7 +4,13 @@ Import('qtEnv')
 
 env = qtEnv.Clone()
 
-env.Append(LIBS=['elf', 'elfsh64'])
+conf = Configure(env)
+if not conf.CheckHeader('libelf.h') or not conf.CheckHeader('gelf.h') or not conf.CheckLib('elf'):
+    print 'libelf not found!'
+    Exit(1)
+env = conf.Finish()
+
+env.Append(LIBS=['elf'])
 
 env.EnableQt4Modules([
     'QtCore'

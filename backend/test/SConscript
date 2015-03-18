@@ -11,9 +11,19 @@ env.Append(LIBS=['backend'], LIBPATH=['..'],
 
 for i in Glob('*.cpp')+Glob('*.c'):
     if i.name=='elfsh.c':
-        env.Program(target='elfsh',
-                source=[i],
-                CPPDEFINES=['ERESI64'])
+        conf = Configure(env)
+        conf.env.Append(CPPDEFINES=['ERESI64'])
+        if conf.CheckHeader('libelfsh.h') and conf.CheckLib('elfsh64'):
+            conf.env['haveelfsh'] = True
+        else:
+            conf.env['haveelfsh'] = False
+        conf.env['CPPDEFINES'].remove('ERESI64')
+        env = conf.Finish()
+        if env['haveelfsh']:
+            env.Program(target='elfsh',
+                    source=[i],
+                    CPPDEFINES=['ERESI64'],
+                    LIBS=['elfsh64'])
         continue
     #else
     env.Program(target=i.name.rsplit('.', 1)[0],

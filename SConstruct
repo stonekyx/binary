@@ -8,6 +8,12 @@ qtdir = '/usr'
 baseEnv = Environment()
 #...further customization of base env
 
+conf = Configure(baseEnv)
+if not conf.CheckHeader('elf.h'):
+    print 'elf.h not found!'
+    Exit(1)
+baseEnv = conf.Finish()
+
 baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
 baseEnv.Append(CPPPATH='#inc')
 baseEnv['LOCAL_INSTALLDIR'] = os.path.join(Dir('#').abspath, '_install')

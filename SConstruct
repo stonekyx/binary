@@ -21,7 +21,7 @@ qtEnv = baseEnv.Clone()
 qtEnv['ENV']['PKG_CONFIG_PATH'] = os.path.join(qtdir, 'lib/pkgconfig')
 qtEnv['QT4DIR'] = qtdir
 # Add qt4 tool
-qtEnv.Tool('qt4')
+qtEnv.Tool('qt4', toolpath=['vendor/tools'])
 #...further customization of qt env
 qtEnv['QT4_AUTOSCAN'] = 0
 

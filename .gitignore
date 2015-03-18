@@ -6,3 +6,4 @@ cscope.out
 *.pro.user
 .sconf_temp
 config.log
+*.pyc

@@ -5,6 +5,16 @@ Import('baseEnv qtEnv')
 baseEnv = baseEnv.Clone()
 qtEnv = qtEnv.Clone()
 
+conf = Configure(qtEnv)
+if conf.CheckCHeader('libiberty/demangle.h'):
+    conf.env.Append(CPPDEFINES=['LIBIBERTY_DEMANGLE'])
+elif conf.CheckCHeader('demangle.h'):
+    conf.env.Append(CPPDEFINES=['DEFAULT_DEMANGLE'])
+else:
+    print 'demangle.h not found!'
+    Exit(1)
+qtEnv = conf.Finish()
+
 qtEnv.EnableQt4Modules([
     'QtGui',
     'QtCore'

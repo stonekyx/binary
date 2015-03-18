@@ -4,3 +4,5 @@ _build
 _install
 cscope.out
 *.pro.user
+.sconf_temp
+config.log

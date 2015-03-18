@@ -202,7 +202,6 @@ void MainWindow::updateInfo(File *file)
             C(EM_XTENSA, "Tensilica Xtensa Architecture");
             C(EM_AARCH64, "ARM AARCH64");
             C(EM_TILEPRO, "Tilera TILEPro");
-            C(EM_MICROBLAZE, "Xilinx MicroBlaze");
             C(EM_TILEGX, "Tilera TILE-Gx");
 
             C(EM_ALPHA, "Alpha");

@@ -38,7 +38,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         QWidget *parent) :
     MWTreeView(new Ui::MWTreeView("PluginBasicMainWindow", "Basic information"),
             plugin, param, parent),
-    _infoModel(new InfoModel(modelData, 2, _ui->infoTree))
+    _infoModel(new InfoModel(modelData, 2))
 {
     _ui->infoTree->setModel(_infoModel);
     updateInfo(_plugin->manager->getBackend()->getFile());

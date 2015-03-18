@@ -22,10 +22,15 @@ public:
     virtual bool getShdr(size_t, Elf64_Shdr *);
     virtual const char *getScnName(Elf64_Shdr *);
     virtual ssize_t getScnData(size_t idx, void *, size_t bufsize);
+    virtual bool getSym(size_t scnIdx, int idx, Elf64_Sym *);
+    virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *);
+    virtual const char *getStrPtr(size_t scnIdx, size_t offset);
     virtual ~FileImplLibelf();
 private:
     int _fd;
     Elf *_elf;
+    Elf_Data *_symTabData;
+    size_t _symTabIdx;
 };
 
 END_BIN_NAMESPACE

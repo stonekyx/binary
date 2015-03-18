@@ -10,5 +10,5 @@ qtEnv.EnableQt4Modules([
     'QtCore'
     ])
 
-pluginTarget = qtEnv.SharedLibrary(target='strtab', source=Glob('*.cpp')+Glob('*.cc'))
+pluginTarget = qtEnv.SharedLibrary(target='symtab', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

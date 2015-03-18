@@ -35,6 +35,8 @@ FileImplLibelf::FileImplLibelf(const char *name,
     }
     _fd = open(name, flags);
     _elf = elf_begin(_fd, cmd, NULL);
+    _symTabData = NULL;
+    _symTabIdx = 0;
 }
 
 bool FileImplLibelf::isValid()
@@ -169,6 +171,51 @@ ssize_t FileImplLibelf::getScnData(size_t idx, void *buf, size_t bufsize)
         n += copySize;
     }
     return n;
+}
+
+bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
+{
+    if(scnIdx != _symTabIdx) {
+        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
+        Elf_Data *data = NULL;
+        if(!scn || (data=elf_getdata(scn, data))==NULL) {
+            return false;
+        }
+        _symTabIdx = scnIdx;
+        _symTabData = data;
+    }
+    GElf_Sym sym;
+    gelf_getsym(_symTabData, idx, &sym);
+    dst->st_name = sym.st_name;
+    dst->st_info = sym.st_info;
+    dst->st_other = sym.st_other;
+    dst->st_shndx = sym.st_shndx;
+    dst->st_value = sym.st_value;
+    dst->st_size = sym.st_size;
+    return true;
+}
+
+bool FileImplLibelf::getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *dst)
+{
+    if(scnIdx != _symTabIdx) {
+        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
+        Elf_Data *data = NULL;
+        if(!scn || (data=elf_getdata(scn, data))==NULL) {
+            return false;
+        }
+        _symTabIdx = scnIdx;
+        _symTabData = data;
+    }
+    GElf_Syminfo syminfo;
+    gelf_getsyminfo(_symTabData, idx, &syminfo);
+    dst->si_boundto = syminfo.si_boundto;
+    dst->si_flags = syminfo.si_flags;
+    return true;
+}
+
+const char *FileImplLibelf::getStrPtr(size_t scnIdx, size_t offset)
+{
+    return elf_strptr(_elf, scnIdx, offset);
 }
 
 FileImplLibelf::~FileImplLibelf()

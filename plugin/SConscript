@@ -14,7 +14,7 @@ qtEnv.Append(CPPPATH=['#', '#frontend'])
 SConscript('plugin_framework/SConscript', duplicate=1)
 
 qtEnv.Append(CPPPATH=[Dir('plugin_framework').abspath],
-        LIBS=['plugin'], LIBPATH=[qtEnv['LOCAL_LIBDIR']],
+        LIBS=['plugin', 'backend'], LIBPATH=[qtEnv['LOCAL_LIBDIR']],
         RPATH=[qtEnv['LOCAL_LIBDIR']])
 
 srcpath = Dir('.').srcnode().abspath

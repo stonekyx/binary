@@ -172,7 +172,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(modelData, 2, _ui->infoTree);
+    _infoModel = new InfoModel(modelData, 2);
     _ui->infoTree->setModel(_infoModel);
 }
 
@@ -186,6 +186,10 @@ void MainWindow::ctxMenuTreeView()
             tr("Show as string table"),
             this, SLOT(showStringTable()));
     actionShowStrTab->setParent(_ui->ctxMenu);
+    QAction *actionShowSymTab = _ui->ctxMenu->addAction(
+            tr("Show as symbol table"),
+            this, SLOT(showSymbolTable()));
+    actionShowSymTab->setParent(_ui->ctxMenu);
 }
 
 void MainWindow::showSectionData()
@@ -210,6 +214,18 @@ void MainWindow::showStringTable()
     map<string, string> param;
     param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
     _plugin->manager->getPlugin("StrTab")->createView(param);
+}
+
+void MainWindow::showSymbolTable()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    QModelIndex index = _ui->infoTree->indexAt(action->data().toPoint());
+    map<string, string> param;
+    param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
+    _plugin->manager->getPlugin("SymTab")->createView(param);
 }
 
 #undef HEX

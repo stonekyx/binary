@@ -7,7 +7,7 @@
 #include "ui_MWTreeView.h"
 
 #include "MainWindow.h"
-#include "wrap.h"
+#include "DemangleWrap.h"
 
 using namespace std;
 
@@ -80,7 +80,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(QString(), 2, _ui->infoTree);
+    _infoModel = new InfoModel(QString(), 2);
     int entryCount = 0;
     QString line;
 

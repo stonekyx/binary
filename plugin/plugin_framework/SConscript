@@ -4,6 +4,16 @@ Import('baseEnv qtEnv')
 
 qtEnv = qtEnv.Clone()
 
+conf = Configure(qtEnv)
+if conf.CheckCHeader('libiberty/demangle.h'):
+    conf.env.Append(CPPDEFINES=['LIBIBERTY_DEMANGLE'])
+elif conf.CheckCHeader('demangle.h'):
+    conf.env.Append(CPPDEFINES=['DEFAULT_DEMANGLE'])
+else:
+    print 'demangle.h not found!'
+    Exit(1)
+qtEnv = conf.Finish()
+
 qtEnv.EnableQt4Modules([
     'QtGui',
     'QtCore'
@@ -12,6 +22,8 @@ qtEnv.EnableQt4Modules([
 qtEnv.Moc4('MWBase.h')
 qtEnv.Moc4('ui_MWBase.h')
 qtEnv.Moc4('ui_MWTreeView.h')
+
+qtEnv.Append(LIBS=['iberty'])
 
 libTarget = qtEnv.SharedLibrary(target='plugin', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_LIBDIR'], libTarget)

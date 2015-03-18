@@ -34,6 +34,9 @@ public:
     virtual bool getShdr(size_t, Elf64_Shdr *) = 0;
     virtual const char *getScnName(Elf64_Shdr *) = 0;
     virtual ssize_t getScnData(size_t idx, void *, size_t bufsize) = 0;
+    virtual bool getSym(size_t scnIdx, int idx, Elf64_Sym *) = 0;
+    virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *) = 0;
+    virtual const char *getStrPtr(size_t scnIdx, size_t offset) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

@@ -133,7 +133,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(modelData, 2, _ui->infoTree);
+    _infoModel = new InfoModel(modelData, 2);
     _ui->infoTree->setModel(_infoModel);
 }
 

@@ -29,10 +29,10 @@ public:
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
     void buildMore(const QString &line);
+    QModelIndex nextRow(const QModelIndex &cur);
 private:
     void buildTree(const QStringList &data);
     InfoTree *_root;
-    QModelIndex _rootIndex;
     QHash<QString, QModelIndex> _variableMap;
     size_t _columnCount;
 

@@ -10,7 +10,6 @@ InfoModel::InfoModel(const QString &data, size_t colCount,
         QObject *parent) :
     QAbstractItemModel(parent),
     _root(new InfoTree),
-    _rootIndex(createIndex(-1, -1, (void*)0)),
     _columnCount(colCount),
     _currentLevel(-1),
     _currentNode(_root)
@@ -54,7 +53,7 @@ QVariant InfoModel::data(const QModelIndex &index, int role) const
 
 bool InfoModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if(role != Qt::DisplayRole || index == _rootIndex) {
+    if(role != Qt::DisplayRole || !index.isValid()) {
         return false;
     }
     InfoTree *node = static_cast<InfoTree*>(index.internalPointer());
@@ -79,7 +78,7 @@ QModelIndex InfoModel::index(int row, int column,
         return QModelIndex();
     }
     InfoTree *node = static_cast<InfoTree*>(parent.internalPointer());
-    if(!node || parent == _rootIndex) {
+    if(!node || !parent.isValid()) {
         node = _root;
     }
     return createIndex(row, column, node->getChild(row));
@@ -88,12 +87,12 @@ QModelIndex InfoModel::index(int row, int column,
 QModelIndex InfoModel::parent(const QModelIndex &index) const
 {
     InfoTree *node = static_cast<InfoTree*>(index.internalPointer());
-    if(!node || index == _rootIndex) {
+    if(!node || !index.isValid()) {
         return QModelIndex();
     }
     InfoTree *parent = node->getParent();
     if(node->getParent() == _root) {
-        return _rootIndex;
+        return QModelIndex();
     }
     return createIndex(parent->getRow(), 0, parent);
 }
@@ -101,7 +100,7 @@ QModelIndex InfoModel::parent(const QModelIndex &index) const
 int InfoModel::rowCount(const QModelIndex &parent) const
 {
     InfoTree *node = static_cast<InfoTree*>(parent.internalPointer());
-    if(!node || parent == _rootIndex) {
+    if(!node || !parent.isValid()) {
         return _root->rowCount();
     }
     return node->rowCount();
@@ -146,6 +145,27 @@ void InfoModel::buildMore(const QString &line)
         QString key = lineFields[1].midRef(1, lineFields[1].length()-2).toString();
         QModelIndex value = createIndex(_currentNode->getRow(), 1, _currentNode);
         _variableMap.insert(key, value);
+    }
+}
+
+QModelIndex InfoModel::nextRow(const QModelIndex &cur)
+{
+    if(!cur.isValid()) {
+        return index(0, 0, cur);
+    }
+    if(hasChildren(cur)) {
+        return cur.child(0, 0);
+    } else if(cur.row()+1 < rowCount(parent(cur))) {
+        return cur.sibling(cur.row()+1, 0);
+    } else {
+        QModelIndex p = cur;
+        while(p.isValid() && p.row()+1 >= rowCount(parent(p))) {
+            p = parent(p);
+        }
+        if(!p.isValid()) {
+            return QModelIndex();
+        }
+        return p.sibling(p.row()+1, 0);
     }
 }
 

@@ -25,7 +25,7 @@ END_PLUG_NAMESPACE
         QApplication::translate(_context, raw, 0, QApplication::UnicodeUTF8)
 
 class binary::plugin::plugin_framework::Ui::MWBase : public QObject {
-private:
+protected:
     const char *_context;
     const char *_title;
 
@@ -74,7 +74,7 @@ public:
 
         retranslateUi(MainWindow);
     }
-    virtual void retranslateUi(QMainWindow *MainWindow) {
+    void retranslateUi(QMainWindow *MainWindow) {
         MainWindow->setWindowTitle(TRANS(_title));
         defaultLabel->setText(TRANS("No file opened."));
     }

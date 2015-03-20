@@ -148,9 +148,10 @@ public:
         foreach(ScnDataTextEdit *p, textEdits) {
             p->ensureCursorVisible();
         }
+
+        retranslateUi(window);
     }
-    virtual void retranslateUi(QMainWindow *window) {
-        MWBase::retranslateUi(window);
+    void retranslateUi(QMainWindow *) {
     }
 };
 

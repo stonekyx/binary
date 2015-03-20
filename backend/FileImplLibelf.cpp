@@ -218,6 +218,24 @@ const char *FileImplLibelf::getStrPtr(size_t scnIdx, size_t offset)
     return elf_strptr(_elf, scnIdx, offset);
 }
 
+bool FileImplLibelf::getDyn(size_t scnIdx, int idx, Elf64_Dyn *dst)
+{
+    if(scnIdx != _dynIdx) {
+        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
+        Elf_Data *data = NULL;
+        if(!scn || (data=elf_getdata(scn, data))==NULL) {
+            return false;
+        }
+        _dynIdx = scnIdx;
+        _dynData = data;
+    }
+    GElf_Dyn dyn;
+    gelf_getdyn(_dynData, idx, &dyn);
+    dst->d_tag = dyn.d_tag;
+    dst->d_un = dyn.d_un;
+    return true;
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     elf_end(_elf);

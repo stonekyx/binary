@@ -25,12 +25,15 @@ public:
     virtual bool getSym(size_t scnIdx, int idx, Elf64_Sym *);
     virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *);
     virtual const char *getStrPtr(size_t scnIdx, size_t offset);
+    virtual bool getDyn(size_t scnIdx, int idx, Elf64_Dyn *);
     virtual ~FileImplLibelf();
 private:
     int _fd;
     Elf *_elf;
     Elf_Data *_symTabData;
     size_t _symTabIdx;
+    Elf_Data *_dynData;
+    size_t _dynIdx;
 };
 
 END_BIN_NAMESPACE

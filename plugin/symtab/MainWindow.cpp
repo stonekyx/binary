@@ -141,7 +141,9 @@ void MainWindow::updateInfo(File *file)
     size_t symCount = shdr.sh_size / shdr.sh_entsize;
     for(size_t i=0; i<symCount; i++) {
         Elf64_Sym sym;
-        file->getSym(_scnIndex, i, &sym);
+        if(!file->getSym(_scnIndex, i, &sym)) {
+            continue;
+        }
 
         _infoModel->buildMore(QString("Entry %1\t%2")
                 .arg(i)

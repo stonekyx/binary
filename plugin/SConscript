@@ -7,6 +7,12 @@ Import('baseEnv qtEnv')
 #baseEnv.Append(CCFLAGS=['-O3'])
 #qtEnv.Append(CCFLAGS=['-O3'])
 
+#------------Builder----------------
+expDefBld = Builder(action='scripts/ExpandDefine.sh < $SOURCE > $TARGET')
+qtEnv.Append(BUILDERS={'ExpandDefine' : expDefBld})
+baseEnv.Append(BUILDERS={'ExpandDefine' : expDefBld})
+#----------End builder--------------
+
 baseEnv.Append(CPPPATH=['#backend'], LIBS=['backend'],
         LIBPATH=[baseEnv['LOCAL_LIBDIR']])
 qtEnv.Append(CPPPATH=['#', '#frontend'])

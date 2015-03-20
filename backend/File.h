@@ -37,6 +37,7 @@ public:
     virtual bool getSym(size_t scnIdx, int idx, Elf64_Sym *) = 0;
     virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *) = 0;
     virtual const char *getStrPtr(size_t scnIdx, size_t offset) = 0;
+    virtual bool getDyn(size_t scnIdx, int idx, Elf64_Dyn *) = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

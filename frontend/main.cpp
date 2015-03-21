@@ -2,6 +2,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QCoreApplication>
 #include <QApplication>
+#include <QtGui/QCleanlooksStyle>
 
 USE_BIN_NAMESPACE(frontend);
 
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
             w.openFile(args.at(i+1));
         }
     }
+    QApplication::setStyle(new QCleanlooksStyle());
     w.show();
 
     return a.exec();

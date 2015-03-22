@@ -93,54 +93,45 @@ void MainWindow::updateInfo(File *file)
 
 void MainWindow::ctxMenuTreeView()
 {
+    _ctxActionMapper = new QSignalMapper(_ui->ctxMenu);
+
     QAction *actionShowData = _ui->ctxMenu->addAction(
             tr("Show section data"),
-            this, SLOT(showSectionData()));
+            _ctxActionMapper, SLOT(map()));
     actionShowData->setParent(_ui->ctxMenu);
+    _ctxActionMapper->setMapping(actionShowData, "ScnData");
+
     QAction *actionShowStrTab = _ui->ctxMenu->addAction(
             tr("Show as string table"),
-            this, SLOT(showStringTable()));
+            _ctxActionMapper, SLOT(map()));
     actionShowStrTab->setParent(_ui->ctxMenu);
+    _ctxActionMapper->setMapping(actionShowStrTab, "StrTab");
+
     QAction *actionShowSymTab = _ui->ctxMenu->addAction(
             tr("Show as symbol table"),
-            this, SLOT(showSymbolTable()));
+            _ctxActionMapper, SLOT(map()));
     actionShowSymTab->setParent(_ui->ctxMenu);
+    _ctxActionMapper->setMapping(actionShowSymTab, "SymTab");
+
+    QObject::connect(_ctxActionMapper, SIGNAL(mapped(const QString &)),
+            this, SLOT(showSection(const QString &)));
 }
 
-void MainWindow::showSectionData()
+void MainWindow::showSection(const QString &pluginName)
 {
-    QAction *actionShowData = dynamic_cast<QAction*>(sender());
-    if(!actionShowData) {
-        return;
-    }
-    QModelIndex index = _ui->infoTree->indexAt(actionShowData->data().toPoint());
-    map<string, string> param;
-    param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
-    _plugin->manager->getPlugin("ScnData")->createView(param);
-}
-
-void MainWindow::showStringTable()
-{
-    QAction *action = dynamic_cast<QAction*>(sender());
+    QAction *action = dynamic_cast<QAction*>(
+            _ctxActionMapper->mapping(pluginName));
     if(!action) {
         return;
     }
     QModelIndex index = _ui->infoTree->indexAt(action->data().toPoint());
     map<string, string> param;
     param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
-    _plugin->manager->getPlugin("StrTab")->createView(param);
-}
-
-void MainWindow::showSymbolTable()
-{
-    QAction *action = dynamic_cast<QAction*>(sender());
-    if(!action) {
-        return;
+    BIN_NAMESPACE(frontend)::Plugin *plugin =
+        _plugin->manager->getPlugin(pluginName.toUtf8().constData());
+    if(plugin) {
+        plugin->createView(param);
     }
-    QModelIndex index = _ui->infoTree->indexAt(action->data().toPoint());
-    map<string, string> param;
-    param["scnIndex"] = QString::number(index.row()).toUtf8().constData();
-    _plugin->manager->getPlugin("SymTab")->createView(param);
 }
 
 #undef HEX

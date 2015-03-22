@@ -7,6 +7,7 @@
 #include "InfoModel.h"
 
 #include <QtGui/QMainWindow>
+#include <QtCore/QSignalMapper>
 
 BEGIN_PLUG_NAMESPACE(shdr)
 
@@ -25,12 +26,11 @@ public:
 public:
     virtual void updateInfo(binary::backend::File *);
 public slots:
-    void ctxMenuTreeView();
-    void showSectionData();
-    void showStringTable();
-    void showSymbolTable();
+    void showSection(const QString &);
 private:
+    void ctxMenuTreeView();
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
+    QSignalMapper *_ctxActionMapper;
 };
 
 #endif

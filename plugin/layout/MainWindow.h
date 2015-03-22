@@ -20,6 +20,7 @@ END_PLUG_NAMESPACE
 
 class binary::plugin::layout::MainWindow :
     public binary::plugin::plugin_framework::MWBase {
+    Q_OBJECT
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -27,6 +28,8 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+public slots:
+    void openScn(size_t scnIdx);
 private:
     Ui::MainWindow *_ui;
 };

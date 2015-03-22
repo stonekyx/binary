@@ -15,7 +15,7 @@ USE_PLUG_NAMESPACE(plugin_framework);
 BEGIN_PLUG_NAMESPACE(layout)
 
 FileLayout::FileLayout(LayoutType type, FileLayout *ref, QWidget *parent) :
-    QWidget(parent), _whole(0,0), _type(type), _ref(ref)
+    QWidget(parent), _whole(0,0), _type(type), _ref(ref), _highlight(0,0)
 {
     setMouseTracking(true);
 }
@@ -37,6 +37,8 @@ void FileLayout::updateInfo(File *file)
         updateScn(file); break;
     case LAYOUT_SGM:
         updateSgm(file); break;
+    case LAYOUT_FILE:
+        updateFile(file); break;
     default:
         return;
     }
@@ -63,6 +65,18 @@ void FileLayout::paintEvent(QPaintEvent *e)
     {
         draw(*it, _whole);
     }
+    if(_highlight.begin == 0 && _highlight.end == 0) {
+        return;
+    }
+    QPainter painter(this);
+    int left = segHPosToScr(_highlight.begin);
+    int right = segHPosToScr(_highlight.end);
+    int top = 0;
+    int bottom = height();
+
+    QColor hlColor = colors[_highlight.colorIdx];
+    hlColor.setAlpha(125);
+    painter.fillRect(left, top, right-left, bottom-top, hlColor);
 }
 
 void FileLayout::mouseMoveEvent(QMouseEvent *e)
@@ -84,7 +98,54 @@ void FileLayout::mouseMoveEvent(QMouseEvent *e)
         }
         QToolTip::showText(e->globalPos(), QString("%1, %2 KiB")
                 .arg(it->name).arg((it->end-it->begin)/1024.0));
-        break;
+        if(_ref) {
+            _ref->highlight(*it, this);
+        }
+        return;
+    }
+    if(_ref) {
+        _ref->highlight(SegInfo(0,0), this);
+    }
+}
+
+void FileLayout::enterEvent(QEvent *e)
+{
+    QWidget::enterEvent(e);
+    _highlight = SegInfo(0,0);
+    update();
+    if(_ref) {
+        _ref->highlight(SegInfo(0,0), this);
+    }
+}
+
+void FileLayout::mouseDoubleClickEvent(QMouseEvent *e)
+{
+    QWidget::mouseDoubleClickEvent(e);
+    QPoint pos = e->pos();
+    double levelHeight = (double)height()/(_whole.level+1);
+    int curLevel = pos.y()/levelHeight;
+    for(vector<SegInfo>::iterator it = _segs.begin();
+            it != _segs.end(); it++)
+    {
+        if(it->level!=curLevel) {
+            continue;
+        }
+        if(segHPosToScr(it->begin)>pos.x() ||
+                segHPosToScr(it->end)<pos.x()) {
+            continue;
+        }
+        switch(_type) {
+        case LAYOUT_SCN:
+            emit openScn(it->data.scnIdx);
+            break;
+        case LAYOUT_SGM:
+            break;
+        case LAYOUT_FILE:
+            break;
+        default:
+            break;
+        }
+        return;
     }
 }
 
@@ -158,6 +219,7 @@ void FileLayout::updateScn(File *file)
         }
         SegInfo info(shdr.sh_offset, shdr.sh_offset+shdr.sh_size);
         info.name = file->getScnName(&shdr);
+        info.data.scnIdx = i;
         _segs.push_back(info);
     }
 }
@@ -175,7 +237,33 @@ void FileLayout::updateSgm(File *file)
         }
         SegInfo info(phdr.p_offset, phdr.p_offset+phdr.p_filesz);
         info.name = Defines::commentText_PT(phdr.p_type);
+        info.data.sgmIdx = i;
         _segs.push_back(info);
+    }
+}
+
+void FileLayout::updateFile(File *file)
+{
+    Elf64_Ehdr ehdr;
+    if(!file->getEhdr(&ehdr)) {
+        return;
+    }
+    SegInfo ehdrInfo(0, ehdr.e_ehsize);
+    ehdrInfo.name = "Executable header";
+    _segs.push_back(ehdrInfo);
+
+    size_t shdrNum, phdrNum;
+    if(ehdr.e_phoff && file->getPhdrNum(&phdrNum) == 0) {
+        SegInfo phdrInfo(ehdr.e_phoff,
+                ehdr.e_phoff + phdrNum*ehdr.e_phentsize);
+        phdrInfo.name = "Program header table";
+        _segs.push_back(phdrInfo);
+    }
+    if(ehdr.e_shoff && file->getShdrNum(&shdrNum) == 0) {
+        SegInfo shdrInfo(ehdr.e_shoff,
+                ehdr.e_shoff + shdrNum*ehdr.e_shentsize);
+        shdrInfo.name = "Section header table";
+        _segs.push_back(shdrInfo);
     }
 }
 
@@ -195,6 +283,18 @@ void FileLayout::updateWhole(const SegInfo &whole)
     }
     if(changed) {
         update();
+    }
+}
+
+void FileLayout::highlight(const SegInfo &info, const FileLayout *src)
+{
+    if(src == this) {
+        return;
+    }
+    _highlight = info;
+    update();
+    if(_ref) {
+        _ref->highlight(info, src);
     }
 }
 

@@ -87,7 +87,7 @@ void MainWindow::updateInfo(File *file)
 #define BL(C) do{ \
     line.clear();line.append(C);_infoModel->buildMore(line);}while(0)
 
-    for(size_t i=1; i<shdr.sh_size-1; i+=strlen(buf+i)+1) {
+    for(size_t i=(buf[0]==0); i<shdr.sh_size-1; i+=strlen(buf+i)+1) {
         BL(QString("Entry %1\t%2").arg(++entryCount).arg(QString(buf+i)));
         BL(QString("\tOffset\t%1").arg(i));
         char *demangle = cplus_demangle(buf+i);

@@ -21,15 +21,20 @@ public:
     typedef enum {
         LAYOUT_SCN,
         LAYOUT_SGM,
+        LAYOUT_FILE,
         LAYOUT_NUM
     } LayoutType;
     FileLayout(LayoutType type, FileLayout *ref = NULL, QWidget *parent = NULL);
     ~FileLayout();
     void updateInfo(binary::backend::File *);
     void setRef(FileLayout *);
+signals:
+    void openScn(size_t scnIdx);
 protected:
     virtual void paintEvent(QPaintEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
+    virtual void enterEvent(QEvent *);
+    virtual void mouseDoubleClickEvent(QMouseEvent *);
 private:
     struct SegInfo {
         SegInfo(int b, int e):begin(b),end(e),level(0),colorIdx(0) {}
@@ -40,19 +45,26 @@ private:
         int begin, end;
         int level;
         size_t colorIdx;
+        union {
+            size_t scnIdx;
+            size_t sgmIdx;
+        } data;
         const char *name;
     };
     std::vector<SegInfo> _segs;
     SegInfo _whole;
     LayoutType _type;
     FileLayout *_ref;
+    SegInfo _highlight;
 
     SegInfo arrange();
     void draw(const SegInfo &, const SegInfo &);
     double segHPosToScr(int);
     void updateScn(binary::backend::File *);
     void updateSgm(binary::backend::File *);
+    void updateFile(binary::backend::File *);
     void updateWhole(const SegInfo &);
+    void highlight(const SegInfo &, const FileLayout *);
 };
 
 #endif

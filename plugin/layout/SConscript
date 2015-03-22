@@ -11,6 +11,7 @@ qtEnv.EnableQt4Modules([
     ])
 
 qtEnv.Moc4('FileLayout.h')
+qtEnv.Moc4('MainWindow.h')
 
 pluginTarget = qtEnv.SharedLibrary(target='layout', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

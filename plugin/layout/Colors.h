@@ -1,3 +1,13 @@
+/*
+ * Data collected from:
+ * “NIPPON COLORS”. Copyright 2010 (c) ONO TAKEHIKO. Some rights reserved.
+ * http://nipponcolors.com/
+ *
+ * Color data cited:
+ * “日本の伝統色 The Traditional Colors of Japan”. PIE BOOKS, 2007.
+ * ISBN-13: 978-4894445789.
+ */
+
 #ifndef PLUGIN_LAYOUT_COLORS_H
 #define PLUGIN_LAYOUT_COLORS_H
 

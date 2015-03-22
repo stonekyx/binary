@@ -6,9 +6,9 @@
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
-#include "TypeDefines.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ BEGIN_PLUG_NAMESPACE(dyn)
 
 MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param, QWidget *parent) :
-    MWTreeView(new Ui::MWTreeView("PluginSymTabMainWindow", "Symbol table"), plugin, param, parent),
+    MWTreeView(new Ui::MWTreeView("PluginDynMainWindow", "Dynamic linking info"), plugin, param, parent),
     _infoModel(NULL)
 {
     if(param.find("scnIndex") != param.end()) {
@@ -60,44 +60,6 @@ static size_t dynIndex(File *file, size_t knownIdx, Elf64_Shdr *dst)
     return 0;
 }
 
-#define C(constant, text) \
-    case (constant):return (text)
-
-template<typename T, typename U>
-bool rangeCheck(T var, U lo, U hi) {
-    return var>=(T)lo && var<=(T)hi;
-}
-
-#define R(var, lo, hi, value) \
-    do { if(rangeCheck(var, lo, hi)) {return (value);} }while(0)
-
-static const char *typeNameText(Elf64_Sxword tag)
-{
-    if(typeDefines.defineMap.find(tag) != typeDefines.defineMap.end()) {
-        return typeDefines.defineMap[tag].name;
-    }
-    DefineInfo &info = typeDefines.queryRange(tag);
-    if(info.valid) {
-        return info.name;
-    }
-    return "Unknown";
-}
-
-static const char *typeText(Elf64_Sxword tag)
-{
-    if(typeDefines.defineMap.find(tag) != typeDefines.defineMap.end()) {
-        return typeDefines.defineMap[tag].explain;
-    }
-    DefineInfo &info = typeDefines.queryRange(tag);
-    if(info.valid) {
-        return info.explain;
-    }
-    return "Unknown";
-}
-
-#undef R
-#undef C
-
 void MainWindow::updateInfo(File *file)
 {
     if(!_ui->switchMode(file)) {
@@ -126,9 +88,9 @@ void MainWindow::updateInfo(File *file)
 
         _infoModel->buildMore(QString("Entry %1\t%2")
                 .arg(i)
-                .arg(typeNameText(dyn.d_tag)));
+                .arg(Defines::macroText_DT(dyn.d_tag)));
         _infoModel->buildMore(QString("\tType\t%1")
-                .arg(typeText(dyn.d_tag)));
+                .arg(Defines::commentText_DT(dyn.d_tag)));
         _infoModel->buildMore(QString("\td_un\t"));
         _infoModel->buildMore(QString("\t\td_val\t%1")
                 .arg(dyn.d_un.d_val));

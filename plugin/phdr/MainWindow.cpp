@@ -5,6 +5,7 @@
 #include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
 
@@ -30,70 +31,6 @@ MainWindow::~MainWindow()
     }
 }
 
-#define C(constant, value) \
-    case (constant): return (value)
-#define D(value) \
-    default: return (value)
-
-template<typename T, typename U>
-bool rangeCheck(T var, U lo, U hi) {
-    return var>=(T)lo && var<=(T)hi;
-}
-
-#define R(var, lo, hi, value) \
-    do { if(rangeCheck(var, lo, hi)) {return (value);} }while(0)
-
-static const char *typeText(Elf64_Word p_type)
-{
-    switch(p_type) {
-        C(PT_NULL, "Program header table entry unused");
-        C(PT_LOAD, "Loadable program segment");
-        C(PT_DYNAMIC, "Dynamic linking information");
-        C(PT_INTERP, "Program interpreter");
-        C(PT_NOTE, "Auxiliary information");
-        C(PT_SHLIB, "Reserved");
-        C(PT_PHDR, "Entry for header table itself");
-        C(PT_TLS, "Thread-local storage segment");
-        C(PT_NUM, "Number of defined types");
-        C(PT_GNU_EH_FRAME, "GCC .eh_frame_hdr segment");
-        C(PT_GNU_STACK, "Indicates stack executability");
-        C(PT_GNU_RELRO, "Read-only after relocation");
-        C(PT_SUNWBSS, "Sun Specific segment");
-        C(PT_SUNWSTACK, "Stack segment");
-    }
-    R(p_type, PT_LOSUNW, PT_HISUNW, "SUNW");
-    R(p_type, PT_LOPROC, PT_HIPROC, "Processor-specific");
-    R(p_type, PT_LOOS, PT_HIOS, "OS-specific");
-    return "Unknown";
-}
-
-static const char *flagsText(Elf64_Word p_flags)
-{
-    static char buf[] = "rwx, OS-specific, Processor-specific";
-    memset(buf, 0, sizeof(buf));
-    memset(buf, '-', 3);
-    if((p_flags & PF_R)) {
-        buf[0] = 'r';
-    }
-    if((p_flags & PF_W)) {
-        buf[1] = 'w';
-    }
-    if((p_flags & PF_X)) {
-        buf[2] = 'x';
-    }
-    if((p_flags & PF_MASKOS)) {
-        strncat(buf, ", OS-specific", sizeof(buf)-strlen(buf)-1);
-    }
-    if((p_flags & PF_MASKPROC)) {
-        strncat(buf, ", Processor-specific", sizeof(buf)-strlen(buf)-1);
-    }
-    return buf;
-}
-
-#undef C
-#undef D
-#undef R
-
 #define HEX(val) (QString("0x%1").arg(val, 0, 16))
 
 void MainWindow::updateInfo(File *file)
@@ -117,10 +54,13 @@ void MainWindow::updateInfo(File *file)
         if(!modelData.isEmpty()) {
             textStream << "\n";
         }
-        textStream << "Entry " << i+1 << "\t" << typeText(phdr.p_type);
+        textStream << "Entry " << i+1 << "\t" << Defines::commentText_PT(phdr.p_type);
 
         textStream << "\n\tFlags\t" << HEX(phdr.p_flags);
-        textStream << " (" << flagsText(phdr.p_flags) << ")";
+        char *buf = new char[Defines::commentText_PF(phdr.p_flags, NULL)+1];
+        Defines::commentText_PF(phdr.p_flags, buf);
+        textStream << " (" << buf << ")";
+        delete[] buf;
 
         textStream << "\n\tOffset\t" << HEX(phdr.p_offset);
         textStream << "\n\tVirtual address\t" << HEX(phdr.p_vaddr);

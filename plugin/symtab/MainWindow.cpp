@@ -6,6 +6,7 @@
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
 
@@ -62,63 +63,6 @@ static size_t symTabIndex(File *file, size_t knownIdx, Elf64_Shdr *dst)
     return 0;
 }
 
-#define C(constant, text) \
-    case (constant):return (text)
-
-template<typename T, typename U>
-bool rangeCheck(T var, U lo, U hi) {
-    return var>=(T)lo && var<=(T)hi;
-}
-
-#define R(var, lo, hi, value) \
-    do { if(rangeCheck(var, lo, hi)) {return (value);} }while(0)
-
-static const char *infoBindText(unsigned char bind)
-{
-    switch(bind) {
-        C(STB_LOCAL, "Local symbol");
-        C(STB_GLOBAL, "Global symbol");
-        C(STB_WEAK, "Weak symbol");
-        C(STB_NUM, "Number of defined types.");
-        C(STB_GNU_UNIQUE, "Unique symbol.");
-    }
-    R(bind, STB_LOOS, STB_HIOS, "OS-specific");
-    R(bind, STB_LOPROC, STB_HIPROC, "Processor-specific");
-    return "Unknown";
-}
-
-static const char *infoTypeText(unsigned char type)
-{
-    switch(type) {
-        C(STT_NOTYPE, "Symbol type is unspecified");
-        C(STT_OBJECT, "Symbol is a data object");
-        C(STT_FUNC, "Symbol is a code object");
-        C(STT_SECTION, "Symbol associated with a section");
-        C(STT_FILE, "Symbol's name is file name");
-        C(STT_COMMON, "Symbol is a common data object");
-        C(STT_TLS, "Symbol is thread-local data object");
-        C(STT_NUM, "Number of defined types.");
-        C(STT_GNU_IFUNC, "Symbol is indirect code object");
-    }
-    R(type, STT_LOOS, STT_HIOS, "OS-specific");
-    R(type, STT_LOPROC, STT_HIPROC, "Processor-specific");
-    return "Unknown";
-}
-
-static const char *visibilityText(unsigned char other)
-{
-    switch(other) {
-        C(STV_DEFAULT, "Default symbol visibility rules");
-        C(STV_INTERNAL, "Processor specific hidden class");
-        C(STV_HIDDEN, "Sym unavailable in other modules");
-        C(STV_PROTECTED, "Not preemptible, not exported");
-    }
-    return "Unknown";
-}
-
-#undef R
-#undef C
-
 void MainWindow::updateInfo(File *file)
 {
     if(!_ui->switchMode(file)) {
@@ -157,11 +101,11 @@ void MainWindow::updateInfo(File *file)
         _infoModel->buildMore(QString("\tInfo\t0x%1")
                 .arg(sym.st_info, 0, 16));
         _infoModel->buildMore(QString("\t\tBind\t%1")
-                .arg(infoBindText(ELF64_ST_BIND(sym.st_info))));
+                .arg(Defines::commentText_STB(ELF64_ST_BIND(sym.st_info))));
         _infoModel->buildMore(QString("\t\tType\t%1")
-                .arg(infoTypeText(ELF64_ST_TYPE(sym.st_info))));
+                .arg(Defines::commentText_STT(ELF64_ST_TYPE(sym.st_info))));
         _infoModel->buildMore(QString("\tVisibility\t%1")
-                .arg(visibilityText(ELF64_ST_VISIBILITY(sym.st_other))));
+                .arg(Defines::commentText_STV(ELF64_ST_VISIBILITY(sym.st_other))));
         _infoModel->buildMore(QString("\tSection index\t%1")
                 .arg(sym.st_shndx));
         _infoModel->buildMore(QString("\tValue\t%1")

@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <cstdlib>
 
 #include "common.h"
 
@@ -27,13 +28,15 @@ public:
     typedef typename std::set<T>::const_iterator RangeSetIr;
     typedef typename std::pair<RangeSetIr, RangeSetIr> RangeSetIrPair;
     typedef typename std::pair<T, T> RangeMapKey;
+    typedef typename std::map<std::pair<T, T>, DefineInfo>::const_iterator RangeMapIr;
 
     ExpandDefine() : nullInfo(false) {}
-    DefineInfo &queryRange(T);
+    const DefineInfo &queryRange(T);
+    const DefineInfo &queryRangeSlow(T);
 };
 
 template<typename T>
-DefineInfo &ExpandDefine<T>::queryRange(T val)
+const DefineInfo &ExpandDefine<T>::queryRange(T val)
 {
     RangeSetIrPair rangeIr = rangeSet.equal_range(val);
     if(rangeIr.first == rangeSet.end() ||
@@ -46,6 +49,23 @@ DefineInfo &ExpandDefine<T>::queryRange(T val)
         return nullInfo;
     }
     return rangeMap[key];
+}
+
+template<typename T>
+const DefineInfo &ExpandDefine<T>::queryRangeSlow(T val)
+{
+    RangeMapKey resRng;
+    const DefineInfo *res = &nullInfo;
+    for(RangeMapIr it = rangeMap.begin(); it!=rangeMap.end(); it++) {
+        if(it->first.first<=val && it->first.second>=val) {
+            if(!res->valid || resRng.second-resRng.first > it->first.second-it->first.first)
+            {
+                resRng = it->first;
+                res = &it->second;
+            }
+        }
+    }
+    return *res;
 }
 
 END_PLUG_NAMESPACE

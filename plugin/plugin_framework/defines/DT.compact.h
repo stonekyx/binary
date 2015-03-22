@@ -1,6 +1,6 @@
 BINARY_PLUGIN_VALUE_TYPE, Elf64_Sxword
-BINARY_PLUGIN_NAMESPACE, dyn
-BINARY_PLUGIN_OBJECTNAME, typeDefines
+BINARY_PLUGIN_NAMESPACE, plugin_framework
+BINARY_PLUGIN_OBJECTNAME, defines_DT
 
 DT_NULL, "Marks end of dynamic section"
 DT_NEEDED, "Name of needed library"

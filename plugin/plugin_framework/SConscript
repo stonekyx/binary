@@ -23,6 +23,8 @@ qtEnv.Moc4('MWBase.h')
 qtEnv.Moc4('ui_MWBase.h')
 qtEnv.Moc4('ui_MWTreeView.h')
 
+SConscript('defines/SConscript', duplicate=1)
+
 qtEnv.Append(LIBS=['iberty'])
 
 libTarget = qtEnv.SharedLibrary(target='plugin', source=Glob('*.cpp')+Glob('*.cc'))

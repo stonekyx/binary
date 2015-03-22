@@ -15,8 +15,11 @@ END {
     className = objName;
     className = toupper(substr(className, 1, 1)) substr(className, 2);
     className = className "Initializer";
+    print "#ifndef PLUGIN_PLUGIN_FRAMEWORK_" toupper(objName) "_H";
+    print "#define PLUGIN_PLUGIN_FRAMEWORK_" toupper(objName) "_H";
+    print "";
     print "#include <elf.h>";
-    print "#include <ExpandDefine.h>";
+    print "#include \"ExpandDefine.h\"";
     print "";
     print "#include \"common.h\"";
     print "";
@@ -26,7 +29,7 @@ END {
     print "";
     print "static struct " className " {";
     print "    " className "();";
-    print "} unusedInstance;";
+    print "} unusedInstance" className ";";
     print "";
     print className "::" className "() {";
     print "using namespace PLUG_NAMESPACE(plugin_framework);";
@@ -60,5 +63,7 @@ END {
     print "}";
     print "";
     print "END_PLUG_NAMESPACE";
+    print "";
+    print "#endif";
 }
 '

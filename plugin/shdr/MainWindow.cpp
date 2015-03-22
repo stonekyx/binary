@@ -5,6 +5,7 @@
 #include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
 
@@ -30,97 +31,6 @@ MainWindow::~MainWindow()
         delete _infoModel;
     }
 }
-
-#define C(constant, value) \
-    case (constant): return (value)
-#define D(value) \
-    default: return (value)
-
-template<typename T, typename U>
-bool rangeCheck(T var, U lo, U hi) {
-    return var>=(T)lo && var<=(T)hi;
-}
-
-#define R(var, lo, hi, value) \
-    do { if(rangeCheck(var, lo, hi)) {return (value);} }while(0)
-
-static const char *typeText(Elf64_Word sh_type)
-{
-    switch(sh_type) {
-        C(SHT_NULL, "Section header table entry unused");
-        C(SHT_PROGBITS, "Program data");
-        C(SHT_SYMTAB, "Symbol table");
-        C(SHT_STRTAB, "String table");
-        C(SHT_RELA, "Relocation entries with addends");
-        C(SHT_HASH, "Symbol hash table");
-        C(SHT_DYNAMIC, "Dynamic linking information");
-        C(SHT_NOTE, "Notes");
-        C(SHT_NOBITS, "Program space with no data (bss)");
-        C(SHT_REL, "Relocation entries, no addends");
-        C(SHT_SHLIB, "Reserved");
-        C(SHT_DYNSYM, "Dynamic linker symbol table");
-        C(SHT_INIT_ARRAY, "Array of constructors");
-        C(SHT_FINI_ARRAY, "Array of destructors");
-        C(SHT_PREINIT_ARRAY, "Array of pre-constructors");
-        C(SHT_GROUP, "Section group");
-        C(SHT_SYMTAB_SHNDX, "Extended section indeces");
-        C(SHT_NUM, "Number of defined types.");
-        C(SHT_GNU_ATTRIBUTES, "Object attributes.");
-        C(SHT_GNU_HASH, "GNU-style hash table.");
-        C(SHT_GNU_LIBLIST, "Prelink library list");
-        C(SHT_CHECKSUM, "Checksum for DSO content.");
-        C(SHT_SUNW_move, "SUNW_move");
-        C(SHT_SUNW_COMDAT, "SUNW_COMDAT");
-        C(SHT_SUNW_syminfo, "SUNW_syminfo");
-        C(SHT_GNU_verdef, "Version definition section.");
-        C(SHT_GNU_verneed, "Version needs section.");
-        C(SHT_GNU_versym, "Version symbol table.");
-    }
-    R(sh_type, SHT_LOSUNW, SHT_HISUNW, "Sun-specific");
-    R(sh_type, SHT_LOOS, SHT_HIOS, "OS-specific");
-    R(sh_type, SHT_LOPROC, SHT_HIPROC, "Processor-specific");
-    R(sh_type, SHT_LOUSER, SHT_HIUSER, "Application-specific");
-    return "Unknown";
-}
-
-#define APPEND(ctext, text) \
-    do { \
-        textStream << "\n"; \
-        for(size_t i=0; i<indentLevel; i++) textStream << "\t"; \
-        textStream << (ctext) << "\t" << (text); \
-    } while(0)
-
-#define IF(var, constant, ctext, text) \
-    do { \
-        if(!((var) & (constant))) break; \
-        APPEND((ctext), (text)); \
-    } while(0)
-
-static void flagsText(QTextStream &textStream, size_t indentLevel,
-        Elf64_Xword sh_flags)
-{
-    IF(sh_flags, SHF_WRITE, "SHF_WRITE", "Writable");
-    IF(sh_flags, SHF_ALLOC, "SHF_ALLOC", "Occupies memory during execution");
-    IF(sh_flags, SHF_EXECINSTR, "SHF_EXECINSTR", "Executable");
-    IF(sh_flags, SHF_MERGE, "SHF_MERGE", "Might be merged");
-    IF(sh_flags, SHF_STRINGS, "SHF_STRINGS", "Contains nul-terminated strings");
-    IF(sh_flags, SHF_INFO_LINK, "SHF_INFO_LINK", "`sh_info' contains SHT index");
-    IF(sh_flags, SHF_LINK_ORDER, "SHF_LINK_ORDER", "Preserve order after combining");
-    IF(sh_flags, SHF_OS_NONCONFORMING, "SHF_OS_NONCONFORMING", "Non-standard OS specific handling required");
-    IF(sh_flags, SHF_GROUP, "SHF_GROUP", "Section is member of a group.");
-    IF(sh_flags, SHF_TLS, "SHF_TLS", "Section hold thread-local data.");
-    IF(sh_flags, SHF_MASKOS, "SHF_MASKOS", "OS-specific.");
-    IF(sh_flags, SHF_MASKPROC, "SHF_MASKPROC", "Processor-specific");
-    IF(sh_flags, SHF_ORDERED, "SHF_ORDERED", "Special ordering requirement (Solaris).");
-    IF(sh_flags, SHF_EXCLUDE, "SHF_EXCLUDE", "Section is excluded unless referenced or allocated (Solaris).");
-}
-
-#undef IF
-#undef APPEND
-
-#undef C
-#undef D
-#undef R
 
 #define HEX(val) (QString("0x%1").arg(val, 0, 16))
 #define DEC(val) (QString("%1").arg(val))
@@ -156,9 +66,14 @@ void MainWindow::updateInfo(File *file)
         }
 
         textStream << "\n\tName index\t" << DEC(shdr.sh_name);
-        textStream << "\n\tType\t" << typeText(shdr.sh_type);
+        textStream << "\n\tType\t" << Defines::commentText_SHT(shdr.sh_type);
         textStream << "\n\tFlags\t" << HEX(shdr.sh_flags);
-        flagsText(textStream, 2, shdr.sh_flags);
+        vector<const char *> flagsName = Defines::macroText_SHF(shdr.sh_flags);
+        vector<const char *> flagsText = Defines::commentText_SHF(shdr.sh_flags);
+        for(size_t i=0; i<flagsName.size(); i++)
+        {
+            textStream << "\n\t\t" << flagsName[i] << "\t" << flagsText[i];
+        }
 
         textStream << "\n\tVaddr at execution\t" << HEX(shdr.sh_addr);
         textStream << "\n\tFile offset\t" << HEX(shdr.sh_offset);

@@ -5,6 +5,7 @@
 #include "frontend/PluginManager.h"
 #include "backend/Backend.h"
 #include "ui_MWTreeView.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
 
@@ -88,11 +89,7 @@ void MainWindow::updateInfo(File *file)
     size_t sizeVal;
 
     int elfClass = file->getClass();
-    switch(elfClass){
-        C(ELFCLASS32, "32 bit");
-        C(ELFCLASS64, "64 bit");
-        D("Unknown");
-    }
+    rawStr = Defines::commentText_ELFCLASS(elfClass);
     SET("INFO_FIELD_CLASS");
 
     File::ELFKind elfKind = file->getKind();
@@ -109,111 +106,13 @@ void MainWindow::updateInfo(File *file)
         rawStr = "Yes";
         SET("INFO_FIELD_EHDR");
 
-        switch(ehdr.e_type) {
-            C(ET_NONE, "No file type");
-            C(ET_REL, "Relocatable file");
-            C(ET_EXEC, "Executable file");
-            C(ET_DYN, "Shared object file");
-            C(ET_CORE, "Core file");
-            C(ET_NUM, "Number of defined types");
-            D("Unknown");
-        }
-        R(ehdr.e_type, ET_LOOS, ET_HIOS, "OS-specific");
-        R(ehdr.e_type, ET_LOPROC, ET_HIPROC, "Processor-specific");
+        rawStr = Defines::commentText_ET(ehdr.e_type);
         SET("INFO_FIELD_EHDR_TYPE");
 
-        switch(ehdr.e_machine) {
-            C(EM_NONE, "No machine");
-            C(EM_M32, "AT&T WE 32100");
-            C(EM_SPARC, "SUN SPARC");
-            C(EM_386, "Intel 80386");
-            C(EM_68K, "Motorola m68k family");
-            C(EM_88K, "Motorola m88k family");
-            C(EM_860, "Intel 80860");
-            C(EM_MIPS, "MIPS R3000 big-endian");
-            C(EM_S370, "IBM System/370");
-            C(EM_MIPS_RS3_LE, "MIPS R3000 little-endian");
-
-            C(EM_PARISC, "HPPA");
-            C(EM_VPP500, "Fujitsu VPP500");
-            C(EM_SPARC32PLUS, "Sun's \"v8plus\"");
-            C(EM_960, "Intel 80960");
-            C(EM_PPC, "PowerPC");
-            C(EM_PPC64, "PowerPC 64-bit");
-            C(EM_S390, "IBM S390");
-
-            C(EM_V800, "NEC V800 series");
-            C(EM_FR20, "Fujitsu FR20");
-            C(EM_RH32, "TRW RH-32");
-            C(EM_RCE, "Motorola RCE");
-            C(EM_ARM, "ARM");
-            C(EM_FAKE_ALPHA, "Digital Alpha");
-            C(EM_SH, "Hitachi SH");
-            C(EM_SPARCV9, "SPARC v9 64-bit");
-            C(EM_TRICORE, "Siemens Tricore");
-            C(EM_ARC, "Argonaut RISC Core");
-            C(EM_H8_300, "Hitachi H8/300");
-            C(EM_H8_300H, "Hitachi H8/300H");
-            C(EM_H8S, "Hitachi H8S");
-            C(EM_H8_500, "Hitachi H8/500");
-            C(EM_IA_64, "Intel Merced");
-            C(EM_MIPS_X, "Stanford MIPS-X");
-            C(EM_COLDFIRE, "Motorola Coldfire");
-            C(EM_68HC12, "Motorola M68HC12");
-            C(EM_MMA, "Fujitsu MMA Multimedia Accelerator");
-            C(EM_PCP, "Siemens PCP");
-            C(EM_NCPU, "Sony nCPU embeeded RISC");
-            C(EM_NDR1, "Denso NDR1 microprocessor");
-            C(EM_STARCORE, "Motorola Start*Core processor");
-            C(EM_ME16, "Toyota ME16 processor");
-            C(EM_ST100, "STMicroelectronic ST100 processor");
-            C(EM_TINYJ, "Advanced Logic Corp. Tinyj emb.fam");
-            C(EM_X86_64, "AMD x86-64 architecture");
-            C(EM_PDSP, "Sony DSP Processor");
-
-            C(EM_FX66, "Siemens FX66 microcontroller");
-            C(EM_ST9PLUS, "STMicroelectronics ST9+ 8/16 mc");
-            C(EM_ST7, "STmicroelectronics ST7 8 bit mc");
-            C(EM_68HC16, "Motorola MC68HC16 microcontroller");
-            C(EM_68HC11, "Motorola MC68HC11 microcontroller");
-            C(EM_68HC08, "Motorola MC68HC08 microcontroller");
-            C(EM_68HC05, "Motorola MC68HC05 microcontroller");
-            C(EM_SVX, "Silicon Graphics SVx");
-            C(EM_ST19, "STMicroelectronics ST19 8 bit mc");
-            C(EM_VAX, "Digital VAX");
-            C(EM_CRIS, "Axis Communications 32-bit embedded processor");
-            C(EM_JAVELIN, "Infineon Technologies 32-bit embedded processor");
-            C(EM_FIREPATH, "Element 14 64-bit DSP Processor");
-            C(EM_ZSP, "LSI Logic 16-bit DSP Processor");
-            C(EM_MMIX, "Donald Knuth's educational 64-bit processor");
-            C(EM_HUANY, "Harvard University machine-independent object files");
-            C(EM_PRISM, "SiTera Prism");
-            C(EM_AVR, "Atmel AVR 8-bit microcontroller");
-            C(EM_FR30, "Fujitsu FR30");
-            C(EM_D10V, "Mitsubishi D10V");
-            C(EM_D30V, "Mitsubishi D30V");
-            C(EM_V850, "NEC v850");
-            C(EM_M32R, "Mitsubishi M32R");
-            C(EM_MN10300, "Matsushita MN10300");
-            C(EM_MN10200, "Matsushita MN10200");
-            C(EM_PJ, "picoJava");
-            C(EM_OPENRISC, "OpenRISC 32-bit embedded processor");
-            C(EM_ARC_A5, "ARC Cores Tangent-A5");
-            C(EM_XTENSA, "Tensilica Xtensa Architecture");
-            C(EM_AARCH64, "ARM AARCH64");
-            C(EM_TILEPRO, "Tilera TILEPro");
-            C(EM_TILEGX, "Tilera TILE-Gx");
-
-            C(EM_ALPHA, "Alpha");
-            D("Unknown");
-        }
+        rawStr = Defines::commentText_EM(ehdr.e_machine);
         SET("INFO_FIELD_EHDR_ARCH");
 
-        switch(ehdr.e_version) {
-            C(EV_NONE, "Invalid ELF version");
-            C(EV_CURRENT, "Current version");
-            D("Unknown");
-        }
+        rawStr = Defines::commentText_EV(ehdr.e_version);
         SET("INFO_FIELD_EHDR_VER");
 
         SETHEX("INFO_FIELD_EHDR_ENTRY", ehdr.e_entry);

@@ -10,8 +10,5 @@ qtEnv.EnableQt4Modules([
     'QtCore'
     ])
 
-expandTar = qtEnv.ExpandDefine('TypeDefines.h', 'TypeDefines.compact.h')
-AlwaysBuild(expandTar)
-
 pluginTarget = qtEnv.SharedLibrary(target='dyn', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

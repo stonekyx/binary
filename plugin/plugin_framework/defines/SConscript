@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+import os
+
+Import('baseEnv qtEnv')
+
+baseEnv = baseEnv.Clone()
+qtEnv = qtEnv.Clone()
+
+srcpath = Dir('.').srcnode().abspath
+
+suffix = ".compact.h"
+
+for i in os.listdir(srcpath):
+    if i[-len(suffix):] != suffix:
+        continue
+    expandTar = qtEnv.ExpandDefine(i.replace(".compact", ""), i)
+    AlwaysBuild(expandTar)

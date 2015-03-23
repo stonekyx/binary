@@ -106,8 +106,16 @@ void MainWindow::updateInfo(File *file)
                 .arg(Defines::commentText_STT(ELF64_ST_TYPE(sym.st_info))));
         _infoModel->buildMore(QString("\tVisibility\t%1")
                 .arg(Defines::commentText_STV(ELF64_ST_VISIBILITY(sym.st_other))));
-        _infoModel->buildMore(QString("\tSection index\t%1")
-                .arg(sym.st_shndx));
+        Elf64_Shdr shdr;
+        QString scnName;
+        if(sym.st_shndx && file->getShdr(sym.st_shndx, &shdr) &&
+                !(scnName=file->getScnName(&shdr)).isEmpty())
+        {
+            scnName.prepend(" (");
+            scnName.append(")");
+        }
+        _infoModel->buildMore(QString("\tSection index\t%1%2")
+                .arg(sym.st_shndx).arg(scnName));
         _infoModel->buildMore(QString("\tValue\t%1")
                 .arg(sym.st_value, 0, 16));
         _infoModel->buildMore(QString("\tSize\t%1")

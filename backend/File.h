@@ -6,6 +6,8 @@
 #include <QtCore/QObject>
 
 #include "common.h"
+#include "Arhdr.h"
+#include "Arsym.h"
 
 BEGIN_BIN_NAMESPACE(backend)
 
@@ -38,6 +40,12 @@ public:
     virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *) = 0;
     virtual const char *getStrPtr(size_t scnIdx, size_t offset) = 0;
     virtual bool getDyn(size_t scnIdx, int idx, Elf64_Dyn *) = 0;
+    virtual Arhdr getArhdr(size_t objIdx) = 0;
+    virtual Arhdr getArhdrByOffset(size_t objOff) = 0;
+    virtual size_t getArhdrNum() = 0;
+    virtual bool setArObj(size_t objIdx) = 0;
+    virtual Arsym getArsym(size_t symIdx) = 0;
+    virtual size_t getArsymNum() = 0;
 
     void setBackend(Backend *b) {
         _backend = b;

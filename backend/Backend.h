@@ -28,6 +28,7 @@ public:
     File *openFile(const char *);
     void closeFile();
     File *getFile();
+    void signalFileChange(File*);
 signals:
     void fileChanged(binary::backend::File *);
 private:

@@ -2,8 +2,11 @@
 #define BACKEND_FILEIMPL_LIBELF_H
 
 #include <libelf.h>
+#include <vector>
 
 #include "common.h"
+#include "Arhdr.h"
+#include "Arsym.h"
 #include "File.h"
 
 BEGIN_BIN_NAMESPACE(backend)
@@ -26,14 +29,28 @@ public:
     virtual bool getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *);
     virtual const char *getStrPtr(size_t scnIdx, size_t offset);
     virtual bool getDyn(size_t scnIdx, int idx, Elf64_Dyn *);
+    virtual Arhdr getArhdr(size_t objIdx);
+    virtual Arhdr getArhdrByOffset(size_t objOff);
+    virtual size_t getArhdrNum();
+    virtual bool setArObj(size_t objIdx);
+    virtual Arsym getArsym(size_t symIdx);
+    virtual size_t getArsymNum();
     virtual ~FileImplLibelf();
 private:
     int _fd;
     Elf *_elf;
+    Elf *_ar;
+    int _arPos;
     Elf_Data *_symTabData;
     size_t _symTabIdx;
     Elf_Data *_dynData;
     size_t _dynIdx;
+    std::vector<Arhdr> _arhdr;
+    std::vector<Arsym> _arsym;
+
+    bool readArhdr();
+    bool rewindAr();
+    void readArsym();
 };
 
 END_BIN_NAMESPACE

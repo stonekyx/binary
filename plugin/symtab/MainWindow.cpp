@@ -68,6 +68,48 @@ void MainWindow::updateInfo(File *file)
     if(!_ui->switchMode(file)) {
         return;
     }
+    switch(file->getKind()) {
+    case File::KIND_AR:
+        updateArInfo(file);
+        break;
+    case File::KIND_ELF:
+        updateElfInfo(file);
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::updateArInfo(File *file)
+{
+    if(_infoModel) {
+        delete _infoModel;
+    }
+    _infoModel = new InfoModel(QString(), 2);
+
+    size_t arsymNum = file->getArsymNum();
+    for(size_t i=0; i<arsymNum; i++) {
+        Arsym arsym = file->getArsym(i);
+        _infoModel->buildMore(QString("Entry %1\t%2")
+                .arg(i)
+                .arg(arsym.name()));
+        QString objName;
+        Arhdr arhdr = file->getArhdrByOffset(arsym.off());
+        if(arhdr.name()) {
+            objName = QString(" (%1)").arg(arhdr.name());
+        }
+        _infoModel->buildMore(QString("\tOffset\t0x%1%2")
+                .arg(arsym.off(), 0, 16)
+                .arg(objName));
+        _infoModel->buildMore(QString("\tHash\t0x%1")
+                .arg(arsym.hash(), 0, 16));
+    }
+
+    _ui->infoTree->setModel(_infoModel);
+}
+
+void MainWindow::updateElfInfo(File *file)
+{
     Elf64_Shdr shdr;
     _scnIndex = symTabIndex(file, _scnIndex, &shdr);
     if(_scnIndex == 0) {

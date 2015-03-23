@@ -5,10 +5,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <ar.h>
 #include <libelf.h>
 #include <gelf.h>
 
 #include "File.h"
+#include "Backend.h"
 #include "FileImplLibelf.h"
 
 BEGIN_BIN_NAMESPACE(backend)
@@ -34,7 +36,18 @@ FileImplLibelf::FileImplLibelf(const char *name,
         flags = O_RDONLY;
     }
     _fd = open(name, flags);
+    _ar = NULL;
     _elf = elf_begin(_fd, cmd, NULL);
+    if(elf_kind(_elf) == ELF_K_AR) {
+        _ar = _elf;
+        _arPos = -1;
+        if(!readArhdr()) {
+            elf_end(_ar);
+            _ar = _elf = NULL;
+        } else {
+            readArsym();
+        }
+    }
     _symTabData = NULL;
     _symTabIdx = 0;
 }
@@ -236,10 +249,102 @@ bool FileImplLibelf::getDyn(size_t scnIdx, int idx, Elf64_Dyn *dst)
     return true;
 }
 
+Arhdr FileImplLibelf::getArhdr(size_t objIdx)
+{
+    if(objIdx>=_arhdr.size()) {
+        return Arhdr();
+    }
+    return _arhdr[objIdx];
+}
+
+Arhdr FileImplLibelf::getArhdrByOffset(size_t objOff)
+{
+    if(elf_rand(_ar, objOff) == 0) {
+        return Arhdr();
+    }
+    Elf *obj = elf_begin(_fd, ELF_C_READ, _ar);
+    if(!obj) {
+        return Arhdr();
+    }
+    Arhdr res(elf_getarhdr(obj), objOff);
+    elf_end(obj);
+    return res;
+}
+
+size_t FileImplLibelf::getArhdrNum()
+{
+    return _arhdr.size();
+}
+
+bool FileImplLibelf::setArObj(size_t objIdx)
+{
+    if(objIdx >= _arhdr.size()) {
+        return false;
+    }
+    if(elf_rand(_ar, _arhdr[objIdx].offset()) == 0) {
+        return false;
+    }
+    _elf = elf_begin(_fd, ELF_C_READ, _ar);
+    _backend->signalFileChange(NULL);
+    _backend->signalFileChange(this);
+    return _elf;
+}
+
+Arsym FileImplLibelf::getArsym(size_t symIdx)
+{
+    if(symIdx>=_arsym.size()) {
+        return Arsym();
+    }
+    return _arsym[symIdx];
+}
+
+size_t FileImplLibelf::getArsymNum()
+{
+    return _arsym.size();
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
-    elf_end(_elf);
+    if(_elf) {
+        elf_end(_elf);
+    }
+    if(_ar && _arPos>=0) {
+        elf_end(_ar);
+    }
     close(_fd);
+}
+
+bool FileImplLibelf::readArhdr()
+{
+    Elf *e;
+    while((e = elf_begin(_fd, ELF_C_READ, _ar))!=NULL) {
+        Elf_Arhdr *arh;
+        if((arh = elf_getarhdr(e)) == NULL) {
+            elf_end(e);
+            return false;
+        }
+        _arhdr.push_back(Arhdr(arh, elf_getaroff(e)));
+        elf_next(e);
+        elf_end(e);
+    }
+    return rewindAr();
+}
+
+bool FileImplLibelf::rewindAr()
+{
+    if(elf_rand(_ar, (size_t)SARMAG) == SARMAG) {
+        return true;
+    }
+    return false;
+}
+
+void FileImplLibelf::readArsym()
+{
+    size_t arsymNum;
+    Elf_Arsym *arsym = elf_getarsym(_ar, &arsymNum);
+    for(size_t i=0; i<arsymNum; i++) {
+        _arsym.push_back(Arsym(arsym+i));
+    }
 }
 
 END_BIN_NAMESPACE

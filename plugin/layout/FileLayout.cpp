@@ -151,6 +151,10 @@ void FileLayout::mouseDoubleClickEvent(QMouseEvent *e)
 
 FileLayout::SegInfo FileLayout::arrange()
 {
+    if(_segs.size() == 0) {
+        return SegInfo(0,0);
+    }
+
     sort(_segs.begin(), _segs.end());
 
     SegInfo whole(_segs.front().begin, _segs.front().end);

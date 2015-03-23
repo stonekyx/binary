@@ -55,4 +55,9 @@ void Backend::closeFile()
     emit fileChanged(_file);
 }
 
+void Backend::signalFileChange(File *file)
+{
+    emit fileChanged(file);
+}
+
 END_BIN_NAMESPACE

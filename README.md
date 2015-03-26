@@ -1,6 +1,16 @@
 # Binary
 Binary analysis and exhibition of ELF.
 
+# Dependencies
+
+依赖的库如下：
+
++ glibc-2.17 (如果平台上有的话，还需要同版本的glibc-headers)
++ elfutils-libelf-devel-0.158 (或者没有的话elfutils)
++ qt-4.8.5 (如果平台上有的话，还需要同版本的qt-devel)
++ python-2.7.5
++ binutils-devel-2.23.52 (提供libiberty。有的平台上是gcc或gcc-multilib提供)
+
 # Compile
 编译命令如下：
 

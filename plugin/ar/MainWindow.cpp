@@ -33,9 +33,6 @@ void MainWindow::updateInfo(File *file)
     if(!_ui->switchMode(file)) {
         return;
     }
-    if(file->getKind() != File::KIND_AR) {
-        return;
-    }
     if(_model) {
         delete _model;
     }

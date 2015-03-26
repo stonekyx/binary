@@ -63,6 +63,7 @@ static size_t dynIndex(File *file, size_t knownIdx, Elf64_Shdr *dst)
 void MainWindow::updateInfo(File *file)
 {
     if(!_ui->switchMode(file)) {
+        _scnIndex = 0;
         return;
     }
     Elf64_Shdr shdr;

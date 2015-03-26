@@ -139,7 +139,7 @@ void MainWindow::updateElfInfo(File *file)
                 .arg(demangle));
         free(demangle);
         _infoModel->buildMore(QString("\tName offset\t0x%1")
-                .arg(sym.st_name));
+                .arg(sym.st_name, 0, 16));
         _infoModel->buildMore(QString("\tInfo\t0x%1")
                 .arg(sym.st_info, 0, 16));
         _infoModel->buildMore(QString("\t\tBind\t%1")

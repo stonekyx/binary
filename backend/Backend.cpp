@@ -55,6 +55,26 @@ void Backend::closeFile()
     emit fileChanged(_file);
 }
 
+File *Backend::openFilePrivate(const char *name)
+{
+    if(BACKEND_LIBELF == _type) {
+        File *res = new FileImplLibelf(name, ELF_C_READ);
+        if(res) {
+            res->setBackend(this);
+        }
+        return res;
+    }
+    return NULL;
+}
+
+void Backend::closeFilePrivate(File **file)
+{
+    if(dynamic_cast<FileImplLibelf*>(*file)) {
+        delete dynamic_cast<FileImplLibelf*>(*file);
+        *file = NULL;
+    }
+}
+
 void Backend::signalFileChange(File *file)
 {
     emit fileChanged(file);

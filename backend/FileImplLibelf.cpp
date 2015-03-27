@@ -1,3 +1,4 @@
+#include <iostream>
 #include <cstdlib>
 #include <exception>
 #include <sys/types.h>
@@ -9,14 +10,20 @@
 #include <libelf.h>
 #include <gelf.h>
 
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+
 #include "File.h"
 #include "Backend.h"
+#include "ForkPipe.h"
 #include "FileImplLibelf.h"
 
+using namespace std;
 BEGIN_BIN_NAMESPACE(backend)
 
 FileImplLibelf::FileImplLibelf(const char *name,
-        Elf_Cmd cmd)
+        Elf_Cmd cmd) :
+    File(name)
 {
     static bool needInit = true;
     if(needInit) {
@@ -50,6 +57,12 @@ FileImplLibelf::FileImplLibelf(const char *name,
     }
     _symTabData = NULL;
     _symTabIdx = 0;
+    _dynData = NULL;
+    _dynIdx = 0;
+    _hashTabRaw = NULL;
+    _dynSymRaw = NULL;
+    _dynStrRaw = NULL;
+    _depsLoaded = false;
 }
 
 bool FileImplLibelf::isValid()
@@ -186,6 +199,17 @@ ssize_t FileImplLibelf::getScnData(size_t idx, void *buf, size_t bufsize)
     return n;
 }
 
+template<typename T>
+static void convertClass(Elf64_Sym &dst, T &src)
+{
+    dst.st_name = src.st_name;
+    dst.st_info = src.st_info;
+    dst.st_other = src.st_other;
+    dst.st_shndx = src.st_shndx;
+    dst.st_value = src.st_value;
+    dst.st_size = src.st_size;
+}
+
 bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
 {
     if(scnIdx != _symTabIdx) {
@@ -199,12 +223,7 @@ bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
     }
     GElf_Sym sym;
     gelf_getsym(_symTabData, idx, &sym);
-    dst->st_name = sym.st_name;
-    dst->st_info = sym.st_info;
-    dst->st_other = sym.st_other;
-    dst->st_shndx = sym.st_shndx;
-    dst->st_value = sym.st_value;
-    dst->st_size = sym.st_size;
+    convertClass<GElf_Sym>(*dst, sym);
     return true;
 }
 
@@ -285,6 +304,14 @@ bool FileImplLibelf::setArObj(size_t objIdx)
         return false;
     }
     _elf = elf_begin(_fd, ELF_C_READ, _ar);
+    _arPos = objIdx;
+    _symTabData = NULL;
+    _symTabIdx = 0;
+    _dynData = NULL;
+    _dynIdx = 0;
+    _hashTabRaw = NULL;
+    _dynSymRaw = NULL;
+    _dynStrRaw = NULL;
     _backend->signalFileChange(NULL);
     _backend->signalFileChange(this);
     return _elf;
@@ -303,8 +330,63 @@ size_t FileImplLibelf::getArsymNum()
     return _arsym.size();
 }
 
+char *FileImplLibelf::getRawData(size_t offset)
+{
+    size_t size;
+    char *fileContent = elf_rawfile(_elf, &size);
+    if(offset >= size) {
+        return NULL;
+    }
+    return fileContent + offset;
+}
+
+bool FileImplLibelf::queryDynSym(const char *name, Elf64_Sym *dst)
+{
+    if(!_hashTabRaw && !(_hashTabRaw=findDynTag(DT_GNU_HASH))) {
+        return false;
+    }
+    if(!_dynSymRaw && !(_dynSymRaw=findDynTag(DT_SYMTAB))) {
+        return false;
+    }
+    if(!_dynStrRaw && !(_dynStrRaw=findDynTag(DT_STRTAB))) {
+        return false;
+    }
+    switch(getKind()) {
+    case ELFCLASS32:
+        return queryDynSymC<uint32_t, Elf32_Sym>(name, dst);
+    case ELFCLASS64:
+        return queryDynSymC<uint64_t, Elf64_Sym>(name, dst);
+    default:
+        return false;
+    }
+}
+
+const char *FileImplLibelf::queryDynSymDeps(const char *name,
+        Elf64_Sym *dst)
+{
+    if(!_depsLoaded) {
+        loadDeps(getName());
+    }
+    for(vector<File*>::iterator it = _deps.begin();
+            it != _deps.end(); it++)
+    {
+        if((*it)->queryDynSym(name, dst)) {
+            return (*it)->getName();
+        }
+    }
+    return NULL;
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
+    for(vector<File*>::iterator it = _deps.begin();
+            it != _deps.end(); it++)
+    {
+        if(*it == this) {
+            continue;
+        }
+        _backend->closeFilePrivate(&*it);
+    }
     if(_elf) {
         elf_end(_elf);
     }
@@ -345,6 +427,117 @@ void FileImplLibelf::readArsym()
     for(size_t i=0; i<arsymNum; i++) {
         _arsym.push_back(Arsym(arsym+i));
     }
+}
+
+char *FileImplLibelf::findDynTag(Elf64_Sxword val)
+{
+    Elf64_Phdr phdr;
+    size_t phdrNum;
+    if(getPhdrNum(&phdrNum) != 0) {
+        return NULL;
+    }
+    for(size_t i=0; i<phdrNum; i++) {
+        if(!getPhdr(i, &phdr)) {
+            continue;
+        }
+        if(phdr.p_type != PT_DYNAMIC) {
+            continue;
+        }
+        char *dynRaw = getRawData(phdr.p_offset);
+        if(getClass() == ELFCLASS32) {
+            Elf32_Dyn *dyn = (Elf32_Dyn*)dynRaw;
+            size_t dynNum = phdr.p_filesz / sizeof(*dyn);
+            for(size_t j=0; j<dynNum; j++) {
+                if(dyn[j].d_tag == val) {
+                    return getRawData(dyn[j].d_un.d_ptr);
+                }
+            }
+        } else if(getClass() == ELFCLASS64) {
+            Elf64_Dyn *dyn = (Elf64_Dyn*)dynRaw;
+            size_t dynNum = phdr.p_filesz / sizeof(*dyn);
+            for(size_t j=0; j<dynNum; j++) {
+                if(dyn[j].d_tag == val) {
+                    return getRawData(dyn[j].d_un.d_ptr);
+                }
+            }
+        } else {
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
+template<typename WordType, typename SymType>
+bool FileImplLibelf::queryDynSymC(const char *name, Elf64_Sym *dst)
+{
+    uint32_t nbuckets = *(uint32_t*)_hashTabRaw;
+    uint32_t symndx = *((uint32_t*)_hashTabRaw+1);
+    uint32_t maskwords = *((uint32_t*)_hashTabRaw+2);
+//    uint32_t shift2 = *((uint32_t*)_hashTabRaw+3);
+//    uint32_t maskwords_bm = maskwords-1;
+    WordType *bloom = (WordType*)(_hashTabRaw+sizeof(uint32_t)*4);
+    uint32_t *buckets = (uint32_t*)(bloom+maskwords);
+    uint32_t *hashvals = (uint32_t*)(buckets+nbuckets);
+//    size_t c = sizeof(WordType)*8;
+    unsigned long int h1, h2;
+    unsigned long int n;
+//    unsigned long int bitmask;
+    uint32_t *hv;
+    const SymType *sym;
+
+    h1 = elf_gnu_hash(name);
+/*    h2 = h1 >> shift2;
+    n = (h1/c) & maskwords_bm;
+    bitmask = (1 << (h1 % c)) | (1 << (h2 % c));
+    if((bloom[n] & bitmask) != bitmask) {
+        return false;
+    }*/
+
+    n = buckets[h1 % nbuckets];
+    if(n==0) {
+        return false;
+    }
+    sym = ((SymType*)_dynSymRaw)+n;
+    hv = &hashvals[n-symndx];
+    for(h1 &= ~1; ; sym++) {
+        h2 = *hv++;
+        if((h1 == (h2 & ~1)) && !strcmp(name, _dynStrRaw+sym->st_name)) {
+            if(dst) {
+                convertClass(*dst, *sym);
+            }
+            return true;
+        }
+        if(h2 & 1) {
+            break;
+        }
+    }
+    return false;
+}
+
+bool FileImplLibelf::loadDeps(const char *name)
+{
+    _depsLoaded = true;
+    _deps.clear();
+    _deps.push_back(this);
+    char *argv[] = {strdup("ldd"), strdup(name), NULL};
+    ForkPipe *forkPipe = new ForkPipe("ldd", argv);
+    if(forkPipe->execAndWait() != 0) {
+        return false;
+    }
+    QStringList lines =
+        QString(forkPipe->getBuf()).split("\n", QString::SkipEmptyParts);
+    foreach(QString s, lines) {
+        if(!s.contains("=>")) {
+            continue;
+        }
+        s.replace(QRegExp(".*=> (.*) \\(.*"), "\\1");
+        _deps.push_back(_backend->openFilePrivate(s.toUtf8().constData()));
+    }
+    delete forkPipe;
+    for(size_t i=0; i<sizeof(argv)/sizeof(argv[0]) - 1; i++) {
+        free(argv[i]);
+    }
+    return true;
 }
 
 END_BIN_NAMESPACE

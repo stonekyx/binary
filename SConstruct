@@ -14,7 +14,7 @@ if not conf.CheckHeader('elf.h'):
     Exit(1)
 baseEnv = conf.Finish()
 
-baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
+baseEnv.Append(CCFLAGS="-g -Wall -Wextra -Werror".split(' '))
 baseEnv.Append(CPPPATH='#inc')
 baseEnv['LOCAL_INSTALLDIR'] = os.path.join(Dir('#').abspath, '_install')
 baseEnv['LOCAL_BINDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'bin')

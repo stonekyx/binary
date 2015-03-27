@@ -131,10 +131,11 @@ void MainWindow::updateElfInfo(File *file)
             continue;
         }
 
+        const char *symName = file->getStrPtr(shdr.sh_link, sym.st_name);
         _infoModel->buildMore(QString("Entry %1\t%2")
                 .arg(i)
-                .arg(file->getStrPtr(shdr.sh_link, sym.st_name)));
-        char *demangle = cplus_demangle(file->getStrPtr(shdr.sh_link, sym.st_name));
+                .arg(symName));
+        char *demangle = cplus_demangle(symName);
         _infoModel->buildMore(QString("\tDemangle\t%1")
                 .arg(demangle));
         free(demangle);
@@ -158,10 +159,32 @@ void MainWindow::updateElfInfo(File *file)
         }
         _infoModel->buildMore(QString("\tSection index\t%1%2")
                 .arg(sym.st_shndx).arg(scnName));
-        _infoModel->buildMore(QString("\tValue\t%1")
+        _infoModel->buildMore(QString("\tValue\t0x%1")
                 .arg(sym.st_value, 0, 16));
-        _infoModel->buildMore(QString("\tSize\t%1")
+        _infoModel->buildMore(QString("\tSize\t0x%1")
                 .arg(sym.st_size, 0, 16));
+        if(ELF64_ST_TYPE(sym.st_info) == STT_FILE ||
+                ELF64_ST_TYPE(sym.st_info) == STT_SECTION ||
+                sym.st_value != 0)
+        {
+            continue;
+        }
+        QString symNameCooked(symName);
+        if(symNameCooked.contains("@")) {
+            symNameCooked.replace(QRegExp("@.*"), "");
+        }
+        const char *libName =
+            file->queryDynSymDeps(symNameCooked.toUtf8().constData(),
+                    NULL);
+        if(!libName) {
+            if(ELF64_ST_BIND(sym.st_info) == STB_WEAK) {
+                libName = "Not found";
+            } else {
+                libName = "Not found!!!";
+            }
+        }
+        _infoModel->buildMore(QString("\tLibrary\t%1")
+                .arg(libName));
     }
     _ui->infoTree->setModel(_infoModel);
 }

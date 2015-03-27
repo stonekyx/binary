@@ -3,6 +3,7 @@
 
 #include <elf.h>
 #include <cstdlib>
+#include <cstring>
 #include <QtCore/QObject>
 
 #include "common.h"
@@ -46,15 +47,22 @@ public:
     virtual bool setArObj(size_t objIdx) = 0;
     virtual Arsym getArsym(size_t symIdx) = 0;
     virtual size_t getArsymNum() = 0;
+    virtual char *getRawData(size_t offset) = 0;
+    virtual bool queryDynSym(const char *, Elf64_Sym *dst) = 0;
+    virtual const char *queryDynSymDeps(const char *, Elf64_Sym *) = 0;
+    virtual const char *getName() {
+        return _name;
+    }
 
     void setBackend(Backend *b) {
         _backend = b;
     }
 protected:
     Backend *_backend;
+    char *_name;
 
-    File() : _backend(NULL) {}
-    virtual ~File() {}
+    File(const char *name) : _backend(NULL), _name(strdup(name)) {}
+    virtual ~File() { free(_name); }
 };
 
 #endif

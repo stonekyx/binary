@@ -35,6 +35,9 @@ public:
     virtual bool setArObj(size_t objIdx);
     virtual Arsym getArsym(size_t symIdx);
     virtual size_t getArsymNum();
+    virtual char *getRawData(size_t offset);
+    virtual bool queryDynSym(const char *, Elf64_Sym *dst);
+    virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual ~FileImplLibelf();
 private:
     int _fd;
@@ -47,10 +50,19 @@ private:
     size_t _dynIdx;
     std::vector<Arhdr> _arhdr;
     std::vector<Arsym> _arsym;
+    char *_hashTabRaw;
+    char *_dynSymRaw;
+    char *_dynStrRaw;
+    std::vector<File*> _deps;
+    bool _depsLoaded;
 
     bool readArhdr();
     bool rewindAr();
     void readArsym();
+    char *findDynTag(Elf64_Sxword);
+    template<typename WordType, typename SymType>
+    bool queryDynSymC(const char *name, Elf64_Sym *dst);
+    bool loadDeps(const char *);
 };
 
 END_BIN_NAMESPACE

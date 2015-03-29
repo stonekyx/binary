@@ -1,0 +1,9 @@
+#!/usr/bin/python
+
+Import('baseEnv')
+
+env = baseEnv.Clone()
+
+lib = env.StaticLibrary('test', Glob('*.cpp'))
+
+Return('lib')

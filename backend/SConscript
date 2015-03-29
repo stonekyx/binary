@@ -21,3 +21,5 @@ env.Moc4('Backend.h')
 
 libbackend = env.SharedLibrary(target='backend', source=Glob('*.cpp')+Glob('*.c')+Glob('*.cc'))
 Install(env['LOCAL_LIBDIR'], libbackend)
+
+env.TestDir('test', [libbackend])

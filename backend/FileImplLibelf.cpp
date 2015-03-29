@@ -519,7 +519,7 @@ bool FileImplLibelf::loadDeps(const char *name)
     _depsLoaded = true;
     _deps.clear();
     _deps.push_back(this);
-    char *argv[] = {strdup("ldd"), strdup(name), NULL};
+    const char *argv[] = {"ldd", name, NULL};
     ForkPipe *forkPipe = new ForkPipe("ldd", argv);
     if(forkPipe->execAndWait() != 0) {
         return false;
@@ -534,9 +534,6 @@ bool FileImplLibelf::loadDeps(const char *name)
         _deps.push_back(_backend->openFilePrivate(s.toUtf8().constData()));
     }
     delete forkPipe;
-    for(size_t i=0; i<sizeof(argv)/sizeof(argv[0]) - 1; i++) {
-        free(argv[i]);
-    }
     return true;
 }
 

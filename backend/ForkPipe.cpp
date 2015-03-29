@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <sys/select.h>
 #include <sys/wait.h>
@@ -11,9 +12,16 @@
 using namespace std;
 BEGIN_BIN_NAMESPACE(backend)
 
-ForkPipe::ForkPipe(const char *path, char *const argv[], size_t bufsize) :
-    _path(path), _argv(argv), _buf(new char[bufsize]), _bufsize(bufsize)
+ForkPipe::ForkPipe(const char *path, const char *const argv[], size_t bufsize) :
+    _path(path), _buf(new char[bufsize]), _bufsize(bufsize)
 {
+    size_t i;
+    for(i=0; argv[i]; i++);
+    _argv = new char*[i+1];
+    for(i=0; argv[i]; i++) {
+        _argv[i] = strdup(argv[i]);
+    }
+    _argv[i] = NULL;
     _finished = false;
     _statLoc = 0;
     _pid = 0;
@@ -21,6 +29,10 @@ ForkPipe::ForkPipe(const char *path, char *const argv[], size_t bufsize) :
 
 ForkPipe::~ForkPipe()
 {
+    for(size_t i=0; _argv[i]; i++) {
+        free(_argv[i]);
+    }
+    delete[] _argv;
     delete[] _buf;
 }
 
@@ -38,14 +50,16 @@ int ForkPipe::execAndWait()
     case -1:
         return -1;
     case 0:
+        close(pipefds[0]);
         dup2(pipefds[1], 1);
         dup2(pipefds[1], 2);
         close(0);
         if(execvp(_path, _argv) == -1) {
             exit(errno);
         }
-        return 0;
+        exit(0);
     default:
+        close(pipefds[1]);
         fcntl(pipefds[0], F_SETFL, O_NONBLOCK);
         fd_set readset;
         FD_ZERO(&readset);

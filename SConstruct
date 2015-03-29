@@ -21,6 +21,22 @@ baseEnv['LOCAL_BINDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'bin')
 baseEnv['LOCAL_LIBDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'lib')
 baseEnv['LOCAL_DATADIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'share', 'binary')
 
+# Test helpers
+testlib = SConscript(dirs='test', exports='baseEnv', variant_dir='_build/test', duplicate=1)
+
+def build_or_run_test(target, source, env):
+    program = env.Program('unittest', source, LIBS=[testlib])
+    env.AlwaysBuild(env.Alias('test', [program], program[0].abspath))
+testBld = Builder(action = build_or_run_test)
+baseEnv.Append(BUILDERS={'Test' : testBld})
+
+def build_or_run_test_dir(self, path, libs):
+    program = self.Program(os.path.join(path, 'unittest'),
+            Glob(os.path.join(path, '*.cpp')),
+            LIBS=['cppunit', testlib]+libs)
+    self.AlwaysBuild(self.Alias('test', [program], program[0].abspath))
+baseEnv.AddMethod(build_or_run_test_dir, 'TestDir')
+
 # Clone Qt environment
 qtEnv = baseEnv.Clone()
 # Set QT4DIR and PKG_CONFIG_PATH

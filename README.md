@@ -10,6 +10,7 @@ Binary analysis and exhibition of ELF.
 + qt-4.8.5 (如果平台上有的话，还需要同版本的qt-devel)
 + python-2.7.5
 + binutils-devel-2.23.52 (提供libiberty。有的平台上是gcc或gcc-multilib提供)
++ cppunit-1.12.1 (如果平台上有的话，还需要同版本的cppunit-devel)
 
 # Compile
 编译命令如下：

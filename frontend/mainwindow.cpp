@@ -61,9 +61,12 @@ void MainWindow::loadPlugin(const QString &path)
 
 void MainWindow::openFile(const QString &path)
 {
-    if(!path.isEmpty()) {
+    closeFile();
+    if(!path.isEmpty() && _backend->openFile(path.toUtf8().constData())) {
         ui->labelHome->setText(path);
-        _backend->openFile(path.toUtf8().constData());
+    } else {
+        QMessageBox::critical(this,
+                tr("Error"), tr("Not a valid ELF file!"));
     }
 }
 
@@ -76,6 +79,7 @@ void MainWindow::openFile()
 void MainWindow::closeFile()
 {
     _backend->closeFile();
+    ui->retranslateUi(this);
 }
 
 void MainWindow::loadPlugin()

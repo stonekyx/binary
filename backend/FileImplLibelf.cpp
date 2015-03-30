@@ -67,7 +67,7 @@ FileImplLibelf::FileImplLibelf(const char *name,
 
 bool FileImplLibelf::isValid()
 {
-    return _elf;
+    return elf_kind(_elf) != ELF_K_NONE;
 }
 
 int FileImplLibelf::getClass()

@@ -28,12 +28,7 @@ void Backend::setBackendType(BackendType type)
 File *Backend::openFile(const char *name)
 {
     closeFile();
-    if(BACKEND_LIBELF == _type) {
-        _file = new FileImplLibelf(name, ELF_C_READ);
-    }
-    if(_file) {
-        _file->setBackend(this);
-    }
+    _file = openFilePrivate(name);
     emit fileChanged(_file);
     return _file;
 }
@@ -48,10 +43,7 @@ void Backend::closeFile()
     if(!_file) {
         return;
     }
-    if(dynamic_cast<FileImplLibelf*>(_file)) {
-        delete dynamic_cast<FileImplLibelf*>(_file);
-    }
-    _file = NULL;
+    closeFilePrivate(&_file);
     emit fileChanged(_file);
 }
 
@@ -59,6 +51,9 @@ File *Backend::openFilePrivate(const char *name)
 {
     if(BACKEND_LIBELF == _type) {
         File *res = new FileImplLibelf(name, ELF_C_READ);
+        if(res && !res->isValid()) {
+            closeFilePrivate(&res);
+        }
         if(res) {
             res->setBackend(this);
         }

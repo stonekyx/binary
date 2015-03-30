@@ -22,4 +22,21 @@ void ForkPipeTest::testSleep()
     CPPUNIT_ASSERT( !strcmp(forkPipe.getBuf(), "") );
 }
 
+void ForkPipeTest::testTimeout()
+{
+    const char *argv[] = {"sleep", "10", NULL};
+    ForkPipe forkPipe("sleep", argv);
+    CPPUNIT_ASSERT( forkPipe.execAndWait() );
+    CPPUNIT_ASSERT( !strcmp(forkPipe.getBuf(), "") );
+}
+
+void ForkPipeTest::testInit()
+{
+    const char *argv[] = {"10", NULL};
+    ForkPipe forkPipe("", argv);
+    CPPUNIT_ASSERT( !strcmp(forkPipe._path, "") );
+    CPPUNIT_ASSERT( !strcmp(forkPipe._argv[0], "10") );
+    CPPUNIT_ASSERT( forkPipe._argv[1] == NULL );
+}
+
 END_BIN_NAMESPACE

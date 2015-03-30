@@ -19,6 +19,7 @@ private:
     pid_t _pid;
     char *_buf;
     size_t _bufsize;
+    friend class ForkPipeTest;
 };
 
 END_BIN_NAMESPACE

@@ -11,10 +11,14 @@ class ForkPipeTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE( ForkPipeTest );
     CPPUNIT_TEST( testShort );
     CPPUNIT_TEST( testSleep );
+    CPPUNIT_TEST( testTimeout );
+    CPPUNIT_TEST( testInit );
     CPPUNIT_TEST_SUITE_END();
 public:
     void testShort();
     void testSleep();
+    void testTimeout();
+    void testInit();
 };
 
 END_BIN_NAMESPACE

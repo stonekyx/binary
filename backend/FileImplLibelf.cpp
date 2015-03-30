@@ -9,6 +9,7 @@
 #include <ar.h>
 #include <libelf.h>
 #include <gelf.h>
+#include <elfutils/libebl.h>
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -63,6 +64,8 @@ FileImplLibelf::FileImplLibelf(const char *name,
     _dynSymRaw = NULL;
     _dynStrRaw = NULL;
     _depsLoaded = false;
+    _disasmCtx = NULL;
+    _ebl = NULL;
 }
 
 bool FileImplLibelf::isValid()
@@ -303,6 +306,9 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     if(elf_rand(_ar, _arhdr[objIdx].offset()) == 0) {
         return false;
     }
+    if(_arPos != -1) {
+        elf_end(_elf);
+    }
     _elf = elf_begin(_fd, ELF_C_READ, _ar);
     _arPos = objIdx;
     _symTabData = NULL;
@@ -312,6 +318,8 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     _hashTabRaw = NULL;
     _dynSymRaw = NULL;
     _dynStrRaw = NULL;
+    resetDeps();
+    resetDisasm();
     _backend->signalFileChange(NULL);
     _backend->signalFileChange(this);
     return _elf;
@@ -377,16 +385,35 @@ const char *FileImplLibelf::queryDynSymDeps(const char *name,
     return NULL;
 }
 
+int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
+{
+    if(!_disasmCtx) {
+        _ebl = ebl_openbackend(_elf);
+        if(!_ebl) {
+            return -1;
+        }
+        _disasmCtx = disasm_begin(_ebl, _elf, NULL);
+        if(!_disasmCtx) {
+            return -1;
+        }
+    }
+    Elf64_Shdr shdr;
+    if(!getShdr(scnIdx, &shdr)) {
+        return -1;
+    }
+    DisasmCBInfo cbInfo;
+    cbInfo.cur = (const uint8_t *)getRawData(shdr.sh_offset);
+    cbInfo.shdr = &shdr;
+    cbInfo.data = cbData;
+    const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
+    return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+shdr.sh_size,
+            shdr.sh_addr, fmt, cb, &cbInfo, NULL);
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
-    for(vector<File*>::iterator it = _deps.begin();
-            it != _deps.end(); it++)
-    {
-        if(*it == this) {
-            continue;
-        }
-        _backend->closeFilePrivate(&*it);
-    }
+    resetDisasm();
+    resetDeps();
     if(_elf) {
         elf_end(_elf);
     }
@@ -535,6 +562,31 @@ bool FileImplLibelf::loadDeps(const char *name)
     }
     delete forkPipe;
     return true;
+}
+
+void FileImplLibelf::resetDeps()
+{
+    for(vector<File*>::iterator it = _deps.begin();
+            it != _deps.end(); it++)
+    {
+        if(*it == this) {
+            continue;
+        }
+        _backend->closeFilePrivate(&*it);
+    }
+    _depsLoaded = false;
+    _deps.clear();
+}
+
+void FileImplLibelf::resetDisasm()
+{
+    if(!_disasmCtx) {
+        return;
+    }
+    disasm_end(_disasmCtx);
+    ebl_closebackend(_ebl);
+    _disasmCtx = NULL;
+    _ebl = NULL;
 }
 
 END_BIN_NAMESPACE

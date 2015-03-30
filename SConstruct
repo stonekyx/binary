@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import subprocess
 
 qtdir = '/usr'
 
@@ -36,6 +37,14 @@ def build_or_run_test_dir(self, path, libs):
             LIBS=['cppunit', testlib]+libs)
     self.AlwaysBuild(self.Alias('test', [program], program[0].abspath))
 baseEnv.AddMethod(build_or_run_test_dir, 'TestDir')
+
+# Other helpers
+def get_library_dir(self, lib):
+    fullPath = subprocess.check_output([baseEnv['CC'], '-print-file-name='+lib])
+    if fullPath.rfind('/')==-1:
+        return None
+    return fullPath[:fullPath.rfind('/')]
+baseEnv.AddMethod(get_library_dir, 'LibraryDir')
 
 # Clone Qt environment
 qtEnv = baseEnv.Clone()

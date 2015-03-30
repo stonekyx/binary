@@ -3,6 +3,7 @@
 
 #include <libelf.h>
 #include <vector>
+#include <elfutils/libasm.h>
 
 #include "common.h"
 #include "Arhdr.h"
@@ -38,6 +39,7 @@ public:
     virtual char *getRawData(size_t offset);
     virtual bool queryDynSym(const char *, Elf64_Sym *dst);
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
+    virtual int disasm(size_t scnIdx, DisasmCB cb, void *cbData);
     virtual ~FileImplLibelf();
 private:
     int _fd;
@@ -55,6 +57,8 @@ private:
     char *_dynStrRaw;
     std::vector<File*> _deps;
     bool _depsLoaded;
+    DisasmCtx_t *_disasmCtx;
+    Ebl *_ebl;
 
     bool readArhdr();
     bool rewindAr();
@@ -63,6 +67,8 @@ private:
     template<typename WordType, typename SymType>
     bool queryDynSymC(const char *name, Elf64_Sym *dst);
     bool loadDeps(const char *);
+    void resetDeps();
+    void resetDisasm();
 };
 
 END_BIN_NAMESPACE

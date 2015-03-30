@@ -50,6 +50,13 @@ public:
     virtual char *getRawData(size_t offset) = 0;
     virtual bool queryDynSym(const char *, Elf64_Sym *dst) = 0;
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *) = 0;
+    typedef int (*DisasmCB)(char *, size_t, void *);
+    struct DisasmCBInfo {
+        const uint8_t *cur;
+        Elf64_Shdr *shdr; //invalid after all calls finished
+        void *data;
+    };
+    virtual int disasm(size_t scnIdx, DisasmCB, void*) = 0;
     virtual const char *getName() {
         return _name;
     }

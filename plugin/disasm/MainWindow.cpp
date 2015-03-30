@@ -1,5 +1,4 @@
 #include <elf.h>
-#include <QtGui/QMessageBox>
 
 #include "frontend/PluginManager.h"
 #include "backend/Backend.h"
@@ -35,11 +34,42 @@ MainWindow::~MainWindow()
     }
 }
 
+static int disasmCallback(char *buf, size_t , void *arg)
+{
+    File::DisasmCBInfo *info = (File::DisasmCBInfo*)arg;
+    InfoModel *infoModel = (InfoModel*)info->data;
+    infoModel->buildMore(QString("\t%1").arg(buf));
+    return 0;
+}
+
 void MainWindow::updateInfo(File *file)
 {
     if(!_ui->switchMode(file)) {
         return;
     }
+    if(_infoModel) {
+        delete _infoModel;
+    }
+    _infoModel = new InfoModel(QString(), 3, NULL);
+    size_t shdrNum;
+    if(file->getShdrNum(&shdrNum) != 0) {
+        return;
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!file->getShdr(i, &shdr)) {
+            continue;
+        }
+        if(shdr.sh_type != SHT_PROGBITS || shdr.sh_size == 0 ||
+                (shdr.sh_flags & SHF_EXECINSTR) == 0)
+        {
+            continue;
+        }
+        _infoModel->buildMore(QString("Section\t%1")
+                .arg(file->getScnName(&shdr)));
+        file->disasm(i, disasmCallback, _infoModel);
+    }
+    _ui->infoTree->setModel(_infoModel);
 }
 
 END_PLUG_NAMESPACE

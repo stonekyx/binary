@@ -72,8 +72,12 @@ void MainWindow::openFile(const QString &path)
 
 void MainWindow::openFile()
 {
-    openFile(QFileDialog::getOpenFileName(this, tr("Open file"),
-            "", tr("ELF files (*)")));
+    QString name = QFileDialog::getOpenFileName(this, tr("Open file"),
+            "", tr("ELF files (*)"));
+    if(name.isNull()) {
+        return;
+    }
+    openFile(name);
 }
 
 void MainWindow::closeFile()

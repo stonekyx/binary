@@ -24,6 +24,10 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     } else {
         _scnIndex = 0;
     }
+    QFont font = _ui->infoTree->font();
+    font.setFamily("Courier");
+    font.setPointSize(9);
+    _ui->infoTree->setFont(font);
     updateInfo(_plugin->manager->getBackend()->getFile());
 }
 
@@ -38,7 +42,19 @@ static int disasmCallback(char *buf, size_t , void *arg)
 {
     File::DisasmCBInfo *info = (File::DisasmCBInfo*)arg;
     InfoModel *infoModel = (InfoModel*)info->data;
-    infoModel->buildMore(QString("\t%1").arg(buf));
+    QString bytes;
+    for(const uint8_t *p=info->last; p != info->cur; p++) {
+        if(!bytes.isEmpty()) {
+            bytes += " ";
+        }
+        bytes += QString("%1").arg(*p, 2, 16, QChar('0'));
+    }
+    infoModel->buildMore(QString("\t0x%1\t%2\t%3")
+            .arg(info->vaddr, 0, 16)
+            .arg(bytes)
+            .arg(buf));
+    info->vaddr += info->cur - info->last;
+    info->last = info->cur;
     return 0;
 }
 
@@ -50,7 +66,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(QString(), 3, NULL);
+    _infoModel = new InfoModel(QString(), 5, NULL);
     size_t shdrNum;
     if(file->getShdrNum(&shdrNum) != 0) {
         return;

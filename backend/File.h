@@ -53,6 +53,8 @@ public:
     typedef int (*DisasmCB)(char *, size_t, void *);
     struct DisasmCBInfo {
         const uint8_t *cur;
+        const uint8_t *last;
+        Elf64_Addr vaddr;
         Elf64_Shdr *shdr; //invalid after all calls finished
         void *data;
     };

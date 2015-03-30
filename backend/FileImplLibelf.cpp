@@ -403,6 +403,8 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
     }
     DisasmCBInfo cbInfo;
     cbInfo.cur = (const uint8_t *)getRawData(shdr.sh_offset);
+    cbInfo.last = cbInfo.cur;
+    cbInfo.vaddr = shdr.sh_addr;
     cbInfo.shdr = &shdr;
     cbInfo.data = cbData;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";

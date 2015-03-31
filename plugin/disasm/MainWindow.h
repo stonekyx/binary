@@ -7,6 +7,9 @@
 #include "InfoModel.h"
 
 #include <QtGui/QMainWindow>
+#include <QtCore/QMutex>
+
+#include "LoadWorker.h"
 
 BEGIN_PLUG_NAMESPACE(disasm)
 
@@ -26,6 +29,8 @@ public:
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
+    LoadWorker *_loadWorker;
+    QMutex _updateMutex;
 };
 
 #endif

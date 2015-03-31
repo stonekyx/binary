@@ -64,10 +64,8 @@ File *Backend::openFilePrivate(const char *name)
 
 void Backend::closeFilePrivate(File **file)
 {
-    if(dynamic_cast<FileImplLibelf*>(*file)) {
-        delete dynamic_cast<FileImplLibelf*>(*file);
-        *file = NULL;
-    }
+    (*file)->arrangeDelete();
+    *file = NULL;
 }
 
 void Backend::signalFileChange(File *file)

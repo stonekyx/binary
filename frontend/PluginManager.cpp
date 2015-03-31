@@ -2,6 +2,7 @@
 #include <dlfcn.h>
 #include <err.h>
 
+#include "Plugin.h"
 #include "PluginManager.h"
 
 using namespace std;
@@ -22,7 +23,7 @@ BEGIN_BIN_NAMESPACE(frontend)
 #define NOOP
 
 PluginManager::PluginManager(BIN_NAMESPACE(backend)::Backend *backend) :
-    _backend(backend)
+    _backend(backend), _arrangedDelete(false)
 {
     _plugins.clear();
 }
@@ -95,16 +96,59 @@ BIN_NAMESPACE(backend)::Backend *PluginManager::getBackend()
     return _backend;
 }
 
-PluginManager::~PluginManager()
+void PluginManager::arrangeDelete()
 {
+    _arrangedDelete = true;
     for(vector<Plugin*>::iterator it = _plugins.begin();
             it != _plugins.end(); it++)
     {
-        void *handle = (*it)->handle;
         delete (*it);
-        DLASSERT(dlclose(handle), NOOP);
     }
     _plugins.clear();
+    if(_libDep.empty()) {
+        deleteLater();
+    }
+}
+
+void PluginManager::registerLibDep(const QObject *o, void *handle)
+{
+    if(!o || !handle) {
+        return;
+    }
+    _libDep[o] = handle;
+    if(_depCnt.find(handle) == _depCnt.end()) {
+        _depCnt[handle] = 0;
+    }
+    _depCnt[handle]++;
+    QObject::connect(o, SIGNAL(destroyed()),
+            this, SLOT(removeLibDep()));
+}
+
+void PluginManager::removeLibDep()
+{
+    const QObject *o = sender();
+    void *handle = NULL;
+    if(_libDep.find(o) == _libDep.end()) {
+        return;
+    }
+    handle = _libDep[o];
+    _libDep.erase(o);
+    if(!handle || _depCnt.find(handle) == _depCnt.end()) {
+        return;
+    }
+    _depCnt[handle]--;
+    if(_arrangedDelete && _libDep.empty()) {
+        deleteLater();
+    }
+}
+
+PluginManager::~PluginManager()
+{
+    for(map<void*, int>::iterator it = _depCnt.begin();
+            it != _depCnt.end(); it++)
+    {
+        DLASSERT(dlclose(it->first), NOOP);
+    }
 }
 
 END_BIN_NAMESPACE

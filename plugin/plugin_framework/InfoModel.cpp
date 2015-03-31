@@ -122,6 +122,7 @@ void InfoModel::buildMore(const QString &line)
         newData << s;
     }
 
+    emit layoutAboutToBeChanged();
     int lineLevel = indentLevel(line);
     if(lineLevel<_currentLevel) {
         while(_currentLevel>lineLevel) {
@@ -141,6 +142,7 @@ void InfoModel::buildMore(const QString &line)
         _currentNode->getParent()->addChild(newData);
         _currentNode = _currentNode->nextSibling();
     }
+    emit layoutChanged();
     if(_columnCount>1 && newData.size()>1 && isVariable(newData[1])) {
         QString key = lineFields[1].midRef(1, lineFields[1].length()-2).toString();
         QModelIndex value = createIndex(_currentNode->getRow(), 1, _currentNode);

@@ -94,7 +94,7 @@ public:
         menuPlugin->addAction(actionPluginLoad);
 
         retranslateUi(MainWindow);
-        QObject::connect(actionFileQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
+        QObject::connect(actionFileQuit, SIGNAL(triggered()), MainWindow, SLOT(safeClose()));
         QObject::connect(actionFileOpen, SIGNAL(triggered()), MainWindow, SLOT(openFile()));
         QObject::connect(actionFileClose, SIGNAL(triggered()), MainWindow, SLOT(closeFile()));
         QObject::connect(actionPluginLoad, SIGNAL(triggered()), MainWindow, SLOT(loadPlugin()));

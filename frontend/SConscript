@@ -19,6 +19,7 @@ env.Append(LINKFLAGS=['-rdynamic'])
 
 env.Moc4('mainwindow.h')
 env.Moc4('Plugin.h')
+env.Moc4('PluginManager.h')
 
 # env.Uic4(Glob('*.ui'))
 frontendTarget = env.Program('mainwindow', source=Glob('*.cpp')+Glob('*.cc'))

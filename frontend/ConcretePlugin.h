@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "Plugin.h"
+#include "PluginManager.h"
 
 BEGIN_BIN_NAMESPACE(frontend)
 
@@ -35,6 +36,7 @@ public:
             } else {
                 (*it)->deleteLater();
             }
+            manager->registerLibDep(*it, handle);
         }
         _views.clear();
     }

@@ -4,6 +4,7 @@
 #include <elf.h>
 #include <cstdlib>
 #include <cstring>
+#include <set>
 #include <QtCore/QObject>
 
 #include "common.h"
@@ -66,11 +67,36 @@ public:
     void setBackend(Backend *b) {
         _backend = b;
     }
+    void registerWatcher(const QObject *o) {
+        _watchers.insert(o);
+        QObject::connect(o, SIGNAL(destroyed()),
+                this, SLOT(admitDestroy()));
+    }
+    void arrangeDelete() {
+        if(_watchers.empty()) {
+            delete this;
+            return;
+        }
+        _arrangedDelete = true;
+        emit aboutToBeDestroyed();
+    }
+signals:
+    void aboutToBeDestroyed();
+public slots:
+    void admitDestroy() {
+        _watchers.erase(sender());
+        if(_arrangedDelete && _watchers.empty()) {
+            deleteLater();
+        }
+    }
 protected:
     Backend *_backend;
     char *_name;
+    std::set<const QObject*> _watchers;
+    bool _arrangedDelete;
 
-    File(const char *name) : _backend(NULL), _name(strdup(name)) {}
+    File(const char *name) :
+        _backend(NULL), _name(strdup(name)), _arrangedDelete(false) {}
     virtual ~File() { free(_name); }
 };
 

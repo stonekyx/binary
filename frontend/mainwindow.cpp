@@ -16,13 +16,13 @@ MainWindow::MainWindow(QWidget *parent) :
     _backend(new Backend),
     _pm(new PluginManager(_backend))
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete _pm;
     delete _backend;
 }
 
@@ -92,16 +92,29 @@ void MainWindow::loadPlugin()
             QString(), tr("Shared object (*.so)")));
 }
 
+void MainWindow::safeClose()
+{
+    QObject::connect(_pm, SIGNAL(destroyed()),
+            this, SLOT(close()));
+    _pm->arrangeDelete();
+}
+
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     switch(event->key()) {
     case Qt::Key_Q:
         if(event->modifiers() & Qt::ControlModifier)
-            QApplication::quit();
+            safeClose();
         break;
     default:
         break;
     }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    safeClose();
+    event->accept();
 }
 
 END_BIN_NAMESPACE

@@ -34,9 +34,11 @@ public slots:
     void openFile();
     void closeFile();
     void loadPlugin();
+    void safeClose();
 
 protected:
     virtual void keyPressEvent(QKeyEvent *);
+    virtual void closeEvent(QCloseEvent *);
 
 private:
     Ui::MainWindow *ui;

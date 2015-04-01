@@ -46,7 +46,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateInfo(File *file)
 {
-    _updateMutex.lock();
     if(_loadWorker)
     {
         _loadWorker->terminate();
@@ -55,7 +54,6 @@ void MainWindow::updateInfo(File *file)
         _loadWorker = NULL;
     }
     if(!_ui->switchMode(file)) {
-        _updateMutex.unlock();
         return;
     }
     if(_infoModel) {
@@ -66,8 +64,6 @@ void MainWindow::updateInfo(File *file)
 
     _loadWorker = new LoadWorker(file, _infoModel);
     _loadWorker->start();
-
-    _updateMutex.unlock();
 }
 
 END_PLUG_NAMESPACE

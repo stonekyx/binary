@@ -7,7 +7,6 @@
 #include "InfoModel.h"
 
 #include <QtGui/QMainWindow>
-#include <QtCore/QMutex>
 
 #include "LoadWorker.h"
 
@@ -30,7 +29,6 @@ private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
     LoadWorker *_loadWorker;
-    QMutex _updateMutex;
 };
 
 #endif

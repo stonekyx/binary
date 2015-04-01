@@ -404,16 +404,19 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
         return -1;
     }
     DisasmCBInfo cbInfo;
+    DisasmPrivData callerData;
     cbInfo.cur = (const uint8_t *)getRawData(shdr.sh_offset);
     cbInfo.last = cbInfo.cur;
     cbInfo.vaddr = shdr.sh_addr;
     cbInfo.shdr = &shdr;
     cbInfo.data = cbData;
-    cbInfo.symNameData = &_symNameMap;
     cbInfo.labelBuf = NULL;
+    cbInfo.callerData = &callerData;
+    callerData.symNameMap = &_symNameMap;
+    callerData.outputCB = cb;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
     return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+shdr.sh_size,
-            shdr.sh_addr, fmt, cb, &cbInfo, &cbInfo);
+            shdr.sh_addr, fmt, disasmOutput, &cbInfo, &cbInfo);
 }
 
 FileImplLibelf::~FileImplLibelf()
@@ -599,12 +602,12 @@ int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
         GElf_Addr val, char **buf, size_t *size, void *arg)
 {
     DisasmCBInfo *info = (DisasmCBInfo *)arg;
+    DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
     if(info->labelBuf) {
         free(info->labelBuf);
         info->labelBuf = NULL;
     }
-    map<Elf64_Addr, const char *> *symNameMap =
-        (map<Elf64_Addr, const char *> *)info->symNameData;
+    map<Elf64_Addr, const char *> *symNameMap = priv->symNameMap;
     if(symNameMap->find(val) != symNameMap->end()) {
         info->labelBuf = strdup((*symNameMap)[val]);
         *size = strlen(info->labelBuf);
@@ -616,13 +619,37 @@ int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
 void FileImplLibelf::prepareSymLookup()
 {
     _symNameMap.clear();
+    char *dynSymRaw = findDynTag(DT_SYMTAB);
+    char *dynStrRaw = findDynTag(DT_STRTAB);
+    size_t dynSymNum = detectDynSymCnt();
+    for(size_t i=0; i<dynSymNum; i++) {
+        Elf64_Sym sym;
+        if(getKind() == ELFCLASS32) {
+            convertClass(sym, *((Elf32_Sym*)dynSymRaw+i));
+        } else if(getKind() == ELFCLASS64) {
+            convertClass(sym, *((Elf64_Sym*)dynSymRaw+i));
+        } else {
+            break;
+        }
+        if(dynStrRaw[sym.st_name] == 0) {
+            continue;
+        }
+        if(_symNameMap.find(sym.st_value) != _symNameMap.end()) {
+            continue;
+        }
+        _symNameMap[sym.st_value] = dynStrRaw+sym.st_name;
+    }
+
     size_t shdrNum;
     if(getShdrNum(&shdrNum)!=0) {
         return;
     }
     for(size_t i=0; i<shdrNum; i++) {
         Elf64_Shdr shdr;
-        if(!getShdr(i, &shdr) || shdr.sh_type != SHT_SYMTAB) {
+        if(!getShdr(i, &shdr) ||
+                (shdr.sh_type != SHT_SYMTAB &&
+                 shdr.sh_type != SHT_DYNSYM))
+        {
             continue;
         }
         for(size_t symIdx = 0;
@@ -642,6 +669,70 @@ void FileImplLibelf::prepareSymLookup()
                 getStrPtr(shdr.sh_link, sym.st_name);
         }
     }
+}
+
+size_t FileImplLibelf::detectDynSymCnt()
+{
+    if(!_hashTabRaw && !(_hashTabRaw=findDynTag(DT_GNU_HASH))) {
+        return 0;
+    }
+    if(getKind() != ELFCLASS32 && getKind() != ELFCLASS64) {
+        return 0;
+    }
+    size_t C = getKind()==ELFCLASS32 ? 4 : 8;
+    uint32_t nbuckets = *(uint32_t*)_hashTabRaw;
+    uint32_t symndx = *((uint32_t*)_hashTabRaw+1);
+    uint32_t maskwords = *((uint32_t*)_hashTabRaw+2);
+    char *bloom = _hashTabRaw+sizeof(uint32_t)*4;
+    uint32_t *buckets = (uint32_t*)(bloom+maskwords*C);
+    uint32_t *hashvals = (uint32_t*)(buckets+nbuckets);
+    uint32_t *hv;
+
+    size_t cnt = symndx;
+    for(size_t i=0; i<nbuckets; i++) {
+        if(buckets[i]==0) {
+            continue;
+        }
+        hv = &hashvals[buckets[i]-symndx];
+        do {
+            cnt++;
+        } while(((*hv++) & 1) == 0);
+    }
+    return cnt;
+}
+
+int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
+{
+    DisasmCBInfo *info = (DisasmCBInfo *)arg;
+    DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
+    QString newBuf(buf);
+    QStringList fields = newBuf.split("\t", QString::SkipEmptyParts);
+    if(fields.size() != 2) {
+        return priv->outputCB(buf, len, arg);
+    }
+    QStringList params =
+        fields.at(1).split(",", QString::SkipEmptyParts);
+    QString label;
+    foreach(QString p, params) {
+        bool ok;
+        size_t val = p.toULong(&ok, 0);
+        if(!ok) {
+            continue;
+        }
+        if(priv->symNameMap->find(val) != priv->symNameMap->end()) {
+            label += " <";
+            label += (*priv->symNameMap)[val];
+            label += ">";
+        }
+    }
+    if(!label.isEmpty()) {
+        label.prepend("#");
+        if(!newBuf.endsWith(QChar('\t'))) {
+            newBuf.append(QChar('\t'));
+        }
+        newBuf.append(label);
+    }
+    return priv->outputCB(newBuf.toUtf8().data(), newBuf.length(), arg);
 }
 
 END_BIN_NAMESPACE

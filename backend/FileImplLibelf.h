@@ -61,6 +61,10 @@ private:
     DisasmCtx_t *_disasmCtx;
     Ebl *_ebl;
     std::map<Elf64_Addr, const char *> _symNameMap;
+    struct DisasmPrivData {
+        std::map<Elf64_Addr, const char *> *symNameMap;
+        DisasmCB outputCB;
+    };
 
     bool readArhdr();
     bool rewindAr();
@@ -74,6 +78,8 @@ private:
     static int disasmGetSym(GElf_Addr, Elf32_Word, GElf_Addr, char **,
             size_t *, void *);
     void prepareSymLookup();
+    size_t detectDynSymCnt();
+    static int disasmOutput(char *, size_t, void *);
 };
 
 END_BIN_NAMESPACE

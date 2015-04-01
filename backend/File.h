@@ -58,8 +58,8 @@ public:
         Elf64_Addr vaddr;
         Elf64_Shdr *shdr; //invalid after all calls finished
         void *data;
-        void *symNameData;
         char *labelBuf;
+        void *callerData;
     };
     virtual int disasm(size_t scnIdx, DisasmCB, void*) = 0;
     virtual const char *getName() {

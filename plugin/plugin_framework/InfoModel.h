@@ -28,7 +28,7 @@ public:
     virtual QModelIndex parent(const QModelIndex &index) const;
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
 
-    void buildMore(const QString &line);
+    QModelIndex buildMore(const QString &line);
     QModelIndex nextRow(const QModelIndex &cur);
 private:
     void buildTree(const QStringList &data);

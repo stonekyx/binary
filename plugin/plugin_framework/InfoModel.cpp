@@ -118,7 +118,7 @@ static int indentLevel(const QString &line)
     return i;
 }
 
-void InfoModel::buildMore(const QString &line)
+QModelIndex InfoModel::buildMore(const QString &line)
 {
     QList<QVariant> newData;
     QStringList lineFields = line.split("\t", QString::SkipEmptyParts);
@@ -153,6 +153,7 @@ void InfoModel::buildMore(const QString &line)
         QModelIndex value = createIndex(_currentNode->getRow(), 1, _currentNode);
         _variableMap.insert(key, value);
     }
+    return createIndex(_currentNode->getRow(), 0, _currentNode);
 }
 
 QModelIndex InfoModel::nextRow(const QModelIndex &cur)

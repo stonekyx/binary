@@ -17,7 +17,9 @@ class MainWindow;
 END_PLUG_NAMESPACE
 
 class binary::plugin::disasm::MainWindow :
-    public PLUG_NAMESPACE(plugin_framework)::MWTreeView {
+    public binary::plugin::plugin_framework::MWTreeView
+{
+    Q_OBJECT
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -25,6 +27,8 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+public slots:
+    void spanFirstColumn(QModelIndex);
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;

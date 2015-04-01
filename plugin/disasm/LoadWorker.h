@@ -16,10 +16,13 @@ END_PLUG_NAMESPACE
 class binary::plugin::disasm::LoadWorker :
     public QThread
 {
+    Q_OBJECT
 public:
     LoadWorker(BIN_NAMESPACE(backend)::File *file,
             PLUG_NAMESPACE(plugin_framework)::InfoModel *im,
             QObject * = NULL);
+signals:
+    void symbolStarted(QModelIndex);
 protected:
     virtual void run();
 private:

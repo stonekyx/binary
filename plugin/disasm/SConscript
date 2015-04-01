@@ -10,5 +10,8 @@ qtEnv.EnableQt4Modules([
     'QtCore'
     ])
 
+qtEnv.Moc4('LoadWorker.h')
+qtEnv.Moc4('MainWindow.h')
+
 pluginTarget = qtEnv.SharedLibrary(target='disasm', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

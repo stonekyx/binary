@@ -63,7 +63,15 @@ void MainWindow::updateInfo(File *file)
     _ui->infoTree->setModel(_infoModel);
 
     _loadWorker = new LoadWorker(file, _infoModel);
+    QObject::connect(_loadWorker, SIGNAL(symbolStarted(QModelIndex)),
+            this, SLOT(spanFirstColumn(QModelIndex)));
     _loadWorker->start();
+}
+
+void MainWindow::spanFirstColumn(QModelIndex index)
+{
+    _ui->infoTree->setFirstColumnSpanned(index.row(), index.parent(),
+            true);
 }
 
 END_PLUG_NAMESPACE

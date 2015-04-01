@@ -409,14 +409,24 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
     cbInfo.last = cbInfo.cur;
     cbInfo.vaddr = shdr.sh_addr;
     cbInfo.shdr = &shdr;
+    cbInfo.file = this;
     cbInfo.data = cbData;
     cbInfo.labelBuf = NULL;
     cbInfo.callerData = &callerData;
     callerData.symNameMap = &_symNameMap;
+    callerData.symDataMap = &_symDataMap;
     callerData.outputCB = cb;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
     return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+shdr.sh_size,
             shdr.sh_addr, fmt, disasmOutput, &cbInfo, &cbInfo);
+}
+
+const char *FileImplLibelf::getSymNameByVal(Elf64_Addr val)
+{
+    if(_symNameMap.find(val) != _symNameMap.end()) {
+        return _symNameMap[val];
+    }
+    return NULL;
 }
 
 FileImplLibelf::~FileImplLibelf()
@@ -631,13 +641,20 @@ void FileImplLibelf::prepareSymLookup()
         } else {
             break;
         }
+
+        if(sym.st_value == 0) {
+            continue;
+        }
+        if(_symDataMap.find(sym.st_value) == _symDataMap.end()) {
+            _symDataMap[sym.st_value] = sym;
+        }
+
         if(dynStrRaw[sym.st_name] == 0) {
             continue;
         }
-        if(_symNameMap.find(sym.st_value) != _symNameMap.end()) {
-            continue;
+        if(_symNameMap.find(sym.st_value) == _symNameMap.end()) {
+            _symNameMap[sym.st_value] = dynStrRaw+sym.st_name;
         }
-        _symNameMap[sym.st_value] = dynStrRaw+sym.st_name;
     }
 
     size_t shdrNum;
@@ -656,17 +673,19 @@ void FileImplLibelf::prepareSymLookup()
                 symIdx < shdr.sh_size/shdr.sh_entsize; symIdx++)
         {
             Elf64_Sym sym;
-            if(!getSym(i, symIdx, &sym)) {
+            if(!getSym(i, symIdx, &sym) || sym.st_value == 0) {
                 continue;
+            }
+            if(_symDataMap.find(sym.st_value) == _symDataMap.end()) {
+                _symDataMap[sym.st_value] = sym;
             }
             if(getStrPtr(shdr.sh_link, sym.st_name)[0] == 0) {
                 continue;
             }
-            if(_symNameMap.find(sym.st_value) != _symNameMap.end()) {
-                continue;
+            if(_symNameMap.find(sym.st_value) == _symNameMap.end()) {
+                _symNameMap[sym.st_value] =
+                    getStrPtr(shdr.sh_link, sym.st_name);
             }
-            _symNameMap[sym.st_value] =
-                getStrPtr(shdr.sh_link, sym.st_name);
         }
     }
 }

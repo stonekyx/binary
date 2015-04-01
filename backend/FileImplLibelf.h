@@ -41,6 +41,7 @@ public:
     virtual bool queryDynSym(const char *, Elf64_Sym *dst);
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual int disasm(size_t scnIdx, DisasmCB cb, void *cbData);
+    virtual const char *getSymNameByVal(Elf64_Addr);
     virtual ~FileImplLibelf();
 private:
     int _fd;
@@ -61,8 +62,10 @@ private:
     DisasmCtx_t *_disasmCtx;
     Ebl *_ebl;
     std::map<Elf64_Addr, const char *> _symNameMap;
+    std::map<Elf64_Addr, Elf64_Sym> _symDataMap;
     struct DisasmPrivData {
         std::map<Elf64_Addr, const char *> *symNameMap;
+        std::map<Elf64_Addr, Elf64_Sym> *symDataMap;
         DisasmCB outputCB;
     };
 

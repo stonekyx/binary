@@ -49,13 +49,23 @@ static QString addTooltip(const char *buf)
 int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
 {
     File::DisasmCBInfo *info = (File::DisasmCBInfo*)arg;
-    InfoModel *infoModel = (InfoModel*)info->data;
+    LoadWorker *worker = (LoadWorker*)info->data;
+    InfoModel *infoModel = worker->_infoModel;
     QString bytes;
     for(const uint8_t *p=info->last; p != info->cur; p++) {
         if(!bytes.isEmpty()) {
             bytes += " ";
         }
         bytes += QString("%1").arg(*p, 2, 16, QChar('0'));
+    }
+    const char *symName = info->file->getSymNameByVal(info->vaddr);
+    if(symName) {
+        char *demangled = cplus_demangle(symName);
+        QModelIndex inserted = infoModel->buildMore(QString("\t%1\x1f%2")
+                .arg(symName)
+                .arg(demangled));
+        worker->symbolStarted(inserted);
+        free(demangled);
     }
     infoModel->buildMore(QString("\t0x%1\t%2\t%3")
             .arg(info->vaddr, 0, 16)
@@ -88,7 +98,7 @@ void LoadWorker::run()
         }
         _infoModel->buildMore(QString("Section\t%1")
                 .arg(_file->getScnName(&shdr)));
-        _file->disasm(i, disasmCallback, _infoModel);
+        _file->disasm(i, disasmCallback, this);
     }
 }
 

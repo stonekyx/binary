@@ -36,12 +36,17 @@ QVariant InfoModel::data(const QModelIndex &index, int role) const
     if(role == Qt::TextAlignmentRole) {
         return Qt::AlignTop;
     }
-    if(role != Qt::DisplayRole) {
+    if(role != Qt::DisplayRole && role != Qt::ToolTipRole) {
         return QVariant();
     }
     InfoTree *node = static_cast<InfoTree*>(index.internalPointer());
     if(node) {
-        QVariant res = node->data(index.column());
+        QVariant res;
+        if(role == Qt::DisplayRole) {
+            res = node->data(index.column());
+        } else {
+            res = node->tooltip(index.column());
+        }
         if(isVariable(res)) {
             return QVariant(QString("N/A"));
         }
@@ -181,10 +186,10 @@ void InfoModel::buildTree(const QStringList &data)
 //----------------InfoTree------------------
 
 InfoTree::InfoTree(const QList<QVariant> &data, InfoTree *parent) :
-    _parent(parent),
-    _data(data)
+    _parent(parent)
 {
     _child.clear();
+    setDataRow(data);
 }
 
 InfoTree::~InfoTree()
@@ -237,6 +242,14 @@ QVariant InfoTree::data(int col)
     return _data[col];
 }
 
+QVariant InfoTree::tooltip(int col)
+{
+    if(col>=_tooltip.size()) {
+        return QVariant();
+    }
+    return _tooltip[col];
+}
+
 void InfoTree::addChild(const QList<QVariant> &data)
 {
     InfoTree *node = new InfoTree(data, this);
@@ -248,8 +261,32 @@ bool InfoTree::setData(int col, const QVariant &value)
     if(col<0 || col>=_data.size()) {
         return false;
     }
-    _data[col] = value;
+    setDataCol(col, value);
     return true;
+}
+
+void InfoTree::setDataRow(const QList<QVariant> &data)
+{
+    int col = 0;
+    _data.reserve(data.size());
+    _tooltip.reserve(data.size());
+    foreach(const QVariant v, data) {
+        _data.push_back(QVariant());
+        _tooltip.push_back(QVariant());
+        setDataCol(col++, v);
+    }
+}
+
+void InfoTree::setDataCol(int col, const QVariant &v)
+{
+    if(v.toString().contains(QChar('\x1f'))) {
+        QStringList units = v.toString().split(QChar('\x1f'));
+        _data[col] = units[0];
+        _tooltip[col] = units[1];
+    } else {
+        _data[col] = v;
+        _tooltip[col] = QVariant();
+    }
 }
 
 END_PLUG_NAMESPACE

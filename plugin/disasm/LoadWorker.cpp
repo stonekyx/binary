@@ -1,3 +1,7 @@
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+
+#include "DemangleWrap.h"
 #include "LoadWorker.h"
 
 USE_BIN_NAMESPACE(backend);
@@ -11,6 +15,35 @@ LoadWorker::LoadWorker(File *file, InfoModel *im, QObject *parent) :
     file->registerWatcher(this);
     QObject::connect(file, SIGNAL(aboutToBeDestroyed()),
             this, SLOT(terminate()));
+}
+
+static QString addTooltip(const char *buf)
+{
+    QString res(buf);
+    QStringList fields = res.split("\t", QString::SkipEmptyParts);
+    if(fields.size() != 3) {
+        return res;
+    }
+    QStringList units = fields[2].split(" ", QString::SkipEmptyParts);
+    QString tooltip;
+    foreach(QString u, units) {
+        if(u.length()>2 &&
+                u.startsWith(QChar('<')) && u.endsWith(QChar('>')))
+        {
+            if(!tooltip.isEmpty()) {
+                tooltip += "\n";
+            }
+            char *demangle = cplus_demangle(
+                    u.mid(1, u.length()-2).toUtf8().constData());
+            tooltip += demangle;
+            free(demangle);
+        }
+    }
+    if(!tooltip.isEmpty()) {
+        res += '\x1f';
+        res += tooltip;
+    }
+    return res;
 }
 
 int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
@@ -27,7 +60,7 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
     infoModel->buildMore(QString("\t0x%1\t%2\t%3")
             .arg(info->vaddr, 0, 16)
             .arg(bytes)
-            .arg(buf));
+            .arg(addTooltip(buf)));
     info->vaddr += info->cur - info->last;
     info->last = info->cur;
     if(info->labelBuf) {

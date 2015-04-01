@@ -52,6 +52,7 @@ public:
     InfoTree *nextSibling();
     int getRow();
     QVariant data(int);
+    QVariant tooltip(int);
 
     void addChild(const QList<QVariant> &);
     bool setData(int, const QVariant &);
@@ -59,6 +60,10 @@ private:
     QList<InfoTree*> _child;
     InfoTree *_parent;
     QList<QVariant> _data;
+    QList<QVariant> _tooltip;
+
+    void setDataRow(const QList<QVariant> &);
+    void setDataCol(int, const QVariant &);
 };
 
 END_PLUG_NAMESPACE

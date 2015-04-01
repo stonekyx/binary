@@ -66,6 +66,7 @@ FileImplLibelf::FileImplLibelf(const char *name,
     _depsLoaded = false;
     _disasmCtx = NULL;
     _ebl = NULL;
+    prepareSymLookup();
 }
 
 bool FileImplLibelf::isValid()
@@ -320,6 +321,7 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     _dynStrRaw = NULL;
     resetDeps();
     resetDisasm();
+    prepareSymLookup();
     _backend->signalFileChange(NULL);
     _backend->signalFileChange(this);
     return _elf;
@@ -392,7 +394,7 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
         if(!_ebl) {
             return -1;
         }
-        _disasmCtx = disasm_begin(_ebl, _elf, NULL);
+        _disasmCtx = disasm_begin(_ebl, _elf, disasmGetSym);
         if(!_disasmCtx) {
             return -1;
         }
@@ -407,9 +409,11 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
     cbInfo.vaddr = shdr.sh_addr;
     cbInfo.shdr = &shdr;
     cbInfo.data = cbData;
+    cbInfo.symNameData = &_symNameMap;
+    cbInfo.labelBuf = NULL;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
     return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+shdr.sh_size,
-            shdr.sh_addr, fmt, cb, &cbInfo, NULL);
+            shdr.sh_addr, fmt, cb, &cbInfo, &cbInfo);
 }
 
 FileImplLibelf::~FileImplLibelf()
@@ -589,6 +593,55 @@ void FileImplLibelf::resetDisasm()
     ebl_closebackend(_ebl);
     _disasmCtx = NULL;
     _ebl = NULL;
+}
+
+int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
+        GElf_Addr val, char **buf, size_t *size, void *arg)
+{
+    DisasmCBInfo *info = (DisasmCBInfo *)arg;
+    if(info->labelBuf) {
+        free(info->labelBuf);
+        info->labelBuf = NULL;
+    }
+    map<Elf64_Addr, const char *> *symNameMap =
+        (map<Elf64_Addr, const char *> *)info->symNameData;
+    if(symNameMap->find(val) != symNameMap->end()) {
+        info->labelBuf = strdup((*symNameMap)[val]);
+        *size = strlen(info->labelBuf);
+    }
+    *buf = info->labelBuf;
+    return 0;
+}
+
+void FileImplLibelf::prepareSymLookup()
+{
+    _symNameMap.clear();
+    size_t shdrNum;
+    if(getShdrNum(&shdrNum)!=0) {
+        return;
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!getShdr(i, &shdr) || shdr.sh_type != SHT_SYMTAB) {
+            continue;
+        }
+        for(size_t symIdx = 0;
+                symIdx < shdr.sh_size/shdr.sh_entsize; symIdx++)
+        {
+            Elf64_Sym sym;
+            if(!getSym(i, symIdx, &sym)) {
+                continue;
+            }
+            if(getStrPtr(shdr.sh_link, sym.st_name)[0] == 0) {
+                continue;
+            }
+            if(_symNameMap.find(sym.st_value) != _symNameMap.end()) {
+                continue;
+            }
+            _symNameMap[sym.st_value] =
+                getStrPtr(shdr.sh_link, sym.st_name);
+        }
+    }
 }
 
 END_BIN_NAMESPACE

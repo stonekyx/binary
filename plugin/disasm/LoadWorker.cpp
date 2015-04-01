@@ -30,6 +30,9 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
             .arg(buf));
     info->vaddr += info->cur - info->last;
     info->last = info->cur;
+    if(info->labelBuf) {
+        info->labelBuf[0] = 0;
+    }
     yieldCurrentThread();
     return 0;
 }

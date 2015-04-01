@@ -3,6 +3,7 @@
 
 #include <libelf.h>
 #include <vector>
+#include <map>
 #include <elfutils/libasm.h>
 
 #include "common.h"
@@ -59,6 +60,7 @@ private:
     bool _depsLoaded;
     DisasmCtx_t *_disasmCtx;
     Ebl *_ebl;
+    std::map<Elf64_Addr, const char *> _symNameMap;
 
     bool readArhdr();
     bool rewindAr();
@@ -69,6 +71,9 @@ private:
     bool loadDeps(const char *);
     void resetDeps();
     void resetDisasm();
+    static int disasmGetSym(GElf_Addr, Elf32_Word, GElf_Addr, char **,
+            size_t *, void *);
+    void prepareSymLookup();
 };
 
 END_BIN_NAMESPACE

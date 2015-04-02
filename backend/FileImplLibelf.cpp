@@ -361,7 +361,7 @@ bool FileImplLibelf::queryDynSym(const char *name, Elf64_Sym *dst)
     if(!_dynStrRaw && !(_dynStrRaw=findDynTag(DT_STRTAB))) {
         return false;
     }
-    switch(getKind()) {
+    switch(getClass()) {
     case ELFCLASS32:
         return queryDynSymC<uint32_t, Elf32_Sym>(name, dst);
     case ELFCLASS64:
@@ -634,9 +634,9 @@ void FileImplLibelf::prepareSymLookup()
     size_t dynSymNum = detectDynSymCnt();
     for(size_t i=0; i<dynSymNum; i++) {
         Elf64_Sym sym;
-        if(getKind() == ELFCLASS32) {
+        if(getClass() == ELFCLASS32) {
             convertClass(sym, *((Elf32_Sym*)dynSymRaw+i));
-        } else if(getKind() == ELFCLASS64) {
+        } else if(getClass() == ELFCLASS64) {
             convertClass(sym, *((Elf64_Sym*)dynSymRaw+i));
         } else {
             break;
@@ -695,10 +695,10 @@ size_t FileImplLibelf::detectDynSymCnt()
     if(!_hashTabRaw && !(_hashTabRaw=findDynTag(DT_GNU_HASH))) {
         return 0;
     }
-    if(getKind() != ELFCLASS32 && getKind() != ELFCLASS64) {
+    if(getClass() != ELFCLASS32 && getClass() != ELFCLASS64) {
         return 0;
     }
-    size_t C = getKind()==ELFCLASS32 ? 4 : 8;
+    size_t C = getClass()==ELFCLASS32 ? 4 : 8;
     uint32_t nbuckets = *(uint32_t*)_hashTabRaw;
     uint32_t symndx = *((uint32_t*)_hashTabRaw+1);
     uint32_t maskwords = *((uint32_t*)_hashTabRaw+2);

@@ -81,9 +81,10 @@ def gen_all_extern(target, source, env):
                 break
         fs.close()
         if vType and nameSpace and objName:
-            f.write('extern PLUG_NAMESPACE(' + nameSpace +\
-                    ')::ExpandDefine<' + vType + '> ' +\
-                    objName + ';\n')
+            f.write('BEGIN_PLUG_NAMESPACE(' + nameSpace + ')\n')
+            f.write('extern PLUG_NAMESPACE(plugin_framework)::ExpandDefine<'\
+                    + vType + '> ' + objName + ';\n')
+            f.write('END_PLUG_NAMESPACE\n')
     f.write('#endif\n')
     f.close()
 

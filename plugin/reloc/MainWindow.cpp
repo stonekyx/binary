@@ -4,6 +4,7 @@
 #include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
+#include "DemangleWrap.h"
 
 #include "MainWindow.h"
 
@@ -24,10 +25,6 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     } else {
         _scnIndex = 0;
     }
-    QFont font = _ui->infoTree->font();
-    font.setFamily("Courier");
-    font.setPointSize(9);
-    _ui->infoTree->setFont(font);
     updateInfo(_plugin->manager->getBackend()->getFile());
 }
 
@@ -46,7 +43,7 @@ void MainWindow::updateInfo(File *file)
     if(_infoModel) {
         delete _infoModel;
     }
-    _infoModel = new InfoModel(QString(), 5, NULL);
+    _infoModel = new InfoModel(QString(), 2, NULL);
     scanShdr(file);
     _ui->infoTree->setModel(_infoModel);
 }
@@ -68,12 +65,48 @@ bool MainWindow::scanShdr(File *file)
         _infoModel->buildMore(QString("Section\t%1")
                 .arg(file->getScnName(&shdr)));
         for(size_t ent=0; ent<shdr.sh_size/shdr.sh_entsize; ent++) {
-            if(shdr.sh_type == SHT_REL) {
+            union {
                 Elf64_Rel rel;
-                if(!file->getRel(i, ent, &rel)) {
+                Elf64_Rela rela;
+            } rel;
+            if(shdr.sh_type == SHT_REL) {
+                if(!file->getRel(i, ent, &rel.rel)) {
                     continue;
                 }
+            } else if(shdr.sh_type == SHT_RELA) {
+                if(!file->getRela(i, ent, &rel.rela)) {
+                    continue;
+                }
+            } else {
+                continue;
             }
+            Elf64_Sym sym;
+            if(!file->getSym(shdr.sh_link,
+                        ELF64_R_SYM(rel.rel.r_info), &sym))
+            {
+                continue;
+            }
+            Elf64_Shdr symShdr;
+            if(!file->getShdr(shdr.sh_link, &symShdr)) {
+                continue;
+            }
+            const char *symName =
+                file->getStrPtr(symShdr.sh_link, sym.st_name);
+            char *demangled = cplus_demangle(symName);
+            _infoModel->buildMore(QString("\tSymbol\t%1\x1f%2")
+                    .arg(symName)
+                    .arg(demangled));
+            _infoModel->buildMore(QString("\t\tOffset\t0x%1")
+                    .arg(rel.rel.r_offset, 0, 16));
+            _infoModel->buildMore(QString("\t\tType\t%1")
+                    .arg(ELF64_R_TYPE(rel.rel.r_info)));
+            if(shdr.sh_type == SHT_RELA) {
+                _infoModel->buildMore(QString("\t\tAddend\t%1")
+                        .arg(rel.rela.r_addend));
+            }
+            _infoModel->buildMore(QString("\t\tLibrary\t%1")
+                    .arg(file->queryDynSymDeps(symName, NULL)));
+            free(demangled);
         }
     }
     return true;

@@ -165,7 +165,7 @@ void MainWindow::updateElfInfo(File *file)
                 .arg(sym.st_size, 0, 16));
         if(ELF64_ST_TYPE(sym.st_info) == STT_FILE ||
                 ELF64_ST_TYPE(sym.st_info) == STT_SECTION ||
-                sym.st_value != 0)
+                sym.st_shndx != 0)
         {
             continue;
         }

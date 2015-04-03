@@ -54,7 +54,7 @@ void MainWindow::updateInfo(File *file)
         if(!modelData.isEmpty()) {
             textStream << "\n";
         }
-        textStream << "Entry " << i+1 << "\t" << Defines::commentText_PT(phdr.p_type);
+        textStream << "Entry " << i+1 << "\t" << Defines::commentText(phdr.p_type, defines_PT);
 
         textStream << "\n\tFlags\t" << HEX(phdr.p_flags);
         char *buf = new char[Defines::commentText_PF(phdr.p_flags, NULL)+1];

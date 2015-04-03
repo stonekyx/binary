@@ -89,7 +89,7 @@ void MainWindow::updateInfo(File *file)
     size_t sizeVal;
 
     int elfClass = file->getClass();
-    rawStr = Defines::commentText_ELFCLASS(elfClass);
+    rawStr = Defines::commentText(elfClass, defines_ELFCLASS);
     SET("INFO_FIELD_CLASS");
 
     File::ELFKind elfKind = file->getKind();
@@ -106,13 +106,13 @@ void MainWindow::updateInfo(File *file)
         rawStr = "Yes";
         SET("INFO_FIELD_EHDR");
 
-        rawStr = Defines::commentText_ET(ehdr.e_type);
+        rawStr = Defines::commentText(ehdr.e_type, defines_ET);
         SET("INFO_FIELD_EHDR_TYPE");
 
-        rawStr = Defines::commentText_EM(ehdr.e_machine);
+        rawStr = Defines::commentText(ehdr.e_machine, defines_EM);
         SET("INFO_FIELD_EHDR_ARCH");
 
-        rawStr = Defines::commentText_EV(ehdr.e_version);
+        rawStr = Defines::commentText(ehdr.e_version, defines_EV);
         SET("INFO_FIELD_EHDR_VER");
 
         SETHEX("INFO_FIELD_EHDR_ENTRY", ehdr.e_entry);

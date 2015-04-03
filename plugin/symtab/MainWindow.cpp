@@ -144,11 +144,11 @@ void MainWindow::updateElfInfo(File *file)
         _infoModel->buildMore(QString("\tInfo\t0x%1")
                 .arg(sym.st_info, 0, 16));
         _infoModel->buildMore(QString("\t\tBind\t%1")
-                .arg(Defines::commentText_STB(ELF64_ST_BIND(sym.st_info))));
+                .arg(Defines::commentText(ELF64_ST_BIND(sym.st_info), defines_STB)));
         _infoModel->buildMore(QString("\t\tType\t%1")
-                .arg(Defines::commentText_STT(ELF64_ST_TYPE(sym.st_info))));
+                .arg(Defines::commentText(ELF64_ST_TYPE(sym.st_info), defines_STT)));
         _infoModel->buildMore(QString("\tVisibility\t%1")
-                .arg(Defines::commentText_STV(ELF64_ST_VISIBILITY(sym.st_other))));
+                .arg(Defines::commentText(ELF64_ST_VISIBILITY(sym.st_other), defines_STV)));
         Elf64_Shdr shdr;
         QString scnName;
         if(sym.st_shndx && file->getShdr(sym.st_shndx, &shdr) &&

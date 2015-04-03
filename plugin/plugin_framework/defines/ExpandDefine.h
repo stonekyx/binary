@@ -31,12 +31,12 @@ public:
     typedef typename std::map<std::pair<T, T>, DefineInfo>::const_iterator RangeMapIr;
 
     ExpandDefine() : nullInfo(false) {}
-    const DefineInfo &queryRange(T);
-    const DefineInfo &queryRangeSlow(T);
+    const DefineInfo &queryRange(T) const;
+    const DefineInfo &queryRangeSlow(T) const;
 };
 
 template<typename T>
-const DefineInfo &ExpandDefine<T>::queryRange(T val)
+const DefineInfo &ExpandDefine<T>::queryRange(T val) const
 {
     RangeSetIrPair rangeIr = rangeSet.equal_range(val);
     if(rangeIr.first == rangeSet.end() ||
@@ -48,11 +48,11 @@ const DefineInfo &ExpandDefine<T>::queryRange(T val)
     if(rangeMap.find(key) == rangeMap.end()) {
         return nullInfo;
     }
-    return rangeMap[key];
+    return rangeMap.find(key)->second;
 }
 
 template<typename T>
-const DefineInfo &ExpandDefine<T>::queryRangeSlow(T val)
+const DefineInfo &ExpandDefine<T>::queryRangeSlow(T val) const
 {
     RangeMapKey resRng;
     const DefineInfo *res = &nullInfo;

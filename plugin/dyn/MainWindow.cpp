@@ -89,9 +89,9 @@ void MainWindow::updateInfo(File *file)
 
         _infoModel->buildMore(QString("Entry %1\t%2")
                 .arg(i)
-                .arg(Defines::macroText_DT(dyn.d_tag)));
+                .arg(Defines::macroText(dyn.d_tag, defines_DT)));
         _infoModel->buildMore(QString("\tType\t%1")
-                .arg(Defines::commentText_DT(dyn.d_tag)));
+                .arg(Defines::commentText(dyn.d_tag, defines_DT)));
         _infoModel->buildMore(QString("\td_un\t"));
         _infoModel->buildMore(QString("\t\td_val\t%1")
                 .arg(dyn.d_un.d_val));

@@ -240,7 +240,7 @@ void FileLayout::updateSgm(File *file)
             continue;
         }
         SegInfo info(phdr.p_offset, phdr.p_offset+phdr.p_filesz);
-        info.name = Defines::commentText_PT(phdr.p_type);
+        info.name = Defines::commentText(phdr.p_type, defines_PT);
         info.data.sgmIdx = i;
         _segs.push_back(info);
     }

@@ -13,30 +13,46 @@ BEGIN_PLUG_NAMESPACE(plugin_framework)
 
 class Defines {
 public:
-    static const char *macroText_DT(Elf64_Sxword);
-    static const char *commentText_DT(Elf64_Sxword);
     static std::vector<const char *> macroText_SHF(Elf64_Xword);
     static std::vector<const char *> commentText_SHF(Elf64_Xword);
     static const char *macroText_SHT(Elf64_Word);
     static const char *commentText_SHT(Elf64_Word);
-    static const char *macroText_STB(unsigned char);
-    static const char *commentText_STB(unsigned char);
-    static const char *macroText_STT(unsigned char);
-    static const char *commentText_STT(unsigned char);
-    static const char *macroText_STV(unsigned char);
-    static const char *commentText_STV(unsigned char);
-    static const char *macroText_PT(Elf64_Word);
-    static const char *commentText_PT(Elf64_Word);
     static size_t commentText_PF(Elf64_Word, char*);
-    static const char *macroText_EM(Elf64_Half);
-    static const char *commentText_EM(Elf64_Half);
-    static const char *macroText_ET(Elf64_Half);
-    static const char *commentText_ET(Elf64_Half);
-    static const char *macroText_EV(Elf64_Word);
-    static const char *commentText_EV(Elf64_Word);
-    static const char *macroText_ELFCLASS(int);
-    static const char *commentText_ELFCLASS(int);
+    template<typename T>
+    static const char *anyText(const T &, const ExpandDefine<T> &,
+            const char *DefineInfo::*memb);
+    template<typename T>
+    static const char *macroText(const T &, const ExpandDefine<T> &);
+    template<typename T>
+    static const char *commentText(const T &, const ExpandDefine<T> &);
 };
+
+template<typename T>
+const char *Defines::anyText(const T &val, const ExpandDefine<T> &obj,
+        const char *DefineInfo::*memb)
+{
+    if(obj.defineMap.find(val) != obj.defineMap.end()) {
+        return obj.defineMap.find(val)->second.*memb;
+    }
+    const DefineInfo &info = obj.queryRange(val);
+    if(info.valid) {
+        return info.*memb;
+    }
+    return "Unknown";
+}
+
+template<typename T>
+const char *Defines::macroText(const T &val, const ExpandDefine<T> &obj)
+{
+    return anyText(val, obj, &DefineInfo::name);
+}
+
+template<typename T>
+const char *Defines::commentText(const T &val,
+        const ExpandDefine<T> &obj)
+{
+    return anyText(val, obj, &DefineInfo::explain);
+}
 
 END_PLUG_NAMESPACE
 

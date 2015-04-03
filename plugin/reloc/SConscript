@@ -1,0 +1,14 @@
+#!/usr/bin/python
+
+Import('baseEnv qtEnv')
+
+baseEnv = baseEnv.Clone()
+qtEnv = qtEnv.Clone()
+
+qtEnv.EnableQt4Modules([
+    'QtGui',
+    'QtCore'
+    ])
+
+pluginTarget = qtEnv.SharedLibrary(target='reloc', source=Glob('*.cpp')+Glob('*.cc'))
+Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

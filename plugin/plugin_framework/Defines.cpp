@@ -2,17 +2,7 @@
 
 #include "Defines.h"
 
-#include "defines/DT.h"
-#include "defines/SHF.h"
-#include "defines/SHT.h"
-#include "defines/STB.h"
-#include "defines/STT.h"
-#include "defines/STV.h"
-#include "defines/PT.h"
-#include "defines/EM.h"
-#include "defines/ET.h"
-#include "defines/EV.h"
-#include "defines/ELFCLASS.h"
+#include "defines/all.h"
 
 using namespace std;
 BEGIN_PLUG_NAMESPACE(plugin_framework)

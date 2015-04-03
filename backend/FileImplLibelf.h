@@ -42,16 +42,20 @@ public:
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual int disasm(size_t scnIdx, DisasmCB cb, void *cbData);
     virtual const char *getSymNameByVal(Elf64_Addr);
+    virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
+    virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
     virtual ~FileImplLibelf();
 private:
     int _fd;
     Elf *_elf;
     Elf *_ar;
     int _arPos;
-    Elf_Data *_symTabData;
-    size_t _symTabIdx;
-    Elf_Data *_dynData;
-    size_t _dynIdx;
+    struct ScnDataCache {
+        ScnDataCache() { reset(); }
+        void reset() { data = NULL; idx = 0; }
+        Elf_Data *data;
+        size_t idx;
+    }_symTabCache, _dynCache, _relCache, _relaCache;
     std::vector<Arhdr> _arhdr;
     std::vector<Arsym> _arsym;
     char *_hashTabRaw;
@@ -83,6 +87,7 @@ private:
     void prepareSymLookup();
     size_t detectDynSymCnt();
     static int disasmOutput(char *, size_t, void *);
+    bool checkScnData(size_t scnIdx, ScnDataCache *cache);
 };
 
 END_BIN_NAMESPACE

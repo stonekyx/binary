@@ -7,19 +7,7 @@ Import('qtEnv')
 
 env = qtEnv.Clone()
 
-# Find header's full path used by compiler, in case of non-standard locations.
-def get_elfutils_dir():
-    p = subprocess.Popen([env['CC'], '-E', '-'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=open(os.devnull, 'w'))
-    (out,err) = p.communicate('#include <elfutils/libasm.h>')
-    if p.wait() == None:
-        p.kill()
-    path = [x for x in out.split('\n') if x.find('elfutils/libasm.h')!=-1][0].split('"')[1]
-    return path[:path.rfind('/')]
-
-env.Append(CPPPATH=[get_elfutils_dir()])
+env.Append(CPPPATH=[env.HeaderDir('elfutils/libasm.h')])
 
 # Check necessary headers and libs
 conf = Configure(env)

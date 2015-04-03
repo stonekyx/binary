@@ -1,18 +1,58 @@
 #!/usr/bin/python
 
 import os
+import subprocess
+import re
 
 Import('baseEnv qtEnv')
 
 baseEnv = baseEnv.Clone()
 qtEnv = qtEnv.Clone()
+qtEnv['ALL_DEFINE_HEADERS'] = []
 
-srcpath = Dir('.').srcnode().abspath
+#--------R files----------
 
-suffix = ".compact.h"
+def predict_output(target, source, env):
+    predict = subprocess.check_output([\
+            os.path.join(Dir('#').abspath, 'scripts/PredictR.sh'), \
+            os.path.join(env.HeaderDir('elf.h'), 'elf.h')])
+    for line in re.split('\n+', predict):
+        if len(line)>0:
+            target.append(line)
+    return target, source
 
-for i in os.listdir(srcpath):
-    if i[-len(suffix):] != suffix:
+rBld = Builder(action='scripts/GenerateR.sh $TARGET ' + \
+        os.path.join(qtEnv.HeaderDir('elf.h'), 'elf.h'), \
+        emitter=predict_output)
+qtEnv.Append(BUILDERS = {'GenerateR' : rBld})
+rFiles = qtEnv.GenerateR('R.md5', [])
+qtEnv.Depends('all.h', rFiles)
+
+#------end R files--------
+
+def gen_all_include(target, source, env):
+    if type(target) is list:
+        target=target[0]
+    try:
+        f=open(target.path, 'w')
+    except:
+        print "all_include: Can't open target header file '%s' in %s" % \
+                (target.path, os.getcwd())
+        raise
+    for ent in source:
+        f.write('#include "' + ent.name + '"\n')
+    f.close()
+
+qtEnv.Append(BUILDERS={'AllInclude' : Builder(action=gen_all_include)})
+
+suffix='.compact.h'
+
+for i in Glob('*.compact.h') + rFiles:
+    if i.name[-len(suffix):] != suffix:
         continue
-    expandTar = qtEnv.ExpandDefine(i.replace(".compact", ""), i)
+    expandTar = qtEnv.ExpandDefine(i.name.replace(".compact", ""), i)
+    qtEnv['ALL_DEFINE_HEADERS'] += [expandTar]
+    qtEnv.Depends('all.h', expandTar)
     AlwaysBuild(expandTar)
+
+allHeader = qtEnv.AllInclude('all.h', qtEnv['ALL_DEFINE_HEADERS'])

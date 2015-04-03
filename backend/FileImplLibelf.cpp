@@ -56,10 +56,6 @@ FileImplLibelf::FileImplLibelf(const char *name,
             readArsym();
         }
     }
-    _symTabData = NULL;
-    _symTabIdx = 0;
-    _dynData = NULL;
-    _dynIdx = 0;
     _hashTabRaw = NULL;
     _dynSymRaw = NULL;
     _dynStrRaw = NULL;
@@ -216,34 +212,22 @@ static void convertClass(Elf64_Sym &dst, T &src)
 
 bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
 {
-    if(scnIdx != _symTabIdx) {
-        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
-        Elf_Data *data = NULL;
-        if(!scn || (data=elf_getdata(scn, data))==NULL) {
-            return false;
-        }
-        _symTabIdx = scnIdx;
-        _symTabData = data;
+    if(!checkScnData(scnIdx, &_symTabCache)) {
+        return false;
     }
     GElf_Sym sym;
-    gelf_getsym(_symTabData, idx, &sym);
+    gelf_getsym(_symTabCache.data, idx, &sym);
     convertClass<GElf_Sym>(*dst, sym);
     return true;
 }
 
 bool FileImplLibelf::getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *dst)
 {
-    if(scnIdx != _symTabIdx) {
-        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
-        Elf_Data *data = NULL;
-        if(!scn || (data=elf_getdata(scn, data))==NULL) {
-            return false;
-        }
-        _symTabIdx = scnIdx;
-        _symTabData = data;
+    if(!checkScnData(scnIdx, &_symTabCache)) {
+        return false;
     }
     GElf_Syminfo syminfo;
-    gelf_getsyminfo(_symTabData, idx, &syminfo);
+    gelf_getsyminfo(_symTabCache.data, idx, &syminfo);
     dst->si_boundto = syminfo.si_boundto;
     dst->si_flags = syminfo.si_flags;
     return true;
@@ -256,17 +240,11 @@ const char *FileImplLibelf::getStrPtr(size_t scnIdx, size_t offset)
 
 bool FileImplLibelf::getDyn(size_t scnIdx, int idx, Elf64_Dyn *dst)
 {
-    if(scnIdx != _dynIdx) {
-        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
-        Elf_Data *data = NULL;
-        if(!scn || (data=elf_getdata(scn, data))==NULL) {
-            return false;
-        }
-        _dynIdx = scnIdx;
-        _dynData = data;
+    if(!checkScnData(scnIdx, &_dynCache)) {
+        return false;
     }
     GElf_Dyn dyn;
-    gelf_getdyn(_dynData, idx, &dyn);
+    gelf_getdyn(_dynCache.data, idx, &dyn);
     dst->d_tag = dyn.d_tag;
     dst->d_un = dyn.d_un;
     return true;
@@ -312,10 +290,10 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     }
     _elf = elf_begin(_fd, ELF_C_READ, _ar);
     _arPos = objIdx;
-    _symTabData = NULL;
-    _symTabIdx = 0;
-    _dynData = NULL;
-    _dynIdx = 0;
+    _symTabCache.reset();
+    _dynCache.reset();
+    _relCache.reset();
+    _relaCache.reset();
     _hashTabRaw = NULL;
     _dynSymRaw = NULL;
     _dynStrRaw = NULL;
@@ -427,6 +405,35 @@ const char *FileImplLibelf::getSymNameByVal(Elf64_Addr val)
         return _symNameMap[val];
     }
     return NULL;
+}
+
+bool FileImplLibelf::getRel(size_t scnIdx, int idx, Elf64_Rel *dst)
+{
+    if(!checkScnData(scnIdx, &_relCache)) {
+        return false;
+    }
+    GElf_Rel rel;
+    if(!gelf_getrel(_relCache.data, idx, &rel)) {
+        return false;
+    }
+    dst->r_offset = rel.r_offset;
+    dst->r_info = rel.r_info;
+    return true;
+}
+
+bool FileImplLibelf::getRela(size_t scnIdx, int idx, Elf64_Rela *dst)
+{
+    if(!checkScnData(scnIdx, &_relaCache)) {
+        return false;
+    }
+    GElf_Rela rela;
+    if(!gelf_getrela(_relaCache.data, idx, &rela)) {
+        return false;
+    }
+    dst->r_offset = rela.r_offset;
+    dst->r_info = rela.r_info;
+    dst->r_addend = rela.r_addend;
+    return true;
 }
 
 FileImplLibelf::~FileImplLibelf()
@@ -752,6 +759,20 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
         newBuf.append(label);
     }
     return priv->outputCB(newBuf.toUtf8().data(), newBuf.length(), arg);
+}
+
+bool FileImplLibelf::checkScnData(size_t scnIdx, ScnDataCache *cache)
+{
+    if(scnIdx != cache->idx) {
+        Elf_Scn *scn = elf_getscn(_elf, scnIdx);
+        Elf_Data *data = NULL;
+        if(!scn || (data=elf_getdata(scn, data))==NULL) {
+            return false;
+        }
+        cache->idx = scnIdx;
+        cache->data = data;
+    }
+    return true;
 }
 
 END_BIN_NAMESPACE

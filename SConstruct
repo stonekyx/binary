@@ -39,12 +39,25 @@ def build_or_run_test_dir(self, path, libs):
 baseEnv.AddMethod(build_or_run_test_dir, 'TestDir')
 
 # Other helpers
-def get_library_dir(self, lib):
+def get_library_dir(baseEnv, lib):
     fullPath = subprocess.check_output([baseEnv['CC'], '-print-file-name='+lib])
     if fullPath.rfind('/')==-1:
         return None
     return fullPath[:fullPath.rfind('/')]
 baseEnv.AddMethod(get_library_dir, 'LibraryDir')
+
+# Find header's full path used by compiler, in case of non-standard locations.
+def get_header_dir(env, header):
+    p = subprocess.Popen([env['CC'], '-E', '-'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=open(os.devnull, 'w'))
+    (out,err) = p.communicate('#include <' + header + '>')
+    if p.wait() == None:
+        p.kill()
+    path = [x for x in out.split('\n') if x.find(header)!=-1][0].split('"')[1]
+    return path[:path.rfind('/')]
+baseEnv.AddMethod(get_header_dir, 'HeaderDir')
 
 # Clone Qt environment
 qtEnv = baseEnv.Clone()

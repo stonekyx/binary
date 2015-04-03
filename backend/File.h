@@ -64,6 +64,8 @@ public:
     };
     virtual int disasm(size_t scnIdx, DisasmCB, void*) = 0;
     virtual const char *getSymNameByVal(Elf64_Addr) = 0;
+    virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *) = 0;
+    virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *) = 0;
     virtual const char *getName() {
         return _name;
     }

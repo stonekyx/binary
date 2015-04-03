@@ -7,6 +7,8 @@
 
 #include "common.h"
 
+#include "defines/all-extern.h"
+
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
 class Defines {

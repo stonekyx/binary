@@ -25,7 +25,7 @@ END {
     print "";
     print "BEGIN_PLUG_NAMESPACE(" namespace ")";
     print "";
-    print "static PLUG_NAMESPACE(plugin_framework)::ExpandDefine<" valueType "> " objName ";";
+    print "PLUG_NAMESPACE(plugin_framework)::ExpandDefine<" valueType "> " objName ";";
     print "";
     print "static struct " className " {";
     print "    " className "();";

@@ -9,6 +9,7 @@ Import('baseEnv qtEnv')
 baseEnv = baseEnv.Clone()
 qtEnv = qtEnv.Clone()
 qtEnv['ALL_DEFINE_HEADERS'] = []
+qtEnv['ALL_COMPACT_HEADERS'] = []
 
 #--------R files----------
 
@@ -27,6 +28,7 @@ rBld = Builder(action='scripts/GenerateR.sh $TARGET ' + \
 qtEnv.Append(BUILDERS = {'GenerateR' : rBld})
 rFiles = qtEnv.GenerateR('R.md5', [])
 qtEnv.Depends('all.h', rFiles)
+qtEnv.Depends('all-extern.h', rFiles)
 
 #------end R files--------
 
@@ -45,14 +47,58 @@ def gen_all_include(target, source, env):
 
 qtEnv.Append(BUILDERS={'AllInclude' : Builder(action=gen_all_include)})
 
+def gen_all_extern(target, source, env):
+    if type(target) is list:
+        target=target[0]
+    try:
+        f=open(target.path, 'w')
+    except:
+        print "all_extern: Can't open target header file '%s' in %s" % \
+                (target.path, os.getcwd())
+        raise
+    f.write('#ifndef PLUGIN_FRAMEWORK_DEFINES_ALL_EXTERN_H\n')
+    f.write('#define PLUGIN_FRAMEWORK_DEFINES_ALL_EXTERN_H\n')
+    f.write('#include "ExpandDefine.h"\n')
+    for ent in source:
+        try:
+            fs=open(ent.path, 'r')
+        except:
+            print "all_extern: Failed to read source header '%s' in %s" % \
+                    (ent.path, os.getcwd())
+            raise
+        vType = None
+        nameSpace = None
+        objName = None
+        for line in fs:
+            line = line.strip()
+            if line.find('BINARY_PLUGIN_VALUE_TYPE') == 0:
+                vType = re.split('[ ,\t]+', line, 1)[1]
+            elif line.find('BINARY_PLUGIN_NAMESPACE') == 0:
+                nameSpace = re.split('[ ,\t]+', line, 1)[1]
+            elif line.find('BINARY_PLUGIN_OBJECTNAME') == 0:
+                objName = re.split('[ ,\t]+', line, 1)[1]
+            if vType and nameSpace and objName:
+                break
+        fs.close()
+        if vType and nameSpace and objName:
+            f.write('extern PLUG_NAMESPACE(' + nameSpace +\
+                    ')::ExpandDefine<' + vType + '> ' +\
+                    objName + ';\n')
+    f.write('#endif\n')
+    f.close()
+
+qtEnv.Append(BUILDERS={'AllExtern' : Builder(action=gen_all_extern)})
+
 suffix='.compact.h'
 
-for i in Glob('*.compact.h') + rFiles:
+for i in Glob('*.compact.h'):
     if i.name[-len(suffix):] != suffix:
         continue
     expandTar = qtEnv.ExpandDefine(i.name.replace(".compact", ""), i)
     qtEnv['ALL_DEFINE_HEADERS'] += [expandTar]
+    qtEnv['ALL_COMPACT_HEADERS'] += [i]
     qtEnv.Depends('all.h', expandTar)
-    AlwaysBuild(expandTar)
+    qtEnv.Depends('all-extern.h', expandTar)
 
 allHeader = qtEnv.AllInclude('all.h', qtEnv['ALL_DEFINE_HEADERS'])
+allExtern = qtEnv.AllExtern('all-extern.h', qtEnv['ALL_COMPACT_HEADERS'])

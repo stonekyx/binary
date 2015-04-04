@@ -22,6 +22,7 @@ qtEnv.EnableQt4Modules([
 qtEnv.Moc4('MWBase.h')
 qtEnv.Moc4('ui_MWBase.h')
 qtEnv.Moc4('ui_MWTreeView.h')
+qtEnv.Moc4('AutoToolTipDelegate.h')
 
 SConscript('defines/SConscript', duplicate=1)
 

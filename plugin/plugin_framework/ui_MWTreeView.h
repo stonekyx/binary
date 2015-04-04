@@ -15,6 +15,8 @@
 #include <QtGui/QInputDialog>
 #include <QtGui/QMessageBox>
 
+#include "AutoToolTipDelegate.h"
+
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
 namespace Ui {
@@ -109,6 +111,7 @@ public:
         infoTree->setSizePolicy(sizePolicy);
         infoTree->header()->setResizeMode(QHeaderView::ResizeToContents);
         infoTree->header()->setStretchLastSection(true);
+        infoTree->setItemDelegate( new AutoToolTipDelegate( infoTree ) );
         infoTree->hide();
 
         gridLayout->addWidget(infoTree, 0, 0, 1, 1);

@@ -96,8 +96,10 @@ void FileLayout::mouseMoveEvent(QMouseEvent *e)
                 segHPosToScr(it->end)<pos.x()) {
             continue;
         }
-        QToolTip::showText(e->globalPos(), QString("%1, %2 KiB")
-                .arg(it->name).arg((it->end-it->begin)/1024.0));
+        QToolTip::showText(e->globalPos(), QString("%1, %2 KiB\n"
+                    "0x%3 -- 0x%4")
+                .arg(it->name).arg((it->end-it->begin)/1024.0)
+                .arg(it->begin, 0, 16).arg(it->end-1, 0, 16));
         if(_ref) {
             _ref->highlight(*it, this);
         }

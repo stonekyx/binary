@@ -58,6 +58,12 @@ void MainWindow::updateInfo(File *file)
     _loadWorker = new LoadWorker(file, _infoModel);
     QObject::connect(_loadWorker, SIGNAL(symbolStarted(QModelIndex)),
             this, SLOT(spanFirstColumn(QModelIndex)));
+    QObject::connect(_loadWorker, SIGNAL(started()),
+            _ui, SLOT(changeStatus()));
+    QObject::connect(_loadWorker, SIGNAL(finished()),
+            _ui, SLOT(changeStatus()));
+    QObject::connect(_loadWorker, SIGNAL(terminated()),
+            _ui, SLOT(changeStatus()));
     _loadWorker->start();
 }
 
@@ -74,7 +80,7 @@ void MainWindow::resetWorker()
     }
     _loadWorker->terminate();
     _loadWorker->wait(1000);
-    delete _loadWorker;
+    _loadWorker->deleteLater();
     _loadWorker = NULL;
 }
 

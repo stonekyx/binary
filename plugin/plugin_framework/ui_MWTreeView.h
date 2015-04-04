@@ -108,7 +108,7 @@ public:
         sizePolicy.setHeightForWidth(infoTree->sizePolicy().hasHeightForWidth());
         infoTree->setSizePolicy(sizePolicy);
         infoTree->header()->setResizeMode(QHeaderView::ResizeToContents);
-        infoTree->header()->setStretchLastSection(false);
+        infoTree->header()->setStretchLastSection(true);
         infoTree->hide();
 
         gridLayout->addWidget(infoTree, 0, 0, 1, 1);

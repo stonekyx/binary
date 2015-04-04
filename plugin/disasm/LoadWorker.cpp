@@ -96,8 +96,9 @@ void LoadWorker::run()
         {
             continue;
         }
-        _infoModel->buildMore(QString("Section\t%1")
+        QModelIndex ins = _infoModel->buildMore(QString("Section   %1")
                 .arg(_file->getScnName(&shdr)));
+        emit symbolStarted(ins);
         _file->disasm(i, disasmCallback, this);
     }
 }

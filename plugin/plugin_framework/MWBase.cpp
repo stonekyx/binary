@@ -53,4 +53,9 @@ void MWBase::updateInfo(File *)
 {
 }
 
+void MWBase::updateInfo()
+{
+    updateInfo(_plugin->manager->getBackend()->getFile());
+}
+
 END_PLUG_NAMESPACE

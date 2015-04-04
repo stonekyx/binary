@@ -28,6 +28,7 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+    using MWBase::updateInfo;
 public slots:
     void openScn(size_t scnIdx);
 private:

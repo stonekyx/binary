@@ -22,7 +22,7 @@ MainWindow::MainWindow(Plugin *plugin, map<string, string> param,
 {
     QObject::connect(_ui, SIGNAL(changeFileToObj(size_t)),
             this, SLOT(changeFileToObj(size_t)));
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

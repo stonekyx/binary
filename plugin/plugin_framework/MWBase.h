@@ -32,6 +32,7 @@ protected:
     virtual void keyPressEvent(QKeyEvent *);
 public slots:
     virtual void updateInfo(binary::backend::File *);
+    virtual void updateInfo();
 protected:
     Ui::MWBase *_ui;
     BIN_NAMESPACE(frontend)::Plugin *_plugin;

@@ -25,6 +25,7 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+    using MWBase::updateInfo;
 public slots:
     void showSection(const QString &);
 private:

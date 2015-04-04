@@ -12,6 +12,9 @@
 
 BEGIN_PLUG_NAMESPACE(disasm)
 
+namespace Ui {
+    class MainWindow;
+}
 class MainWindow;
 
 END_PLUG_NAMESPACE
@@ -27,12 +30,15 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+    using MWBase::updateInfo;
 public slots:
     void spanFirstColumn(QModelIndex);
+    void resetWorker();
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
     LoadWorker *_loadWorker;
+    Ui::MainWindow *_ui;
 };
 
 #endif

@@ -2,7 +2,6 @@
 #include <QtGui/QMenu>
 
 #include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "Defines.h"
@@ -22,7 +21,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     _infoModel(NULL)
 {
     ctxMenuTreeView();
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

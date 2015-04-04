@@ -21,6 +21,7 @@ public:
     virtual ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+    using MWBase::updateInfo;
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
 };

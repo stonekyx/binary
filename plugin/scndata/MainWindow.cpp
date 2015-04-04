@@ -4,8 +4,6 @@
 #include <QtCore/QTextStream>
 #include <QtGui/QTextBlock>
 
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
@@ -33,7 +31,7 @@ MainWindow::MainWindow(Plugin *plugin, map<string, string> param,
         QObject::connect(textEdit, SIGNAL(selectionChanged()),
                 this, SLOT(updateHighlight()));
     }
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

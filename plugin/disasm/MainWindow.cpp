@@ -1,9 +1,7 @@
 #include <elf.h>
 
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "backend/File.h"
-#include "ui_MWTreeView.h"
+#include "ui_MainWindow.h"
 
 #include "MainWindow.h"
 
@@ -16,10 +14,15 @@ BEGIN_PLUG_NAMESPACE(disasm)
 
 MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param, QWidget *parent) :
-    MWTreeView(new Ui::MWTreeView("PluginDisasmMainWindow", "Disassemble"), plugin, param, parent),
+    MWTreeView(new Ui::MainWindow(), plugin, param, parent),
     _infoModel(NULL),
-    _loadWorker(NULL)
+    _loadWorker(NULL),
+    _ui(dynamic_cast<Ui::MainWindow*>(MWTreeView::_ui))
 {
+    QObject::connect(_ui, SIGNAL(signalStopDisasm()),
+            this, SLOT(resetWorker()));
+    QObject::connect(_ui, SIGNAL(signalRefreshDisasm()),
+            this, SLOT(updateInfo()));
     if(param.find("scnIndex") != param.end()) {
         _scnIndex = QString(param["scnIndex"].c_str()).toULong();
     } else {
@@ -29,16 +32,12 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     font.setFamily("Courier");
     font.setPointSize(9);
     _ui->infoTree->setFont(font);
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()
 {
-    if(_loadWorker) {
-        _loadWorker->terminate();
-        _loadWorker->wait(1000);
-        delete _loadWorker;
-    }
+    resetWorker();
     if(_infoModel) {
         delete _infoModel;
     }
@@ -46,13 +45,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateInfo(File *file)
 {
-    if(_loadWorker)
-    {
-        _loadWorker->terminate();
-        _loadWorker->wait(1000);
-        delete _loadWorker;
-        _loadWorker = NULL;
-    }
+    resetWorker();
     if(!_ui->switchMode(file)) {
         return;
     }
@@ -72,6 +65,17 @@ void MainWindow::spanFirstColumn(QModelIndex index)
 {
     _ui->infoTree->setFirstColumnSpanned(index.row(), index.parent(),
             true);
+}
+
+void MainWindow::resetWorker()
+{
+    if(!_loadWorker) {
+        return;
+    }
+    _loadWorker->terminate();
+    _loadWorker->wait(1000);
+    delete _loadWorker;
+    _loadWorker = NULL;
 }
 
 END_PLUG_NAMESPACE

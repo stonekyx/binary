@@ -1,7 +1,5 @@
 #include <elf.h>
 
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
@@ -25,7 +23,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     } else {
         _scnIndex = 0;
     }
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

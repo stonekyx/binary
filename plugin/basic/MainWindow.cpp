@@ -2,8 +2,6 @@
 #include <cstdio>
 #include <elf.h>
 
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "ui_MWTreeView.h"
 #include "Defines.h"
 
@@ -42,7 +40,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     _infoModel(new InfoModel(modelData, 2))
 {
     _ui->infoTree->setModel(_infoModel);
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

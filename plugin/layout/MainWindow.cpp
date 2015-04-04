@@ -19,7 +19,7 @@ MainWindow::MainWindow(Plugin *plugin, map<string, string> param,
 {
     QObject::connect(_ui->scnLayout, SIGNAL(openScn(size_t)),
             this, SLOT(openScn(size_t)));
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

@@ -28,6 +28,7 @@ public:
     ~MainWindow();
 public:
     virtual void updateInfo(binary::backend::File *);
+    using MWBase::updateInfo;
 public slots:
     virtual void updateHighlight();
 private:

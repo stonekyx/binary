@@ -1,8 +1,6 @@
 #include <elf.h>
 #include <QtCore/QTextStream>
 
-#include "frontend/PluginManager.h"
-#include "backend/Backend.h"
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "Defines.h"
@@ -21,7 +19,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     MWTreeView(new Ui::MWTreeView("PluginPhdrMainWindow", "Program header"), plugin, param, parent),
     _infoModel(NULL)
 {
-    updateInfo(_plugin->manager->getBackend()->getFile());
+    updateInfo();
 }
 
 MainWindow::~MainWindow()

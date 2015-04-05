@@ -55,6 +55,7 @@ public:
 
     virtual void setupUi(QMainWindow *window) {
         MWTreeView::setupUi(window);
+        window->resize(600, 600);
 
         menuDisasm = new QMenu(menuBar);
         OBJNAME(menuDisasm);
@@ -102,6 +103,10 @@ public:
                 this, SLOT(stopDisasm()));
         QObject::connect(actionDisasmRefresh, SIGNAL(triggered()),
                 this, SLOT(refreshDisasm()));
+        QObject::connect(leBegin, SIGNAL(returnPressed()),
+                this, SLOT(updateRange()));
+        QObject::connect(leEnd, SIGNAL(returnPressed()),
+                this, SLOT(updateRange()));
 
         retranslateUi(window);
     }
@@ -131,9 +136,30 @@ public slots:
             statusLabel->setText(tr("Error!"));
         }
     }
+    void setRange(size_t begin, size_t end) {
+        _begin = begin;
+        _end = end;
+        leBegin->setText(QString("0x%1").arg(begin, 0, 16));
+        leEnd->setText(QString("0x%1").arg(end, 0, 16));
+    }
+    void updateRange() {
+        bool ok;
+        size_t begin = leBegin->text().toULong(&ok, 0);
+        if(!ok) { return; }
+        size_t end = leEnd->text().toULong(&ok, 0);
+        if(!ok) { return; }
+        if(begin != _begin || end != _end) {
+            _begin = begin;
+            _end = end;
+            emit signalRangeChange(begin, end);
+        }
+    }
 signals:
     void signalStopDisasm();
     void signalRefreshDisasm();
+    void signalRangeChange(size_t, size_t);
+private:
+    size_t _begin, _end;
 };
 
 #undef OBJNAME

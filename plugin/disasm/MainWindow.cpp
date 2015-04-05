@@ -23,11 +23,15 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             this, SLOT(resetWorker()));
     QObject::connect(_ui, SIGNAL(signalRefreshDisasm()),
             this, SLOT(updateInfo()));
+    QObject::connect(_ui, SIGNAL(signalRangeChange(size_t, size_t)),
+            this, SLOT(setRange(size_t, size_t)));
     if(param.find("scnIndex") != param.end()) {
         _scnIndex = QString(param["scnIndex"].c_str()).toULong();
     } else {
         _scnIndex = 0;
     }
+    _useRange = false;
+    _begin = _end = 0;
     QFont font = _ui->infoTree->font();
     font.setFamily("Courier");
     font.setPointSize(9);
@@ -55,7 +59,12 @@ void MainWindow::updateInfo(File *file)
     _infoModel = new InfoModel(QString(), 5, NULL);
     _ui->infoTree->setModel(_infoModel);
 
-    if(_scnIndex != 0) {
+    if(_useRange) {
+        _ui->setRange(_begin, _end);
+        if(_begin < _end) {
+            _loadWorker = new LoadWorker(_begin, _end, file, _infoModel);
+        }
+    } else if(_scnIndex != 0) {
         Elf64_Shdr shdr;
         if(!file->getShdr(_scnIndex, &shdr)) {
             QMessageBox::critical(this, tr("Error"),
@@ -63,6 +72,7 @@ void MainWindow::updateInfo(File *file)
             close();
             return;
         }
+        _ui->setRange(shdr.sh_offset, shdr.sh_offset + shdr.sh_size);
         _loadWorker = new LoadWorker(
                 shdr.sh_offset, shdr.sh_offset + shdr.sh_size,
                 file, _infoModel);
@@ -70,15 +80,17 @@ void MainWindow::updateInfo(File *file)
         _loadWorker = new LoadWorker(file, _infoModel);
     }
 
-    QObject::connect(_loadWorker, SIGNAL(symbolStarted(QModelIndex)),
-            this, SLOT(spanFirstColumn(QModelIndex)));
-    QObject::connect(_loadWorker, SIGNAL(started()),
-            _ui, SLOT(changeStatus()));
-    QObject::connect(_loadWorker, SIGNAL(finished()),
-            _ui, SLOT(changeStatus()));
-    QObject::connect(_loadWorker, SIGNAL(terminated()),
-            _ui, SLOT(changeStatus()));
-    _loadWorker->start();
+    if(_loadWorker) {
+        QObject::connect(_loadWorker, SIGNAL(symbolStarted(QModelIndex)),
+                this, SLOT(spanFirstColumn(QModelIndex)));
+        QObject::connect(_loadWorker, SIGNAL(started()),
+                _ui, SLOT(changeStatus()));
+        QObject::connect(_loadWorker, SIGNAL(finished()),
+                _ui, SLOT(changeStatus()));
+        QObject::connect(_loadWorker, SIGNAL(terminated()),
+                _ui, SLOT(changeStatus()));
+        _loadWorker->start();
+    }
 }
 
 void MainWindow::spanFirstColumn(QModelIndex index)
@@ -96,6 +108,14 @@ void MainWindow::resetWorker()
     _loadWorker->wait(1000);
     _loadWorker->deleteLater();
     _loadWorker = NULL;
+}
+
+void MainWindow::setRange(size_t begin, size_t end)
+{
+    _useRange = true;
+    _begin = begin;
+    _end = end;
+    updateInfo();
 }
 
 END_PLUG_NAMESPACE

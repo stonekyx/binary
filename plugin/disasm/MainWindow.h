@@ -34,11 +34,14 @@ public:
 public slots:
     void spanFirstColumn(QModelIndex);
     void resetWorker();
+    void setRange(size_t, size_t);
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
     LoadWorker *_loadWorker;
     Ui::MainWindow *_ui;
+    bool _useRange;
+    size_t _begin, _end;
 };
 
 #endif

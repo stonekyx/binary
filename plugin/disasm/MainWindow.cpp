@@ -1,6 +1,9 @@
 #include <elf.h>
 
 #include "backend/File.h"
+#include "backend/Backend.h"
+#include "frontend/PluginManager.h"
+#include "backend/ConvertAddr.h"
 #include "ui_MainWindow.h"
 
 #include "MainWindow.h"
@@ -25,6 +28,8 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             this, SLOT(updateInfo()));
     QObject::connect(_ui, SIGNAL(signalRangeChange(size_t, size_t)),
             this, SLOT(setRange(size_t, size_t)));
+    QObject::connect(_ui, SIGNAL(signalVaddrRangeChange(size_t, size_t)),
+            this, SLOT(setVaddrRange(size_t, size_t)));
     if(param.find("scnIndex") != param.end()) {
         _scnIndex = QString(param["scnIndex"].c_str()).toULong();
     } else {
@@ -59,8 +64,14 @@ void MainWindow::updateInfo(File *file)
     _infoModel = new InfoModel(QString(), 5, NULL);
     _ui->infoTree->setModel(_infoModel);
 
+    ConvertAddr convertAddr(file);
+
     if(_useRange) {
         _ui->setRange(_begin, _end);
+        size_t _vBegin=0, _vEnd=0;
+        convertAddr.fileOffToVaddr(_vBegin, _begin);
+        convertAddr.fileOffToVaddr(_vEnd, _end);
+        _ui->setVaddrRange(_vBegin, _vEnd);
         if(_begin < _end) {
             _loadWorker = new LoadWorker(_begin, _end, file, _infoModel);
         }
@@ -73,6 +84,7 @@ void MainWindow::updateInfo(File *file)
             return;
         }
         _ui->setRange(shdr.sh_offset, shdr.sh_offset + shdr.sh_size);
+        _ui->setVaddrRange(shdr.sh_addr, shdr.sh_addr + shdr.sh_size);
         _loadWorker = new LoadWorker(
                 shdr.sh_offset, shdr.sh_offset + shdr.sh_size,
                 file, _infoModel);
@@ -112,10 +124,26 @@ void MainWindow::resetWorker()
 
 void MainWindow::setRange(size_t begin, size_t end)
 {
-    _useRange = true;
-    _begin = begin;
-    _end = end;
-    updateInfo();
+    if(!_useRange || begin != _begin || end != _end) {
+        _useRange = true;
+        _begin = begin;
+        _end = end;
+        updateInfo();
+    }
+}
+
+void MainWindow::setVaddrRange(size_t begin, size_t end)
+{
+    size_t fBegin = 0, fEnd = 0;
+    ConvertAddr convertAddr(_plugin->manager->getBackend()->getFile());
+    convertAddr.vaddrToFileOff(fBegin, begin);
+    convertAddr.vaddrToFileOff(fEnd, end);
+    if(!_useRange || fBegin != _begin || fEnd != _end) {
+        _useRange = true;
+        _begin = fBegin;
+        _end = fEnd;
+        updateInfo();
+    }
 }
 
 END_PLUG_NAMESPACE

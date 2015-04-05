@@ -31,24 +31,35 @@ public:
     QMenu *menuDisasm;
     QAction *actionDisasmStop;
     QAction *actionDisasmRefresh;
-    QHBoxLayout *hbRangeContainer;
-    QLineEdit *leBegin;
-    QLineEdit *leEnd;
+    QHBoxLayout *hbFileOffRange;
+    QLineEdit *leFileOffBegin;
+    QLineEdit *leFileOffEnd;
+    QHBoxLayout *hbVaddrRange;
+    QLineEdit *leVaddrBegin;
+    QLineEdit *leVaddrEnd;
     QStatusBar *statusBar;
     QLabel *statusLabel;
     QRegExpValidator *rangeValValidator;
 
     MainWindow() : MWTreeView("PluginDisasmMainWindow", "Disassemble") {}
+    ~MainWindow() {
+        hbFileOffRange->deleteLater();
+        hbVaddrRange->deleteLater();
+    }
 
     virtual bool switchMode(bool file) {
         if(MWTreeView::switchMode(file)) {
-            leBegin->show();
-            leEnd->show();
+            leFileOffBegin->show();
+            leFileOffEnd->show();
+            leVaddrBegin->show();
+            leVaddrEnd->show();
             statusBar->show();
             return true;
         }
-        leBegin->hide();
-        leEnd->hide();
+        leFileOffBegin->hide();
+        leFileOffEnd->hide();
+        leVaddrBegin->hide();
+        leVaddrEnd->hide();
         statusBar->hide();
         return false;
     }
@@ -72,24 +83,40 @@ public:
         menuDisasm->addAction(actionDisasmStop);
         menuDisasm->addAction(actionDisasmRefresh);
 
-        hbRangeContainer = new QHBoxLayout();
-        OBJNAME(hbRangeContainer);
-        gridLayout->addLayout(hbRangeContainer, 1, 0, 1, 1);
+        hbFileOffRange = new QHBoxLayout();
+        OBJNAME(hbFileOffRange);
+        gridLayout->addLayout(hbFileOffRange, 1, 0, 1, 1);
 
         rangeValValidator = new QRegExpValidator(QRegExp(
                     "(0x[a-fA-F0-9]+)|([0-9]+)"));
 
-        leBegin = new QLineEdit(centralWidget);
-        OBJNAME(leBegin);
-        leBegin->hide();
-        leBegin->setValidator(rangeValValidator);
-        hbRangeContainer->addWidget(leBegin);
+        leFileOffBegin = new QLineEdit(centralWidget);
+        OBJNAME(leFileOffBegin);
+        leFileOffBegin->hide();
+        leFileOffBegin->setValidator(rangeValValidator);
+        hbFileOffRange->addWidget(leFileOffBegin);
 
-        leEnd = new QLineEdit(centralWidget);
-        OBJNAME(leEnd);
-        leEnd->hide();
-        leEnd->setValidator(rangeValValidator);
-        hbRangeContainer->addWidget(leEnd);
+        leFileOffEnd = new QLineEdit(centralWidget);
+        OBJNAME(leFileOffEnd);
+        leFileOffEnd->hide();
+        leFileOffEnd->setValidator(rangeValValidator);
+        hbFileOffRange->addWidget(leFileOffEnd);
+
+        hbVaddrRange = new QHBoxLayout();
+        OBJNAME(hbVaddrRange);
+        gridLayout->addLayout(hbVaddrRange, 2, 0, 1, 1);
+
+        leVaddrBegin = new QLineEdit(centralWidget);
+        OBJNAME(leVaddrBegin);
+        leVaddrBegin->hide();
+        leVaddrBegin->setValidator(rangeValValidator);
+        hbVaddrRange->addWidget(leVaddrBegin);
+
+        leVaddrEnd = new QLineEdit(centralWidget);
+        OBJNAME(leVaddrEnd);
+        leVaddrEnd->hide();
+        leVaddrEnd->setValidator(rangeValValidator);
+        hbVaddrRange->addWidget(leVaddrEnd);
 
         statusBar = new QStatusBar(window);
         OBJNAME(statusBar);
@@ -103,9 +130,13 @@ public:
                 this, SLOT(stopDisasm()));
         QObject::connect(actionDisasmRefresh, SIGNAL(triggered()),
                 this, SLOT(refreshDisasm()));
-        QObject::connect(leBegin, SIGNAL(returnPressed()),
+        QObject::connect(leFileOffBegin, SIGNAL(returnPressed()),
                 this, SLOT(updateRange()));
-        QObject::connect(leEnd, SIGNAL(returnPressed()),
+        QObject::connect(leFileOffEnd, SIGNAL(returnPressed()),
+                this, SLOT(updateRange()));
+        QObject::connect(leVaddrBegin, SIGNAL(returnPressed()),
+                this, SLOT(updateRange()));
+        QObject::connect(leVaddrEnd, SIGNAL(returnPressed()),
                 this, SLOT(updateRange()));
 
         retranslateUi(window);
@@ -137,29 +168,35 @@ public slots:
         }
     }
     void setRange(size_t begin, size_t end) {
-        _begin = begin;
-        _end = end;
-        leBegin->setText(QString("0x%1").arg(begin, 0, 16));
-        leEnd->setText(QString("0x%1").arg(end, 0, 16));
+        leFileOffBegin->setText(QString("0x%1").arg(begin, 0, 16));
+        leFileOffEnd->setText(QString("0x%1").arg(end, 0, 16));
+    }
+    void setVaddrRange(size_t begin, size_t end) {
+        leVaddrBegin->setText(QString("0x%1").arg(begin, 0, 16));
+        leVaddrEnd->setText(QString("0x%1").arg(end, 0, 16));
     }
     void updateRange() {
-        bool ok;
-        size_t begin = leBegin->text().toULong(&ok, 0);
-        if(!ok) { return; }
-        size_t end = leEnd->text().toULong(&ok, 0);
-        if(!ok) { return; }
-        if(begin != _begin || end != _end) {
-            _begin = begin;
-            _end = end;
+        if(sender() == leFileOffBegin || sender() == leFileOffEnd) {
+            bool ok;
+            size_t begin = leFileOffBegin->text().toULong(&ok, 0);
+            if(!ok) { return; }
+            size_t end = leFileOffEnd->text().toULong(&ok, 0);
+            if(!ok) { return; }
             emit signalRangeChange(begin, end);
+        } else {
+            bool ok;
+            size_t begin = leVaddrBegin->text().toULong(&ok, 0);
+            if(!ok) { return; }
+            size_t end = leVaddrEnd->text().toULong(&ok, 0);
+            if(!ok) { return; }
+            emit signalVaddrRangeChange(begin, end);
         }
     }
 signals:
     void signalStopDisasm();
     void signalRefreshDisasm();
     void signalRangeChange(size_t, size_t);
-private:
-    size_t _begin, _end;
+    void signalVaddrRangeChange(size_t, size_t);
 };
 
 #undef OBJNAME

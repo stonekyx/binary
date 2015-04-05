@@ -35,6 +35,7 @@ public slots:
     void spanFirstColumn(QModelIndex);
     void resetWorker();
     void setRange(size_t, size_t);
+    void setVaddrRange(size_t, size_t);
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;

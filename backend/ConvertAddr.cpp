@@ -34,6 +34,30 @@ bool ConvertAddr::vaddrToFileOff(size_t &dst, Elf64_Addr addr)
     return false;
 }
 
+bool ConvertAddr::fileOffToVaddr(Elf64_Addr &dst, size_t offset)
+{
+    if(!_file) {
+        return false;
+    }
+    size_t phdrNum;
+    if(_file->getPhdrNum(&phdrNum) != 0) {
+        return false;
+    }
+    for(size_t i=0; i<phdrNum; i++) {
+        Elf64_Phdr phdr;
+        if(!_file->getPhdr(i, &phdr)) {
+            continue;
+        }
+        if(offset >= phdr.p_offset &&
+                offset < phdr.p_offset+phdr.p_filesz)
+        {
+            dst = phdr.p_vaddr + (offset - phdr.p_offset);
+            return true;
+        }
+    }
+    return false;
+}
+
 void ConvertAddr::invalidate()
 {
     _file = NULL;

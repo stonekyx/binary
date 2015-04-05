@@ -56,13 +56,12 @@ public:
         const uint8_t *cur;
         const uint8_t *last;
         Elf64_Addr vaddr;
-        Elf64_Shdr *shdr; //invalid after all calls finished
         File *file;
         void *data;
         char *labelBuf;
         void *callerData;
     };
-    virtual int disasm(size_t scnIdx, DisasmCB, void*) = 0;
+    virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*) = 0;
     virtual const char *getSymNameByVal(Elf64_Addr) = 0;
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *) = 0;
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *) = 0;

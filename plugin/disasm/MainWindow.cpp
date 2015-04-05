@@ -55,7 +55,21 @@ void MainWindow::updateInfo(File *file)
     _infoModel = new InfoModel(QString(), 5, NULL);
     _ui->infoTree->setModel(_infoModel);
 
-    _loadWorker = new LoadWorker(file, _infoModel);
+    if(_scnIndex != 0) {
+        Elf64_Shdr shdr;
+        if(!file->getShdr(_scnIndex, &shdr)) {
+            QMessageBox::critical(this, tr("Error"),
+                    tr("Can't find specified section!"));
+            close();
+            return;
+        }
+        _loadWorker = new LoadWorker(
+                shdr.sh_offset, shdr.sh_offset + shdr.sh_size,
+                file, _infoModel);
+    } else {
+        _loadWorker = new LoadWorker(file, _infoModel);
+    }
+
     QObject::connect(_loadWorker, SIGNAL(symbolStarted(QModelIndex)),
             this, SLOT(spanFirstColumn(QModelIndex)));
     QObject::connect(_loadWorker, SIGNAL(started()),

@@ -40,7 +40,7 @@ public:
     virtual char *getRawData(size_t offset);
     virtual bool queryDynSym(const char *, Elf64_Sym *dst);
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
-    virtual int disasm(size_t scnIdx, DisasmCB cb, void *cbData);
+    virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*);
     virtual const char *getSymNameByVal(Elf64_Addr);
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);

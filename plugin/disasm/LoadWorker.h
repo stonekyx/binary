@@ -21,6 +21,10 @@ public:
     LoadWorker(BIN_NAMESPACE(backend)::File *file,
             PLUG_NAMESPACE(plugin_framework)::InfoModel *im,
             QObject * = NULL);
+    LoadWorker(size_t begin, size_t end,
+            BIN_NAMESPACE(backend)::File *file,
+            PLUG_NAMESPACE(plugin_framework)::InfoModel *im,
+            QObject * = NULL);
 signals:
     void symbolStarted(QModelIndex);
 protected:
@@ -28,8 +32,12 @@ protected:
 private:
     BIN_NAMESPACE(backend)::File *_file;
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
+    bool _restricted;
+    size_t _begin, _end;
+    size_t _instIndentLevel;
 
     static int disasmCallback(char *, size_t, void *);
+    void runAll();
 };
 
 #endif

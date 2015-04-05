@@ -329,7 +329,8 @@ const char *FileImplLibelf::queryDynSymDeps(const char *name,
     return NULL;
 }
 
-int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
+int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
+        DisasmCB cb, void *cbData)
 {
     if(!_disasmCtx) {
         _ebl = ebl_openbackend(_elf);
@@ -341,16 +342,14 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
             return -1;
         }
     }
-    Elf64_Shdr shdr;
-    if(!getShdr(scnIdx, &shdr)) {
-        return -1;
-    }
+    ConvertAddr convertAddr(this);
     DisasmCBInfo cbInfo;
     DisasmPrivData callerData;
-    cbInfo.cur = (const uint8_t *)getRawData(shdr.sh_offset);
+    cbInfo.cur = (const uint8_t *)getRawData(begin);
     cbInfo.last = cbInfo.cur;
-    cbInfo.vaddr = shdr.sh_addr;
-    cbInfo.shdr = &shdr;
+    if(!convertAddr.fileOffToVaddr(cbInfo.vaddr, begin)) {
+        cbInfo.vaddr = begin;
+    }
     cbInfo.file = this;
     cbInfo.data = cbData;
     cbInfo.labelBuf = NULL;
@@ -359,8 +358,8 @@ int FileImplLibelf::disasm(size_t scnIdx, DisasmCB cb, void *cbData)
     callerData.symDataMap = &_symDataMap;
     callerData.outputCB = cb;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
-    return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+shdr.sh_size,
-            shdr.sh_addr, fmt, disasmOutput, &cbInfo, &cbInfo);
+    return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
+            cbInfo.vaddr, fmt, disasmOutput, &cbInfo, &cbInfo);
 }
 
 const char *FileImplLibelf::getSymNameByVal(Elf64_Addr val)

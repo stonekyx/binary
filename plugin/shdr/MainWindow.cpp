@@ -112,6 +112,12 @@ void MainWindow::ctxMenuTreeView()
     actionShowSymTab->setParent(_ui->ctxMenu);
     _ctxActionMapper->setMapping(actionShowSymTab, "SymTab");
 
+    QAction *actionDisasm = _ui->ctxMenu->addAction(
+            tr("Disassemble"),
+            _ctxActionMapper, SLOT(map()));
+    actionDisasm->setParent(_ui->ctxMenu);
+    _ctxActionMapper->setMapping(actionDisasm, "Disasm");
+
     QObject::connect(_ctxActionMapper, SIGNAL(mapped(const QString &)),
             this, SLOT(showSection(const QString &)));
 }

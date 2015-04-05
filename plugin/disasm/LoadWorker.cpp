@@ -12,6 +12,17 @@ BEGIN_PLUG_NAMESPACE(disasm)
 LoadWorker::LoadWorker(File *file, InfoModel *im, QObject *parent) :
     QThread(parent), _file(file), _infoModel(im)
 {
+    _restricted = false;
+    file->registerWatcher(this);
+    QObject::connect(file, SIGNAL(aboutToBeDestroyed()),
+            this, SLOT(terminate()));
+}
+
+LoadWorker::LoadWorker(size_t begin, size_t end,
+        File *file, InfoModel *im, QObject *parent) :
+    QThread(parent), _file(file), _infoModel(im), _begin(begin), _end(end)
+{
+    _restricted = true;
     file->registerWatcher(this);
     QObject::connect(file, SIGNAL(aboutToBeDestroyed()),
             this, SLOT(terminate()));
@@ -61,13 +72,16 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
     const char *symName = info->file->getSymNameByVal(info->vaddr);
     if(symName) {
         char *demangled = cplus_demangle(symName);
-        QModelIndex inserted = infoModel->buildMore(QString("\t%1\x1f%2")
+        QModelIndex inserted = infoModel->buildMore(
+                QString("\t").repeated(worker->_instIndentLevel) +
+                QString("%1\x1f%2")
                 .arg(symName)
                 .arg(demangled));
         worker->symbolStarted(inserted);
         free(demangled);
     }
-    infoModel->buildMore(QString("\t0x%1\t%2\t%3")
+    infoModel->buildMore(QString("\t").repeated(worker->_instIndentLevel)+
+            QString("0x%1\t%2\t%3")
             .arg(info->vaddr, 0, 16)
             .arg(bytes)
             .arg(addTooltip(buf)));
@@ -81,6 +95,17 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
 }
 
 void LoadWorker::run()
+{
+    if(_restricted) {
+        _instIndentLevel = 0;
+        _file->disasm(_begin, _end, disasmCallback, this);
+    } else {
+        _instIndentLevel = 1;
+        runAll();
+    }
+}
+
+void LoadWorker::runAll()
 {
     size_t shdrNum;
     if(_file->getShdrNum(&shdrNum) != 0) {
@@ -99,7 +124,8 @@ void LoadWorker::run()
         QModelIndex ins = _infoModel->buildMore(QString("Section   %1")
                 .arg(_file->getScnName(&shdr)));
         emit symbolStarted(ins);
-        _file->disasm(i, disasmCallback, this);
+        _file->disasm(shdr.sh_offset, shdr.sh_offset+shdr.sh_size,
+                disasmCallback, this);
     }
 }
 

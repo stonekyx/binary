@@ -44,6 +44,7 @@ public:
     virtual const char *getSymNameByVal(Elf64_Addr);
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
+    virtual char *findDynTag(Elf64_Sxword);
     virtual ~FileImplLibelf();
 private:
     int _fd;
@@ -76,7 +77,6 @@ private:
     bool readArhdr();
     bool rewindAr();
     void readArsym();
-    char *findDynTag(Elf64_Sxword);
     template<typename WordType, typename SymType>
     bool queryDynSymC(const char *name, Elf64_Sym *dst);
     bool loadDeps(const char *);

@@ -66,6 +66,7 @@ public:
     virtual const char *getSymNameByVal(Elf64_Addr) = 0;
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *) = 0;
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *) = 0;
+    virtual char *findDynTag(Elf64_Sxword) = 0;
     virtual const char *getName() {
         return _name;
     }

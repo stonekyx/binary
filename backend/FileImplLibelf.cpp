@@ -17,6 +17,8 @@
 #include "File.h"
 #include "Backend.h"
 #include "ForkPipe.h"
+#include "ConvertClass.h"
+#include "ConvertAddr.h"
 #include "FileImplLibelf.h"
 
 using namespace std;
@@ -67,7 +69,10 @@ FileImplLibelf::FileImplLibelf(const char *name,
 
 bool FileImplLibelf::isValid()
 {
-    return elf_kind(_elf) != ELF_K_NONE;
+    return elf_kind(_elf) != ELF_K_NONE &&
+        (gelf_getclass(_elf) == ELFCLASS32 ||
+         gelf_getclass(_elf) == ELFCLASS64 ||
+         elf_kind(_elf) == ELF_K_AR);
 }
 
 int FileImplLibelf::getClass()
@@ -97,19 +102,7 @@ bool FileImplLibelf::getEhdr(Elf64_Ehdr *dst)
         return false;
     }
     memcpy(&dst->e_ident, &ehdr.e_ident, sizeof(ehdr.e_ident));
-    dst->e_type = ehdr.e_type;
-    dst->e_machine = ehdr.e_machine;
-    dst->e_version = ehdr.e_version;
-    dst->e_entry = ehdr.e_entry;
-    dst->e_phoff = ehdr.e_phoff;
-    dst->e_shoff = ehdr.e_shoff;
-    dst->e_flags = ehdr.e_flags;
-    dst->e_ehsize = ehdr.e_ehsize;
-    dst->e_phentsize = ehdr.e_phentsize;
-    dst->e_phnum = ehdr.e_phnum;
-    dst->e_shentsize = ehdr.e_shentsize;
-    dst->e_shnum = ehdr.e_shnum;
-    dst->e_shstrndx = ehdr.e_shstrndx;
+    ConvertClass::cvt(*dst, ehdr);
     return true;
 }
 
@@ -134,14 +127,7 @@ bool FileImplLibelf::getPhdr(size_t idx, Elf64_Phdr *dst)
     if(!gelf_getphdr(_elf, idx, &phdr)) {
         return false;
     }
-    dst->p_type = phdr.p_type;
-    dst->p_flags = phdr.p_flags;
-    dst->p_offset = phdr.p_offset;
-    dst->p_vaddr = phdr.p_vaddr;
-    dst->p_paddr = phdr.p_paddr;
-    dst->p_filesz = phdr.p_filesz;
-    dst->p_memsz = phdr.p_memsz;
-    dst->p_align = phdr.p_align;
+    ConvertClass::cvt(*dst, phdr);
     return true;
 }
 
@@ -152,16 +138,7 @@ bool FileImplLibelf::getShdr(size_t idx, Elf64_Shdr *dst)
     if(!(scn=elf_getscn(_elf, idx)) || !gelf_getshdr(scn, &shdr)) {
         return false;
     }
-    dst->sh_name = shdr.sh_name;
-    dst->sh_type = shdr.sh_type;
-    dst->sh_flags = shdr.sh_flags;
-    dst->sh_addr = shdr.sh_addr;
-    dst->sh_offset = shdr.sh_offset;
-    dst->sh_size = shdr.sh_size;
-    dst->sh_link = shdr.sh_link;
-    dst->sh_info = shdr.sh_info;
-    dst->sh_addralign = shdr.sh_addralign;
-    dst->sh_entsize = shdr.sh_entsize;
+    ConvertClass::cvt(*dst, shdr);
     return true;
 }
 
@@ -199,17 +176,6 @@ ssize_t FileImplLibelf::getScnData(size_t idx, void *buf, size_t bufsize)
     return n;
 }
 
-template<typename T>
-static void convertClass(Elf64_Sym &dst, T &src)
-{
-    dst.st_name = src.st_name;
-    dst.st_info = src.st_info;
-    dst.st_other = src.st_other;
-    dst.st_shndx = src.st_shndx;
-    dst.st_value = src.st_value;
-    dst.st_size = src.st_size;
-}
-
 bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
 {
     if(!checkScnData(scnIdx, &_symTabCache)) {
@@ -217,7 +183,7 @@ bool FileImplLibelf::getSym(size_t scnIdx, int idx, Elf64_Sym *dst)
     }
     GElf_Sym sym;
     gelf_getsym(_symTabCache.data, idx, &sym);
-    convertClass<GElf_Sym>(*dst, sym);
+    ConvertClass::cvt(*dst, sym);
     return true;
 }
 
@@ -228,8 +194,7 @@ bool FileImplLibelf::getSyminfo(size_t scnIdx, int idx, Elf64_Syminfo *dst)
     }
     GElf_Syminfo syminfo;
     gelf_getsyminfo(_symTabCache.data, idx, &syminfo);
-    dst->si_boundto = syminfo.si_boundto;
-    dst->si_flags = syminfo.si_flags;
+    ConvertClass::cvt(*dst, syminfo);
     return true;
 }
 
@@ -245,8 +210,7 @@ bool FileImplLibelf::getDyn(size_t scnIdx, int idx, Elf64_Dyn *dst)
     }
     GElf_Dyn dyn;
     gelf_getdyn(_dynCache.data, idx, &dyn);
-    dst->d_tag = dyn.d_tag;
-    dst->d_un = dyn.d_un;
+    ConvertClass::cvt(*dst, dyn);
     return true;
 }
 
@@ -416,8 +380,7 @@ bool FileImplLibelf::getRel(size_t scnIdx, int idx, Elf64_Rel *dst)
     if(!gelf_getrel(_relCache.data, idx, &rel)) {
         return false;
     }
-    dst->r_offset = rel.r_offset;
-    dst->r_info = rel.r_info;
+    ConvertClass::cvt(*dst, rel);
     return true;
 }
 
@@ -430,10 +393,42 @@ bool FileImplLibelf::getRela(size_t scnIdx, int idx, Elf64_Rela *dst)
     if(!gelf_getrela(_relaCache.data, idx, &rela)) {
         return false;
     }
-    dst->r_offset = rela.r_offset;
-    dst->r_info = rela.r_info;
-    dst->r_addend = rela.r_addend;
+    ConvertClass::cvt(*dst, rela);
     return true;
+}
+
+char *FileImplLibelf::findDynTag(Elf64_Sxword val)
+{
+    Elf64_Phdr phdr;
+    size_t phdrNum;
+    if(getPhdrNum(&phdrNum) != 0) {
+        return NULL;
+    }
+    ConvertAddr conv(this);
+    for(size_t i=0; i<phdrNum; i++) {
+        if(!getPhdr(i, &phdr)) {
+            continue;
+        }
+        if(phdr.p_type != PT_DYNAMIC) {
+            continue;
+        }
+        char *dynRaw = getRawData(phdr.p_offset);
+        size_t resOff;
+        size_t entSize = getClass()==ELFCLASS32 ?
+            sizeof(Elf32_Dyn) : sizeof(Elf64_Dyn);
+        size_t entNum = phdr.p_filesz/entSize;
+        for(size_t j=0; j<entNum; j++) {
+            Elf64_Dyn dyn;
+            ConvertClass::cvt(dyn, *(Elf64_Dyn*)(dynRaw+j*entSize));
+            if(dyn.d_tag == val) {
+                if(!conv.vaddrToFileOff(resOff, dyn.d_un.d_ptr)) {
+                    return NULL;
+                }
+                return getRawData(resOff);
+            }
+        }
+    }
+    return NULL;
 }
 
 FileImplLibelf::~FileImplLibelf()
@@ -482,44 +477,6 @@ void FileImplLibelf::readArsym()
     }
 }
 
-char *FileImplLibelf::findDynTag(Elf64_Sxword val)
-{
-    Elf64_Phdr phdr;
-    size_t phdrNum;
-    if(getPhdrNum(&phdrNum) != 0) {
-        return NULL;
-    }
-    for(size_t i=0; i<phdrNum; i++) {
-        if(!getPhdr(i, &phdr)) {
-            continue;
-        }
-        if(phdr.p_type != PT_DYNAMIC) {
-            continue;
-        }
-        char *dynRaw = getRawData(phdr.p_offset);
-        if(getClass() == ELFCLASS32) {
-            Elf32_Dyn *dyn = (Elf32_Dyn*)dynRaw;
-            size_t dynNum = phdr.p_filesz / sizeof(*dyn);
-            for(size_t j=0; j<dynNum; j++) {
-                if(dyn[j].d_tag == val) {
-                    return getRawData(dyn[j].d_un.d_ptr);
-                }
-            }
-        } else if(getClass() == ELFCLASS64) {
-            Elf64_Dyn *dyn = (Elf64_Dyn*)dynRaw;
-            size_t dynNum = phdr.p_filesz / sizeof(*dyn);
-            for(size_t j=0; j<dynNum; j++) {
-                if(dyn[j].d_tag == val) {
-                    return getRawData(dyn[j].d_un.d_ptr);
-                }
-            }
-        } else {
-            return NULL;
-        }
-    }
-    return NULL;
-}
-
 template<typename WordType, typename SymType>
 bool FileImplLibelf::queryDynSymC(const char *name, Elf64_Sym *dst)
 {
@@ -556,7 +513,7 @@ bool FileImplLibelf::queryDynSymC(const char *name, Elf64_Sym *dst)
         h2 = *hv++;
         if((h1 == (h2 & ~1)) && !strcmp(name, _dynStrRaw+sym->st_name)) {
             if(dst) {
-                convertClass(*dst, *sym);
+                ConvertClass::cvt(*dst, *sym);
             }
             return true;
         }
@@ -642,9 +599,9 @@ void FileImplLibelf::prepareSymLookup()
     for(size_t i=0; i<dynSymNum; i++) {
         Elf64_Sym sym;
         if(getClass() == ELFCLASS32) {
-            convertClass(sym, *((Elf32_Sym*)dynSymRaw+i));
+            ConvertClass::cvt(sym, *((Elf32_Sym*)dynSymRaw+i));
         } else if(getClass() == ELFCLASS64) {
-            convertClass(sym, *((Elf64_Sym*)dynSymRaw+i));
+            ConvertClass::cvt(sym, *((Elf64_Sym*)dynSymRaw+i));
         } else {
             break;
         }

@@ -1,7 +1,9 @@
 #include <elf.h>
 #include <QtGui/QMessageBox>
+#include <QtGui/QTextDocument>
 
 #include "backend/File.h"
+#include "backend/ConvertClass.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
 #include "Defines.h"
@@ -108,34 +110,63 @@ void MainWindow::updateArInfo(File *file)
 
 void MainWindow::updateElfInfo(File *file)
 {
+    bool useShdr = false;
+    bool usePhdr = false;
+    char *dynSymRaw = NULL, *dynStrRaw = NULL;
     Elf64_Shdr shdr;
-    _scnIndex = symTabIndex(file, _scnIndex, &shdr);
-    if(_scnIndex == 0) {
+    size_t found;
+    if((found = symTabIndex(file, _scnIndex, &shdr))) {
+        useShdr = true;
+    } else if((dynSymRaw = file->findDynTag(DT_SYMTAB))) {
+        dynStrRaw = file->findDynTag(DT_STRTAB);
+        usePhdr = true;
+    }
+    if(!useShdr && !usePhdr) {
         QMessageBox::critical(this, tr("Error"),
                 tr("No symbol table found or not a valid symbol table."));
         close();
         return;
     }
+    _scnIndex = found;
 
     if(_infoModel) {
         delete _infoModel;
     }
     _infoModel = new InfoModel(QString(), 2);
 
-    size_t symCount = shdr.sh_size / shdr.sh_entsize;
+    size_t symCount;
+    if(useShdr) {
+        symCount = shdr.sh_size / shdr.sh_entsize;
+    } else {
+        symCount = file->detectDynSymCnt();
+    }
     for(size_t i=0; i<symCount; i++) {
         Elf64_Sym sym;
-        if(!file->getSym(_scnIndex, i, &sym)) {
-            continue;
+        if(useShdr) {
+            if(!file->getSym(_scnIndex, i, &sym)) {
+                continue;
+            }
+        } else {
+            if(file->getClass() == ELFCLASS32) {
+                ConvertClass::cvt(sym,
+                        *(Elf32_Sym*)(dynSymRaw+i*sizeof(Elf32_Sym)));
+            } else {
+                ConvertClass::cvt(sym,
+                        *(Elf64_Sym*)(dynSymRaw+i*sizeof(Elf64_Sym)));
+            }
         }
 
-        const char *symName = file->getStrPtr(shdr.sh_link, sym.st_name);
-        _infoModel->buildMore(QString("Entry %1\t%2")
-                .arg(i)
-                .arg(symName));
+        const char *symName;
+        if(useShdr) {
+            symName = file->getStrPtr(shdr.sh_link, sym.st_name);
+        } else {
+            symName = dynStrRaw ? dynStrRaw + sym.st_name : NULL;
+        }
         char *demangle = cplus_demangle(symName);
-        _infoModel->buildMore(QString("\tDemangle\t%1")
-                .arg(demangle));
+        _infoModel->buildMore(QString("Entry %1\t%2\x1f<div>%3</div>")
+                .arg(i)
+                .arg(symName)
+                .arg(Qt::escape(demangle)));
         free(demangle);
         _infoModel->buildMore(QString("\tName offset\t0x%1")
                 .arg(sym.st_name, 0, 16));
@@ -149,7 +180,8 @@ void MainWindow::updateElfInfo(File *file)
                 .arg(Defines::commentText(ELF64_ST_VISIBILITY(sym.st_other), defines_STV)));
         Elf64_Shdr shdr;
         QString scnName;
-        if(sym.st_shndx && file->getShdr(sym.st_shndx, &shdr) &&
+        if(useShdr &&
+                sym.st_shndx && file->getShdr(sym.st_shndx, &shdr) &&
                 !(scnName=file->getScnName(&shdr)).isEmpty())
         {
             scnName.prepend(" (");

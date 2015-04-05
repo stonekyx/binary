@@ -45,6 +45,7 @@ public:
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
     virtual char *findDynTag(Elf64_Sxword);
+    virtual size_t detectDynSymCnt();
     virtual ~FileImplLibelf();
 private:
     int _fd;
@@ -85,7 +86,6 @@ private:
     static int disasmGetSym(GElf_Addr, Elf32_Word, GElf_Addr, char **,
             size_t *, void *);
     void prepareSymLookup();
-    size_t detectDynSymCnt();
     static int disasmOutput(char *, size_t, void *);
     bool checkScnData(size_t scnIdx, ScnDataCache *cache);
 };

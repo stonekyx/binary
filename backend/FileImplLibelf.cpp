@@ -431,6 +431,36 @@ char *FileImplLibelf::findDynTag(Elf64_Sxword val)
     return NULL;
 }
 
+size_t FileImplLibelf::detectDynSymCnt()
+{
+    if(!_hashTabRaw && !(_hashTabRaw=findDynTag(DT_GNU_HASH))) {
+        return 0;
+    }
+    if(getClass() != ELFCLASS32 && getClass() != ELFCLASS64) {
+        return 0;
+    }
+    size_t C = getClass()==ELFCLASS32 ? 4 : 8;
+    uint32_t nbuckets = *(uint32_t*)_hashTabRaw;
+    uint32_t symndx = *((uint32_t*)_hashTabRaw+1);
+    uint32_t maskwords = *((uint32_t*)_hashTabRaw+2);
+    char *bloom = _hashTabRaw+sizeof(uint32_t)*4;
+    uint32_t *buckets = (uint32_t*)(bloom+maskwords*C);
+    uint32_t *hashvals = (uint32_t*)(buckets+nbuckets);
+    uint32_t *hv;
+
+    size_t cnt = symndx;
+    for(size_t i=0; i<nbuckets; i++) {
+        if(buckets[i]==0) {
+            continue;
+        }
+        hv = &hashvals[buckets[i]-symndx];
+        do {
+            cnt++;
+        } while(((*hv++) & 1) == 0);
+    }
+    return cnt;
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     resetDisasm();
@@ -652,36 +682,6 @@ void FileImplLibelf::prepareSymLookup()
             }
         }
     }
-}
-
-size_t FileImplLibelf::detectDynSymCnt()
-{
-    if(!_hashTabRaw && !(_hashTabRaw=findDynTag(DT_GNU_HASH))) {
-        return 0;
-    }
-    if(getClass() != ELFCLASS32 && getClass() != ELFCLASS64) {
-        return 0;
-    }
-    size_t C = getClass()==ELFCLASS32 ? 4 : 8;
-    uint32_t nbuckets = *(uint32_t*)_hashTabRaw;
-    uint32_t symndx = *((uint32_t*)_hashTabRaw+1);
-    uint32_t maskwords = *((uint32_t*)_hashTabRaw+2);
-    char *bloom = _hashTabRaw+sizeof(uint32_t)*4;
-    uint32_t *buckets = (uint32_t*)(bloom+maskwords*C);
-    uint32_t *hashvals = (uint32_t*)(buckets+nbuckets);
-    uint32_t *hv;
-
-    size_t cnt = symndx;
-    for(size_t i=0; i<nbuckets; i++) {
-        if(buckets[i]==0) {
-            continue;
-        }
-        hv = &hashvals[buckets[i]-symndx];
-        do {
-            cnt++;
-        } while(((*hv++) & 1) == 0);
-    }
-    return cnt;
 }
 
 int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)

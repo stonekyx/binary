@@ -689,7 +689,10 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
     DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
     QString newBuf(buf);
     QStringList fields = newBuf.split("\t", QString::SkipEmptyParts);
-    if(fields.size() != 2) {
+    Elf64_Ehdr ehdr;
+    if(fields.size() != 2 ||
+            (info->file->getEhdr(&ehdr) && ehdr.e_type == ET_REL))
+    {
         return priv->outputCB(buf, len, arg);
     }
     QStringList params =

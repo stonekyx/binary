@@ -35,8 +35,16 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     } else {
         _scnIndex = 0;
     }
-    _useRange = false;
+    _useRange = _useVRange = false;
     _begin = _end = 0;
+    if(param.find("vBegin") != param.end() &&
+            param.find("vEnd") != param.end())
+    {
+        _useRange = true;
+        _useVRange = true;
+        _begin = QString(param["vBegin"].c_str()).toULong();
+        _end = QString(param["vEnd"].c_str()).toULong();
+    }
     QFont font = _ui->infoTree->font();
     font.setFamily("Courier");
     font.setPointSize(9);
@@ -67,6 +75,14 @@ void MainWindow::updateInfo(File *file)
     ConvertAddr convertAddr(file);
 
     if(_useRange) {
+        if(_useVRange) {
+            size_t fBegin=0, fEnd=0;
+            convertAddr.vaddrToFileOff(fBegin, _begin);
+            convertAddr.vaddrToFileOff(fEnd, _end);
+            _begin = fBegin;
+            _end = fEnd;
+            _useVRange = false;
+        }
         _ui->setRange(_begin, _end);
         size_t _vBegin=0, _vEnd=0;
         convertAddr.fileOffToVaddr(_vBegin, _begin);
@@ -126,6 +142,7 @@ void MainWindow::setRange(size_t begin, size_t end)
 {
     if(!_useRange || begin != _begin || end != _end) {
         _useRange = true;
+        _useVRange = false;
         _begin = begin;
         _end = end;
         updateInfo();
@@ -140,6 +157,7 @@ void MainWindow::setVaddrRange(size_t begin, size_t end)
     convertAddr.vaddrToFileOff(fEnd, end);
     if(!_useRange || fBegin != _begin || fEnd != _end) {
         _useRange = true;
+        _useVRange = false;
         _begin = fBegin;
         _end = fEnd;
         updateInfo();

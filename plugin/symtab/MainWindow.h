@@ -15,7 +15,8 @@ class MainWindow;
 END_PLUG_NAMESPACE
 
 class binary::plugin::symtab::MainWindow :
-    public PLUG_NAMESPACE(plugin_framework)::MWTreeView {
+    public binary::plugin::plugin_framework::MWTreeView {
+    Q_OBJECT
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -24,12 +25,15 @@ public:
 public:
     virtual void updateInfo(binary::backend::File *);
     using MWBase::updateInfo;
+public slots:
+    void openDisasm();
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
 
     void updateArInfo(binary::backend::File *);
     void updateElfInfo(binary::backend::File *);
+    void ctxMenuTreeView();
 };
 
 #endif

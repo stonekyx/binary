@@ -3,6 +3,8 @@
 #include <QtGui/QTextDocument>
 
 #include "backend/File.h"
+#include "backend/Backend.h"
+#include "frontend/PluginManager.h"
 #include "backend/ConvertClass.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
@@ -22,6 +24,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     MWTreeView(new Ui::MWTreeView("PluginSymTabMainWindow", "Symbol table"), plugin, param, parent),
     _infoModel(NULL)
 {
+    ctxMenuTreeView();
     if(param.find("scnIndex") != param.end()) {
         _scnIndex = QString(param["scnIndex"].c_str()).toULong();
     } else {
@@ -77,6 +80,37 @@ void MainWindow::updateInfo(File *file)
         break;
     default:
         break;
+    }
+}
+
+void MainWindow::openDisasm()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    QModelIndex index = _ui->infoTree->indexAt(action->data().toPoint());
+    while(index.parent().isValid()) {
+        index = index.parent();
+    }
+    if(index.model()->rowCount(index) <= 2) {
+        return; //ar
+    }
+    bool ok;
+    Elf64_Addr vaddr =
+        index.child(4, 1).data().toString().toULong(&ok, 0);
+    if(!ok) { return; }
+    Elf64_Xword size =
+        index.child(5, 1).data().toString().toULong(&ok, 0);
+    if(!ok) { return; }
+
+    map<string, string> param;
+    param["vBegin"] = QString::number(vaddr).toUtf8().constData();
+    param["vEnd"] = QString::number(vaddr+size).toUtf8().constData();
+    BIN_NAMESPACE(frontend)::Plugin *plugin =
+        _plugin->manager->getPlugin("Disasm");
+    if(plugin) {
+        plugin->createView(param);
     }
 }
 
@@ -217,6 +251,13 @@ void MainWindow::updateElfInfo(File *file)
                 .arg(libName));
     }
     _ui->infoTree->setModel(_infoModel);
+}
+
+void MainWindow::ctxMenuTreeView()
+{
+    QAction *actionDisasm = _ui->ctxMenu->addAction(
+            tr("Disassemble"), this, SLOT(openDisasm()));
+    actionDisasm->setParent(_ui->ctxMenu);
 }
 
 END_PLUG_NAMESPACE

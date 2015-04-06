@@ -41,7 +41,7 @@ private:
     size_t _scnIndex;
     LoadWorker *_loadWorker;
     Ui::MainWindow *_ui;
-    bool _useRange;
+    bool _useRange, _useVRange;
     size_t _begin, _end;
 };
 

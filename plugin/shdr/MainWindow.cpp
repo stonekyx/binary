@@ -46,7 +46,7 @@ void MainWindow::updateInfo(File *file)
     Elf64_Shdr shdr;
     size_t shdrNum;
     if(file->getShdrNum(&shdrNum) != 0) {
-        return;
+        shdrNum = 0;
     }
 
     for(size_t i=0; i<shdrNum; i++) {

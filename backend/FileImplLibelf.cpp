@@ -697,7 +697,12 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
     QString label;
     foreach(QString p, params) {
         bool ok;
-        size_t val = p.toULong(&ok, 0);
+        size_t val;
+        if(p.startsWith(QChar('$'))) {
+            val = p.right(p.length()-1).toULong(&ok, 0);
+        } else {
+            val = p.toULong(&ok, 0);
+        }
         if(!ok) {
             continue;
         }

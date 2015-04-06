@@ -85,17 +85,22 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
             .arg(info->vaddr, 0, 16)
             .arg(bytes)
             .arg(addTooltip(buf)));
+    worker->_noSleep += info->cur - info->last;
     info->vaddr += info->cur - info->last;
     info->last = info->cur;
     if(info->labelBuf) {
         info->labelBuf[0] = 0;
     }
-    yieldCurrentThread();
+    if(worker->_noSleep > 0x1000) {
+        msleep(100);
+        worker->_noSleep = 0;
+    }
     return 0;
 }
 
 void LoadWorker::run()
 {
+    _noSleep = 0;
     if(_restricted) {
         _instIndentLevel = 0;
         _file->disasm(_begin, _end, disasmCallback, this);

@@ -35,6 +35,7 @@ private:
     bool _restricted;
     size_t _begin, _end;
     size_t _instIndentLevel;
+    size_t _noSleep;
 
     static int disasmCallback(char *, size_t, void *);
     void runAll();

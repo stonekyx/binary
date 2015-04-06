@@ -12,7 +12,7 @@ ConvertAddr::ConvertAddr(File *file) :
     }
 }
 
-bool ConvertAddr::vaddrToFileOff(size_t &dst, Elf64_Addr addr)
+bool ConvertAddr::vaddrToFileOff(Elf64_Off &dst, Elf64_Addr addr)
 {
     if(!_file) {
         return false;
@@ -34,7 +34,7 @@ bool ConvertAddr::vaddrToFileOff(size_t &dst, Elf64_Addr addr)
     return false;
 }
 
-bool ConvertAddr::fileOffToVaddr(Elf64_Addr &dst, size_t offset)
+bool ConvertAddr::fileOffToVaddr(Elf64_Addr &dst, Elf64_Off offset)
 {
     if(!_file) {
         return false;
@@ -56,6 +56,60 @@ bool ConvertAddr::fileOffToVaddr(Elf64_Addr &dst, size_t offset)
         }
     }
     return false;
+}
+
+bool ConvertAddr::vaddrToSecOff(size_t &scnIdx, Elf64_Off &scnOff,
+        Elf64_Addr addr)
+{
+    size_t shdrNum;
+    if(!_file || _file->getShdrNum(&shdrNum) != 0) {
+        return false;
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!_file->getShdr(i, &shdr)) {
+            continue;
+        }
+        if(addr >= shdr.sh_addr && addr < shdr.sh_addr+shdr.sh_size) {
+            scnIdx = i;
+            scnOff = addr - shdr.sh_addr;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ConvertAddr::fileOffToSecOff(size_t &scnIdx, Elf64_Off &scnOff,
+        Elf64_Off offset)
+{
+    size_t shdrNum;
+    if(!_file || _file->getShdrNum(&shdrNum) != 0) {
+        return false;
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!_file->getShdr(i, &shdr)) {
+            continue;
+        }
+        if(offset >= shdr.sh_offset && offset < shdr.sh_offset+shdr.sh_size)
+        {
+            scnIdx = i;
+            scnOff = offset - shdr.sh_offset;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ConvertAddr::secOffToFileOff(Elf64_Off &dst,
+        size_t scnIdx, Elf64_Off scnOff)
+{
+    Elf64_Shdr shdr;
+    if(!_file || !_file->getShdr(scnIdx, &shdr)) {
+        return false;
+    }
+    dst = shdr.sh_offset + scnOff;
+    return true;
 }
 
 void ConvertAddr::invalidate()

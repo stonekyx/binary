@@ -357,15 +357,18 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
     callerData.symNameMap = &_symNameMap;
     callerData.symDataMap = &_symDataMap;
     callerData.outputCB = cb;
+    callerData.convertAddr = new ConvertAddr(this);
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
-    return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
+    int res = disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
             cbInfo.vaddr, fmt, disasmOutput, &cbInfo, &cbInfo);
+    delete callerData.convertAddr;
+    return res;
 }
 
-const char *FileImplLibelf::getSymNameByVal(Elf64_Addr val)
+const char *FileImplLibelf::getSymNameByFileOff(Elf64_Off offset)
 {
-    if(_symNameMap.find(val) != _symNameMap.end()) {
-        return _symNameMap[val];
+    if(_symNameMap.find(offset) != _symNameMap.end()) {
+        return _symNameMap[offset];
     }
     return NULL;
 }
@@ -610,8 +613,11 @@ int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
         free(info->labelBuf);
         info->labelBuf = NULL;
     }
-    map<Elf64_Addr, const char *> *symNameMap = priv->symNameMap;
-    if(symNameMap->find(val) != symNameMap->end()) {
+    map<Elf64_Off, const char *> *symNameMap = priv->symNameMap;
+    Elf64_Off fileOff = 0;
+    if(priv->convertAddr->vaddrToFileOff(fileOff, val) &&
+            symNameMap->find(val) != symNameMap->end())
+    {
         info->labelBuf = strdup((*symNameMap)[val]);
         *size = strlen(info->labelBuf);
     }
@@ -622,6 +628,7 @@ int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
 void FileImplLibelf::prepareSymLookup()
 {
     _symNameMap.clear();
+    ConvertAddr convertAddr(this);
     char *dynSymRaw = findDynTag(DT_SYMTAB);
     char *dynStrRaw = findDynTag(DT_STRTAB);
     size_t dynSymNum = detectDynSymCnt();
@@ -635,23 +642,28 @@ void FileImplLibelf::prepareSymLookup()
             break;
         }
 
-        if(sym.st_value == 0) {
+        if(sym.st_shndx == 0) {
             continue;
         }
-        if(_symDataMap.find(sym.st_value) == _symDataMap.end()) {
-            _symDataMap[sym.st_value] = sym;
+        Elf64_Off fileOff = 0;
+        if(!convertAddr.vaddrToFileOff(fileOff, sym.st_value)) {
+            continue;
+        }
+        if(_symDataMap.find(fileOff) == _symDataMap.end()) {
+            _symDataMap[fileOff] = sym;
         }
 
         if(dynStrRaw[sym.st_name] == 0) {
             continue;
         }
-        if(_symNameMap.find(sym.st_value) == _symNameMap.end()) {
-            _symNameMap[sym.st_value] = dynStrRaw+sym.st_name;
+        if(_symNameMap.find(fileOff) == _symNameMap.end()) {
+            _symNameMap[fileOff] = dynStrRaw+sym.st_name;
         }
     }
 
+    Elf64_Ehdr ehdr;
     size_t shdrNum;
-    if(getShdrNum(&shdrNum)!=0) {
+    if(getShdrNum(&shdrNum)!=0 || !getEhdr(&ehdr)) {
         return;
     }
     for(size_t i=0; i<shdrNum; i++) {
@@ -666,17 +678,28 @@ void FileImplLibelf::prepareSymLookup()
                 symIdx < shdr.sh_size/shdr.sh_entsize; symIdx++)
         {
             Elf64_Sym sym;
-            if(!getSym(i, symIdx, &sym) || sym.st_value == 0) {
+            if(!getSym(i, symIdx, &sym) || sym.st_shndx == 0) {
                 continue;
             }
-            if(_symDataMap.find(sym.st_value) == _symDataMap.end()) {
-                _symDataMap[sym.st_value] = sym;
+            bool ok;
+            Elf64_Off fileOff = 0;
+            if(ehdr.e_type == ET_REL) {
+                ok = convertAddr.secOffToFileOff(fileOff,
+                        sym.st_shndx, sym.st_value);
+            } else {
+                ok = convertAddr.vaddrToFileOff(fileOff, sym.st_value);
+            }
+            if(!ok) {
+                continue;
+            }
+            if(_symDataMap.find(fileOff) == _symDataMap.end()) {
+                _symDataMap[fileOff] = sym;
             }
             if(getStrPtr(shdr.sh_link, sym.st_name)[0] == 0) {
                 continue;
             }
-            if(_symNameMap.find(sym.st_value) == _symNameMap.end()) {
-                _symNameMap[sym.st_value] =
+            if(_symNameMap.find(fileOff) == _symNameMap.end()) {
+                _symNameMap[fileOff] =
                     getStrPtr(shdr.sh_link, sym.st_name);
             }
         }
@@ -709,9 +732,12 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
         if(!ok) {
             continue;
         }
-        if(priv->symNameMap->find(val) != priv->symNameMap->end()) {
+        Elf64_Off fileOff = 0;
+        if(priv->convertAddr->vaddrToFileOff(fileOff, val) &&
+                priv->symNameMap->find(fileOff) != priv->symNameMap->end())
+        {
             label += " <";
-            label += (*priv->symNameMap)[val];
+            label += (*priv->symNameMap)[fileOff];
             label += ">";
         }
     }

@@ -69,7 +69,8 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
         }
         bytes += QString("%1").arg(*p, 2, 16, QChar('0'));
     }
-    const char *symName = info->file->getSymNameByVal(info->vaddr);
+    const char *symName = info->file->getSymNameByFileOff(
+            info->last - (const uint8_t*)info->file->getRawData(0));
     if(symName) {
         char *demangled = cplus_demangle(symName);
         QModelIndex inserted = infoModel->buildMore(

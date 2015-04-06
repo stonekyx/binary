@@ -16,8 +16,11 @@ class binary::backend::ConvertAddr : public QObject {
     Q_OBJECT
 public:
     ConvertAddr(File *file);
-    bool vaddrToFileOff(size_t &dst, Elf64_Addr);
-    bool fileOffToVaddr(Elf64_Addr &dst, size_t);
+    bool vaddrToFileOff(Elf64_Off &dst, Elf64_Addr);
+    bool fileOffToVaddr(Elf64_Addr &dst, Elf64_Off);
+    bool vaddrToSecOff(size_t &scnIdx, Elf64_Off &scnOff, Elf64_Addr);
+    bool fileOffToSecOff(size_t &scnIdx, Elf64_Off &scnOff, Elf64_Off);
+    bool secOffToFileOff(Elf64_Off &dst, size_t scnIdx, Elf64_Off scnOff);
 public slots:
     void invalidate();
 signals:

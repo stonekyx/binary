@@ -13,6 +13,7 @@
 
 BEGIN_BIN_NAMESPACE(backend)
 
+class ConvertAddr;
 class FileImplLibelf : public File {
 public:
     FileImplLibelf(const char *, Elf_Cmd);
@@ -41,7 +42,7 @@ public:
     virtual bool queryDynSym(const char *, Elf64_Sym *dst);
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*);
-    virtual const char *getSymNameByVal(Elf64_Addr);
+    virtual const char *getSymNameByFileOff(Elf64_Off);
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
     virtual char *findDynTag(Elf64_Sxword);
@@ -67,12 +68,13 @@ private:
     bool _depsLoaded;
     DisasmCtx_t *_disasmCtx;
     Ebl *_ebl;
-    std::map<Elf64_Addr, const char *> _symNameMap;
-    std::map<Elf64_Addr, Elf64_Sym> _symDataMap;
+    std::map<Elf64_Off, const char *> _symNameMap;
+    std::map<Elf64_Off, Elf64_Sym> _symDataMap;
     struct DisasmPrivData {
-        std::map<Elf64_Addr, const char *> *symNameMap;
-        std::map<Elf64_Addr, Elf64_Sym> *symDataMap;
+        std::map<Elf64_Off, const char *> *symNameMap;
+        std::map<Elf64_Off, Elf64_Sym> *symDataMap;
         DisasmCB outputCB;
+        ConvertAddr *convertAddr;
     };
 
     bool readArhdr();

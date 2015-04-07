@@ -65,6 +65,7 @@ FileImplLibelf::FileImplLibelf(const char *name,
     _disasmCtx = NULL;
     _ebl = NULL;
     prepareSymLookup();
+    prepareRelocLookup();
 }
 
 bool FileImplLibelf::isValid()
@@ -264,6 +265,7 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     resetDeps();
     resetDisasm();
     prepareSymLookup();
+    prepareRelocLookup();
     _backend->signalFileChange(NULL);
     _backend->signalFileChange(this);
     return _elf;
@@ -357,6 +359,7 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
     cbInfo.callerData = &callerData;
     callerData.symNameMap = &_symNameMap;
     callerData.symDataMap = &_symDataMap;
+    callerData.relocNameMap = &_relocNameMap;
     callerData.outputCB = cb;
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
     return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
@@ -367,6 +370,17 @@ const char *FileImplLibelf::getSymNameByFileOff(Elf64_Off offset)
 {
     if(_symNameMap.find(offset) != _symNameMap.end()) {
         return _symNameMap[offset];
+    }
+    return NULL;
+}
+
+const char *FileImplLibelf::getRelocNameByFileOff(
+        Elf64_Off start, Elf64_Off end)
+{
+    map<Elf64_Off, const char *>::const_iterator it =
+        _relocNameMap.lower_bound(start);
+    if(it != _relocNameMap.end() && it->first < end) {
+        return it->second;
     }
     return NULL;
 }
@@ -727,6 +741,67 @@ bool FileImplLibelf::checkScnData(size_t scnIdx, ScnDataCache *cache)
         cache->data = data;
     }
     return true;
+}
+
+void FileImplLibelf::prepareRelocLookup()
+{
+    _relocNameMap.clear();
+    ConvertAddr convertAddr(this);
+    Elf64_Ehdr ehdr;
+    size_t shdrNum;
+    if(getShdrNum(&shdrNum) != 0 || !getEhdr(&ehdr)) {
+        return;
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!getShdr(i, &shdr)) {
+            continue;
+        }
+        if(shdr.sh_type != SHT_REL && shdr.sh_type != SHT_RELA) {
+            continue;
+        }
+        for(size_t ent=0; ent<shdr.sh_size/shdr.sh_entsize; ent++) {
+            union {
+                Elf64_Rel rel;
+                Elf64_Rela rela;
+            } rel;
+            if(shdr.sh_type == SHT_REL) {
+                if(!getRel(i, ent, &rel.rel)) {
+                    continue;
+                }
+            } else if(shdr.sh_type == SHT_RELA) {
+                if(!getRela(i, ent, &rel.rela)) {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+            Elf64_Sym sym;
+            if(!getSym(shdr.sh_link,
+                        ELF64_R_SYM(rel.rel.r_info), &sym))
+            {
+                continue;
+            }
+            Elf64_Shdr symShdr;
+            if(!getShdr(shdr.sh_link, &symShdr)) {
+                continue;
+            }
+            const char *symName = getStrPtr(symShdr.sh_link, sym.st_name);
+            bool ok;
+            Elf64_Off fileOff = 0;
+            if(ehdr.e_type == ET_REL) {
+                ok = convertAddr.secOffToFileOff(fileOff,
+                        shdr.sh_info, rel.rel.r_offset);
+            } else {
+                ok = convertAddr.vaddrToFileOff(fileOff,
+                        rel.rel.r_offset);
+            }
+            if(ok && _relocNameMap.find(fileOff) == _relocNameMap.end())
+            {
+                _relocNameMap[fileOff] = symName;
+            }
+        }
+    }
 }
 
 END_BIN_NAMESPACE

@@ -41,7 +41,7 @@ static QString getTooltip(const QString &orig)
 
 static QString getTooltip(Elf64_Addr addr, File::DisasmCBInfo *info)
 {
-    char *buf = info->convertAddr->vaddrToSecOffStrWithData(addr, 20);
+    char *buf = info->convertAddr->vaddrToSecOffStrWithData(addr, 50);
     QString res(buf);
     free(buf);
     return res;
@@ -129,12 +129,22 @@ static QString processBuffer(const char *buf, File::DisasmCBInfo *info)
             }
         }
     }
+    const char *relocName;
+    if((relocName = info->file->getRelocNameByFileOff(
+                    (const char*)info->last - info->file->getRawData(0),
+                    (const char*)info->cur - info->file->getRawData(0))))
+    {
+        labels.push_back(relocName);
+    }
     foreach(QString label, labels) {
         if(toolTipMap.find(label) != toolTipMap.end()) {
             tooltips.push_back(toolTipMap[label]);
         } else {
             tooltips.push_back(getTooltip(label));
         }
+    }
+    if(relocName) {
+        labels.last().prepend("Reloc: ");
     }
     QString res = comm;
     if(!args.isEmpty()) {

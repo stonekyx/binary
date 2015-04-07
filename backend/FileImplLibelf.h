@@ -42,6 +42,7 @@ public:
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*);
     virtual const char *getSymNameByFileOff(Elf64_Off);
+    virtual const char *getRelocNameByFileOff(Elf64_Off, Elf64_Off);
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
     virtual char *findDynTag(Elf64_Sxword);
@@ -69,9 +70,11 @@ private:
     Ebl *_ebl;
     std::map<Elf64_Off, const char *> _symNameMap;
     std::map<Elf64_Off, Elf64_Sym> _symDataMap;
+    std::map<Elf64_Off, const char *> _relocNameMap;
     struct DisasmPrivData {
         std::map<Elf64_Off, const char *> *symNameMap;
         std::map<Elf64_Off, Elf64_Sym> *symDataMap;
+        std::map<Elf64_Off, const char *> *relocNameMap;
         DisasmCB outputCB;
     };
 
@@ -88,6 +91,7 @@ private:
     void prepareSymLookup();
     static int disasmOutput(char *, size_t, void *);
     bool checkScnData(size_t scnIdx, ScnDataCache *cache);
+    void prepareRelocLookup();
 };
 
 END_BIN_NAMESPACE

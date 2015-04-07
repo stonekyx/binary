@@ -65,6 +65,7 @@ public:
     };
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*) = 0;
     virtual const char *getSymNameByFileOff(Elf64_Off) = 0;
+    virtual const char *getRelocNameByFileOff(Elf64_Off, Elf64_Off) = 0;
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *) = 0;
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *) = 0;
     virtual char *findDynTag(Elf64_Sxword) = 0;

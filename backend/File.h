@@ -14,6 +14,7 @@
 BEGIN_BIN_NAMESPACE(backend)
 
 class Backend;
+class ConvertAddr;
 class File;
 
 END_BIN_NAMESPACE
@@ -59,6 +60,7 @@ public:
         File *file;
         void *data;
         char *labelBuf;
+        ConvertAddr *convertAddr;
         void *callerData;
     };
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*) = 0;

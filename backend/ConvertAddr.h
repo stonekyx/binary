@@ -1,6 +1,8 @@
 #ifndef BACKEND_CONVERT_ADDR_H
 #define BACKEND_CONVERT_ADDR_H
 
+#include <vector>
+
 #include <QtCore/QObject>
 
 #include "common.h"
@@ -21,12 +23,19 @@ public:
     bool vaddrToSecOff(size_t &scnIdx, Elf64_Off &scnOff, Elf64_Addr);
     bool fileOffToSecOff(size_t &scnIdx, Elf64_Off &scnOff, Elf64_Off);
     bool secOffToFileOff(Elf64_Off &dst, size_t scnIdx, Elf64_Off scnOff);
+    char *secOffStr(size_t scnIdx, Elf64_Off scnOff);
+    char *vaddrToSecOffStr(Elf64_Addr);
+    char *vaddrToSecOffStrWithOrig(Elf64_Addr);
+    char *vaddrToSecOffStrWithData(Elf64_Addr, size_t dataSize = 20);
 public slots:
     void invalidate();
 signals:
     void invalidated();
 private:
     File *_file;
+    std::vector<Elf64_Phdr> _phdrs;
+    std::vector<Elf64_Shdr> _shdrs;
+    const char *_shdrStrRaw;
 };
 
 #endif

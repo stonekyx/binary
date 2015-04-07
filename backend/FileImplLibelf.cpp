@@ -353,16 +353,14 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
     cbInfo.file = this;
     cbInfo.data = cbData;
     cbInfo.labelBuf = NULL;
+    cbInfo.convertAddr = &convertAddr;
     cbInfo.callerData = &callerData;
     callerData.symNameMap = &_symNameMap;
     callerData.symDataMap = &_symDataMap;
     callerData.outputCB = cb;
-    callerData.convertAddr = new ConvertAddr(this);
     const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
-    int res = disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
+    return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
             cbInfo.vaddr, fmt, disasmOutput, &cbInfo, &cbInfo);
-    delete callerData.convertAddr;
-    return res;
 }
 
 const char *FileImplLibelf::getSymNameByFileOff(Elf64_Off offset)
@@ -615,10 +613,10 @@ int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
     }
     map<Elf64_Off, const char *> *symNameMap = priv->symNameMap;
     Elf64_Off fileOff = 0;
-    if(priv->convertAddr->vaddrToFileOff(fileOff, val) &&
-            symNameMap->find(val) != symNameMap->end())
+    if(info->convertAddr->vaddrToFileOff(fileOff, val) &&
+            symNameMap->find(fileOff) != symNameMap->end())
     {
-        info->labelBuf = strdup((*symNameMap)[val]);
+        info->labelBuf = strdup((*symNameMap)[fileOff]);
         *size = strlen(info->labelBuf);
     }
     *buf = info->labelBuf;
@@ -646,7 +644,9 @@ void FileImplLibelf::prepareSymLookup()
             continue;
         }
         Elf64_Off fileOff = 0;
-        if(!convertAddr.vaddrToFileOff(fileOff, sym.st_value)) {
+        if(ELF64_ST_TYPE(sym.st_info) == STT_FILE ||
+                !convertAddr.vaddrToFileOff(fileOff, sym.st_value))
+        {
             continue;
         }
         if(_symDataMap.find(fileOff) == _symDataMap.end()) {
@@ -678,7 +678,9 @@ void FileImplLibelf::prepareSymLookup()
                 symIdx < shdr.sh_size/shdr.sh_entsize; symIdx++)
         {
             Elf64_Sym sym;
-            if(!getSym(i, symIdx, &sym) || sym.st_shndx == 0) {
+            if(!getSym(i, symIdx, &sym) || sym.st_shndx == 0 ||
+                    ELF64_ST_TYPE(sym.st_info) == STT_FILE)
+            {
                 continue;
             }
             bool ok;
@@ -710,45 +712,7 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
 {
     DisasmCBInfo *info = (DisasmCBInfo *)arg;
     DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
-    QString newBuf(buf);
-    QStringList fields = newBuf.split("\t", QString::SkipEmptyParts);
-    Elf64_Ehdr ehdr;
-    if(fields.size() != 2 ||
-            (info->file->getEhdr(&ehdr) && ehdr.e_type == ET_REL))
-    {
-        return priv->outputCB(buf, len, arg);
-    }
-    QStringList params =
-        fields.at(1).split(",", QString::SkipEmptyParts);
-    QString label;
-    foreach(QString p, params) {
-        bool ok;
-        size_t val;
-        if(p.startsWith(QChar('$'))) {
-            val = p.right(p.length()-1).toULong(&ok, 0);
-        } else {
-            val = p.toULong(&ok, 0);
-        }
-        if(!ok) {
-            continue;
-        }
-        Elf64_Off fileOff = 0;
-        if(priv->convertAddr->vaddrToFileOff(fileOff, val) &&
-                priv->symNameMap->find(fileOff) != priv->symNameMap->end())
-        {
-            label += " <";
-            label += (*priv->symNameMap)[fileOff];
-            label += ">";
-        }
-    }
-    if(!label.isEmpty()) {
-        label.prepend("#");
-        if(!newBuf.endsWith(QChar('\t'))) {
-            newBuf.append(QChar('\t'));
-        }
-        newBuf.append(label);
-    }
-    return priv->outputCB(newBuf.toUtf8().data(), newBuf.length(), arg);
+    return priv->outputCB(buf, len, arg);
 }
 
 bool FileImplLibelf::checkScnData(size_t scnIdx, ScnDataCache *cache)

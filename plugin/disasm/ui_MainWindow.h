@@ -39,6 +39,7 @@ public:
     QLineEdit *leVaddrEnd;
     QStatusBar *statusBar;
     QLabel *statusLabel;
+    QLabel *statusTimerLabel;
     QRegExpValidator *rangeValValidator;
 
     MainWindow() : MWTreeView("PluginDisasmMainWindow", "Disassemble") {}
@@ -126,6 +127,10 @@ public:
         OBJNAME(statusLabel);
         statusBar->addWidget(statusLabel);
 
+        statusTimerLabel = new QLabel(statusBar);
+        OBJNAME(statusTimerLabel);
+        statusBar->addPermanentWidget(statusTimerLabel);
+
         QObject::connect(actionDisasmStop, SIGNAL(triggered()),
                 this, SLOT(stopDisasm()));
         QObject::connect(actionDisasmRefresh, SIGNAL(triggered()),
@@ -146,6 +151,7 @@ public:
         actionDisasmStop->setText(tr("&Stop"));
         actionDisasmRefresh->setText(tr("&Refresh"));
         statusLabel->setText(tr("Ready."));
+        statusTimerLabel->setText(tr(""));
     }
 public slots:
     void stopDisasm() {
@@ -191,6 +197,10 @@ public slots:
             if(!ok) { return; }
             emit signalVaddrRangeChange(begin, end);
         }
+    }
+    void showLoadTime(double sec, double per) {
+        statusTimerLabel->setText(QString::number(sec) + "s; " +
+                QString::number(per) + "s/inst");
     }
 signals:
     void signalStopDisasm();

@@ -27,6 +27,9 @@ public:
             QObject * = NULL);
 signals:
     void symbolStarted(QModelIndex);
+    void timerStopped(double, double);
+public slots:
+    void stopTimer();
 protected:
     virtual void run();
 private:
@@ -36,6 +39,8 @@ private:
     size_t _begin, _end;
     size_t _instIndentLevel;
     size_t _noSleep;
+    struct timespec _startTime;
+    size_t _instCnt;
 
     static int disasmCallback(char *, size_t, void *);
     void runAll();

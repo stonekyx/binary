@@ -88,7 +88,7 @@ void MainWindow::updateInfo(File *file)
     }
     bool useShdr = false;
     bool usePhdr = false;
-    char *dynRaw, *dynStrRaw;
+    char *dynRaw=NULL, *dynStrRaw=NULL;
     size_t dynRawSize;
     Elf64_Shdr shdr;
     _scnIndex = dynIndex(file, _scnIndex, &shdr);

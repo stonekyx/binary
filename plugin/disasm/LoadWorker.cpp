@@ -1,6 +1,9 @@
+#include <ctime>
+
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
+#include "backend/ConvertAddr.h"
 #include "DemangleWrap.h"
 #include "LoadWorker.h"
 
@@ -28,31 +31,120 @@ LoadWorker::LoadWorker(size_t begin, size_t end,
             this, SLOT(terminate()));
 }
 
-static QString addTooltip(const char *buf)
+static QString getTooltip(const QString &orig)
 {
+    char *demangle = cplus_demangle(orig.toUtf8().constData());
+    QString res(demangle);
+    free(demangle);
+    return res;
+}
+
+static QString getTooltip(Elf64_Addr addr, File::DisasmCBInfo *info)
+{
+    char *buf = info->convertAddr->vaddrToSecOffStrWithData(addr, 20);
     QString res(buf);
-    QStringList fields = res.split("\t", QString::SkipEmptyParts);
-    if(fields.size() != 3) {
-        return res;
-    }
-    QStringList units = fields[2].split(" ", QString::SkipEmptyParts);
-    QString tooltip;
-    foreach(QString u, units) {
-        if(u.length()>2 &&
-                u.startsWith(QChar('<')) && u.endsWith(QChar('>')))
-        {
-            if(!tooltip.isEmpty()) {
-                tooltip += "\n";
+    free(buf);
+    return res;
+}
+
+static QStringList splitArgs(const QString &args, char sep)
+{
+    QStringList res;
+    int paran=0, bracket=0, brace=0, sharp=0;
+    size_t last = 0;
+    for(int i=0; i<args.length(); i++) {
+        args[i] == '(' && (paran++);
+        args[i] == ')' && (paran--);
+        args[i] == '[' && (bracket++);
+        args[i] == ']' && (bracket--);
+        args[i] == '{' && (brace++);
+        args[i] == '}' && (brace--);
+        args[i] == '<' && (sharp++);
+        args[i] == '>' && (sharp--);
+        if(paran || bracket || brace || sharp) {
+            continue;
+        }
+        if(args[i] == sep) {
+            if(i-last) {
+                res.push_back(args.mid(last, i-last));
             }
-            char *demangle = cplus_demangle(
-                    u.mid(1, u.length()-2).toUtf8().constData());
-            tooltip += demangle;
-            free(demangle);
+            last = i+1;
+        } else if(i==args.length()-1) {
+            if(i-last+1) {
+                res.push_back(args.mid(last, i-last+1));
+            }
         }
     }
-    if(!tooltip.isEmpty()) {
-        res += '\x1f';
-        res += tooltip;
+    return res;
+}
+
+static QString processBuffer(const char *buf, File::DisasmCBInfo *info)
+{
+    QStringList fields = QString(buf).split('\t', QString::SkipEmptyParts);
+    QString comm;
+    QStringList args, labels, tooltips;
+    QMap<QString, QString> toolTipMap;
+    if(fields.size()>0) comm = fields.at(0);
+    if(fields.size()>1) args = splitArgs(fields.at(1), ',');
+    if(fields.size()>2) labels = splitArgs(fields.at(2), ' ');
+    if(labels.startsWith("#")) {
+        labels.removeFirst();
+    }
+    for(int i=0; i<labels.size(); i++) {
+        if(labels[i].startsWith('<') && labels[i].endsWith('>')) {
+            labels[i] = labels[i].mid(1, labels[i].length()-2);
+        }
+        bool ok;
+        Elf64_Addr addr = labels[i].toULong(&ok, 0);
+        if(ok) {
+            char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
+            if(buf) {
+                labels[i] = buf;
+                toolTipMap[labels[i]] = getTooltip(addr, info);
+                free(buf);
+            }
+        }
+    }
+    foreach(QString arg, args) {
+        bool ok;
+        Elf64_Addr addr;
+        if(arg.startsWith('$')) {
+            addr = arg.right(arg.length()-1).toULong(&ok, 0);
+        } else {
+            addr = arg.toULong(&ok, 0);
+        }
+        if(!ok) continue;
+        Elf64_Off fileOff;
+        const char *symName;
+        if(info->convertAddr->vaddrToFileOff(fileOff, addr) &&
+                (symName = info->file->getSymNameByFileOff(fileOff)))
+        {
+            labels.push_back(symName);
+        } else {
+            char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
+            if(buf) {
+                labels.push_back(buf);
+                toolTipMap[labels.last()] = getTooltip(addr, info);
+                free(buf);
+            }
+        }
+    }
+    foreach(QString label, labels) {
+        if(toolTipMap.find(label) != toolTipMap.end()) {
+            tooltips.push_back(toolTipMap[label]);
+        } else {
+            tooltips.push_back(getTooltip(label));
+        }
+    }
+    QString res = comm;
+    if(!args.isEmpty()) {
+        res += "\t" + args.join(",");
+    }
+    if(!labels.isEmpty()) {
+        res += "\t# <" + labels.join("> <") + ">";
+        if(!tooltips.isEmpty()) {
+            res += "\x1f" + tooltips.join("\n");
+        }
     }
     return res;
 }
@@ -85,7 +177,7 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
             QString("0x%1\t%2\t%3")
             .arg(info->vaddr, 0, 16)
             .arg(bytes)
-            .arg(addTooltip(buf)));
+            .arg(processBuffer(buf, info)));
     worker->_noSleep += info->cur - info->last;
     info->vaddr += info->cur - info->last;
     info->last = info->cur;
@@ -96,12 +188,28 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
         msleep(100);
         worker->_noSleep = 0;
     }
+    worker->_instCnt++;
     return 0;
+}
+
+void LoadWorker::stopTimer()
+{
+    struct timespec nowtime;
+    clock_gettime(CLOCK_MONOTONIC, &nowtime);
+    double start = _startTime.tv_sec + (double)_startTime.tv_nsec*1e-9;
+    double end = nowtime.tv_sec + (double)nowtime.tv_nsec*1e-9;
+    emit timerStopped(end-start, (end-start)/_instCnt);
 }
 
 void LoadWorker::run()
 {
+    clock_gettime(CLOCK_MONOTONIC, &_startTime);
+    QObject::connect(this, SIGNAL(finished()),
+            this, SLOT(stopTimer()));
+    QObject::connect(this, SIGNAL(terminated()),
+            this, SLOT(stopTimer()));
     _noSleep = 0;
+    _instCnt = 0;
     if(_restricted) {
         _instIndentLevel = 0;
         _file->disasm(_begin, _end, disasmCallback, this);

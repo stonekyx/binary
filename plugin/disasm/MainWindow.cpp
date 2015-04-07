@@ -117,6 +117,9 @@ void MainWindow::updateInfo(File *file)
                 _ui, SLOT(changeStatus()));
         QObject::connect(_loadWorker, SIGNAL(terminated()),
                 _ui, SLOT(changeStatus()));
+        QObject::connect(
+                _loadWorker, SIGNAL(timerStopped(double, double)),
+                _ui, SLOT(showLoadTime(double, double)));
         _loadWorker->start();
     }
 }

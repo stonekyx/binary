@@ -13,7 +13,6 @@
 
 BEGIN_BIN_NAMESPACE(backend)
 
-class ConvertAddr;
 class FileImplLibelf : public File {
 public:
     FileImplLibelf(const char *, Elf_Cmd);
@@ -74,7 +73,6 @@ private:
         std::map<Elf64_Off, const char *> *symNameMap;
         std::map<Elf64_Off, Elf64_Sym> *symDataMap;
         DisasmCB outputCB;
-        ConvertAddr *convertAddr;
     };
 
     bool readArhdr();

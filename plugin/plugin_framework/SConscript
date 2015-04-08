@@ -12,6 +12,13 @@ elif conf.CheckCHeader('demangle.h'):
 else:
     print 'demangle.h not found!'
     Exit(1)
+if conf.CheckLib('iberty_pic'):
+    conf.env.Append(LIBS=['iberty_pic'])
+elif conf.CheckLib('iberty'):
+    conf.env.Append(LIBS=['iberty'])
+else:
+    print 'libiberty not found!'
+    Exit(1)
 qtEnv = conf.Finish()
 
 qtEnv.EnableQt4Modules([
@@ -25,8 +32,6 @@ qtEnv.Moc4('ui_MWTreeView.h')
 qtEnv.Moc4('AutoToolTipDelegate.h')
 
 SConscript('defines/SConscript', duplicate=1)
-
-qtEnv.Append(LIBS=['iberty'])
 
 libTarget = qtEnv.SharedLibrary(target='plugin', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_LIBDIR'], libTarget)

@@ -5,10 +5,6 @@ compiler:
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -y libc6-dev libqt4-dev libqt4-core libqt4-gui binutils binutils-dev libcppunit-dev
-    - wget https://fedorahosted.org/releases/e/l/elfutils/0.161/elfutils-0.161.tar.bz2
-    - tar -xvf elfutils-0.161.tar.bz2
-    - cd elfutils-0.161
-    - sed -e '/*runp =/,+2d' -e '/runp +=/s/r.*;/*runp++ = '\0';/' -i libelf/elf_begin.c && ./configure --prefix=/usr --program-prefix="eu-" && make
-    - sudo make install
-    - cd ..
+    - wget http://kamijou.info/elfutils_0.161-1_amd64.deb
+    - sudo dpkg -i elfutils_0.161-1_amd64.deb
 script: python2 vendor/scons.py && python2 vendor/scons.py test

@@ -3,7 +3,7 @@ Binary analysis and exhibition of ELF.
 
 # Dependencies
 
-依赖的库如下：
+一般平台上依赖的库如下：
 
 + glibc-2.17 (如果平台上有的话，还需要同版本的glibc-headers)
 + elfutils-0.158 (如果平台上有的话，还需要同版本的elfutils-libs，elfutils-libelf，elfutils-devel和elfutils-libelf-devel)
@@ -11,6 +11,20 @@ Binary analysis and exhibition of ELF.
 + python-2.7.5
 + binutils-devel-2.23.52 (提供libiberty。有的平台上是gcc或gcc-multilib提供)
 + cppunit-1.12.1 (如果平台上有的话，还需要同版本的cppunit-devel)
+
+对于Ubuntu，依赖情况更加复杂。请参考如下列表：
+
++ libc6-dev
++ elfutils
++ libelf1
++ libelf-dev
++ libasm-dev
++ libqt4-dev
++ libqt4-core
++ libqt4-gui
++ binutils
++ binutils-dev
++ libcppunit-dev
 
 # Compile
 编译命令如下：

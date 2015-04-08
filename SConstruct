@@ -55,8 +55,12 @@ def get_header_dir(env, header):
     (out,err) = p.communicate('#include <' + header + '>')
     if p.wait() == None:
         p.kill()
-    path = [x for x in out.split('\n') if x.find(header)!=-1][0].split('"')[1]
-    return path[:path.rfind('/')]
+    outputLines = [x for x in out.split('\n') if x.find(os.path.basename(header))!=-1]
+    if len(outputLines)>0 and len(outputLines[0].split('"'))>1:
+        path = outputLines[0].split('"')[1]
+        return os.path.dirname(path)
+    else:
+        return None
 baseEnv.AddMethod(get_header_dir, 'HeaderDir')
 
 # Clone Qt environment

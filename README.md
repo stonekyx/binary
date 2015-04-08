@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/stonekyx/binary.svg?branch=master)](https://travis-ci.org/stonekyx/binary)
+
 # Binary
 Binary analysis and exhibition of ELF.
 
@@ -14,11 +16,10 @@ Binary analysis and exhibition of ELF.
 
 对于Ubuntu，依赖情况更加复杂。请参考如下列表：
 
++ gcc g++ make autoconf automake m4 python
 + libc6-dev
 + elfutils
-+ libelf1
-+ libelf-dev
-+ libasm-dev
+    - 由于Ubuntu软件源不包含libebl，所以需要自行编译安装完整的elfutils。步骤参考[Linux from scratch](http://www.linuxfromscratch.org/blfs/view/svn/general/elfutils.html)。如果不想执行这些操作，可以下载本项目Travis CI使用的二进制包，位于[私有服务器](http://kamijou.info/elfutils_0.161-1_amd64.deb)。注意：这个包不适合发布，也不应该在个人系统上长期安装。
 + libqt4-dev
 + libqt4-core
 + libqt4-gui

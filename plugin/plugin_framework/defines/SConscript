@@ -103,3 +103,7 @@ for i in Glob('*.compact.h'):
 
 allHeader = qtEnv.AllInclude('all.h', qtEnv['ALL_DEFINE_HEADERS'])
 allExtern = qtEnv.AllExtern('all-extern.h', qtEnv['ALL_COMPACT_HEADERS'])
+
+qtEnv.AlwaysBuild(qtEnv.Alias('test', [], \
+        File('#scripts/ExpandDefineTest.sh').abspath + ' ' + \
+        Dir('.').abspath))

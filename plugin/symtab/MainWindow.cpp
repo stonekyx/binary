@@ -96,6 +96,12 @@ void MainWindow::openDisasm()
     if(index.model()->rowCount(index) <= 2) {
         return; //ar
     }
+    QString shndx = index.child(3, 1).data().toString();
+    if(shndx.indexOf(" ") != -1) {
+        shndx = shndx.left(shndx.indexOf(" "));
+    } else {
+        shndx = QString();
+    }
     bool ok;
     Elf64_Addr vaddr =
         index.child(4, 1).data().toString().toULong(&ok, 0);
@@ -107,6 +113,9 @@ void MainWindow::openDisasm()
     map<string, string> param;
     param["vBegin"] = QString::number(vaddr).toUtf8().constData();
     param["vEnd"] = QString::number(vaddr+size).toUtf8().constData();
+    if(!shndx.isEmpty()) {
+        param["scnIndex"] = shndx.toUtf8().constData();
+    }
     BIN_NAMESPACE(frontend)::Plugin *plugin =
         _plugin->manager->getPlugin("Disasm");
     if(plugin) {

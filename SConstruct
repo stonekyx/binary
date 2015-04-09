@@ -9,6 +9,11 @@ qtdir = '/usr'
 baseEnv = Environment()
 #...further customization of base env
 
+if os.environ.has_key('CC'):
+    baseEnv.Replace(CC = os.environ['CC'])
+if os.environ.has_key('CXX'):
+    baseEnv.Replace(CXX = os.environ['CXX'])
+
 conf = Configure(baseEnv)
 if not conf.CheckHeader('elf.h'):
     print 'elf.h not found!'

@@ -78,7 +78,7 @@ static QStringList splitArgs(const QString &args, char sep)
     return res;
 }
 
-static QString processBuffer(const char *buf, File::DisasmCBInfo *info)
+QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
 {
     QStringList fields = QString(buf).split('\t', QString::SkipEmptyParts);
     QString comm;
@@ -120,7 +120,7 @@ static QString processBuffer(const char *buf, File::DisasmCBInfo *info)
                 (symName = info->file->getSymNameByFileOff(fileOff)))
         {
             labels.push_back(symName);
-        } else {
+        } else if(((LoadWorker*)info->data)->_ehdr.e_type != ET_REL) {
             char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
             if(buf) {
                 labels.push_back(buf);
@@ -220,6 +220,9 @@ void LoadWorker::run()
             this, SLOT(stopTimer()));
     _noSleep = 0;
     _instCnt = 0;
+    if(!_file->getEhdr(&_ehdr)) {
+        return;
+    }
     if(_restricted) {
         _instIndentLevel = 0;
         _file->disasm(_begin, _end, disasmCallback, this);

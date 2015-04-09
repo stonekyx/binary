@@ -41,7 +41,10 @@ private:
     size_t _noSleep;
     struct timespec _startTime;
     size_t _instCnt;
+    Elf64_Ehdr _ehdr;
 
+    static QString processBuffer(const char *,
+            BIN_NAMESPACE(backend)::File::DisasmCBInfo *);
     static int disasmCallback(char *, size_t, void *);
     void runAll();
 };

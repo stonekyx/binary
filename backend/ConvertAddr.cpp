@@ -117,7 +117,7 @@ bool ConvertAddr::fileOffToSecOff(size_t &scnIdx, Elf64_Off &scnOff,
 bool ConvertAddr::secOffToFileOff(Elf64_Off &dst,
         size_t scnIdx, Elf64_Off scnOff)
 {
-    if(!_file || scnIdx >= _shdrs.size() || scnOff >= _shdrs[scnIdx].sh_size) {
+    if(!_file || scnIdx >= _shdrs.size() || scnOff > _shdrs[scnIdx].sh_size) {
         return false;
     }
     dst = _shdrs[scnIdx].sh_offset + scnOff;
@@ -127,7 +127,7 @@ bool ConvertAddr::secOffToFileOff(Elf64_Off &dst,
 char *ConvertAddr::secOffStr(size_t scnIdx, Elf64_Off scnOff)
 {
     char *res;
-    if(!_file || scnIdx >= _shdrs.size() || scnOff >= _shdrs[scnIdx].sh_size) {
+    if(!_file || scnIdx >= _shdrs.size() || scnOff > _shdrs[scnIdx].sh_size) {
         return NULL;
     }
     if(_shdrStrRaw && _shdrStrRaw[_shdrs[scnIdx].sh_name]) {

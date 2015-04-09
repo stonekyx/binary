@@ -72,13 +72,22 @@ void MainWindow::updateInfo(File *file)
     _infoModel = new InfoModel(QString(), 5, NULL);
     _ui->infoTree->setModel(_infoModel);
 
+    Elf64_Ehdr ehdr;
+    if(!file->getEhdr(&ehdr)) {
+        return;
+    }
     ConvertAddr convertAddr(file);
 
     if(_useRange) {
         if(_useVRange) {
             size_t fBegin=0, fEnd=0;
-            convertAddr.vaddrToFileOff(fBegin, _begin);
-            convertAddr.vaddrToFileOff(fEnd, _end);
+            if(ehdr.e_type == ET_REL) {
+                convertAddr.secOffToFileOff(fBegin, _scnIndex, _begin);
+                convertAddr.secOffToFileOff(fEnd, _scnIndex, _end);
+            } else {
+                convertAddr.vaddrToFileOff(fBegin, _begin);
+                convertAddr.vaddrToFileOff(fEnd, _end);
+            }
             _begin = fBegin;
             _end = fEnd;
             _useVRange = false;

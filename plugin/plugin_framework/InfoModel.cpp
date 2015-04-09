@@ -17,6 +17,11 @@ InfoModel::InfoModel(const QString &data, size_t colCount,
     buildTree(data.split("\n", QString::SkipEmptyParts));
 }
 
+InfoModel::~InfoModel()
+{
+    delete _root;
+}
+
 int InfoModel::columnCount(const QModelIndex &) const
 {
     return _columnCount;

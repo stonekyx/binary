@@ -17,6 +17,7 @@ class InfoModel : public QAbstractItemModel {
 public:
     InfoModel(const QString &data, size_t colCount = 2,
             QObject *parent = 0);
+    ~InfoModel();
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual QVariant data(const QModelIndex &index,
             int role = Qt::DisplayRole ) const;

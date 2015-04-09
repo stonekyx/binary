@@ -7,24 +7,24 @@
 using namespace std;
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
-template<typename T>
-const char *anyTextSlow(T val,
-        ExpandDefine<T> &obj, const char *DefineInfo::*memb)
+template<typename T, typename U, typename V>
+V *anyTextSlow(T val,
+        ExpandDefine<T, U> &obj, V *DefineInfo<U>::*memb, V *failsafe)
 {
     if(obj.defineMap.find(val) != obj.defineMap.end()) {
         return obj.defineMap[val].*memb;
     }
-    const DefineInfo &info = obj.queryRangeSlow(val);
+    const DefineInfo<U> &info = obj.queryRangeSlow(val);
     if(info.valid) {
         return info.*memb;
     }
-    return "Unknown";
+    return failsafe;
 }
 
 vector<const char *> Defines::macroText_SHF(Elf64_Xword val)
 {
     vector<const char *> res;
-    for(map<Elf64_Xword, DefineInfo>::iterator it = defines_SHF.defineMap.begin();
+    for(map<Elf64_Xword, DefineInfo<> >::iterator it = defines_SHF.defineMap.begin();
             it != defines_SHF.defineMap.end(); it++)
     {
         if(val & it->first) {
@@ -37,7 +37,7 @@ vector<const char *> Defines::macroText_SHF(Elf64_Xword val)
 vector<const char *> Defines::commentText_SHF(Elf64_Xword val)
 {
     vector<const char *> res;
-    for(map<Elf64_Xword, DefineInfo>::iterator it = defines_SHF.defineMap.begin();
+    for(map<Elf64_Xword, DefineInfo<> >::iterator it = defines_SHF.defineMap.begin();
             it != defines_SHF.defineMap.end(); it++)
     {
         if(val & it->first) {
@@ -49,12 +49,12 @@ vector<const char *> Defines::commentText_SHF(Elf64_Xword val)
 
 const char *Defines::macroText_SHT(Elf64_Word val)
 {
-    return anyTextSlow<Elf64_Word>(val, defines_SHT, &DefineInfo::name);
+    return anyTextSlow(val, defines_SHT, &DefineInfo<>::name, "Unknown");
 }
 
 const char *Defines::commentText_SHT(Elf64_Word val)
 {
-    return anyTextSlow<Elf64_Word>(val, defines_SHT, &DefineInfo::explain);
+    return anyTextSlow(val, defines_SHT, &DefineInfo<>::explain, "Unknown");
 }
 
 size_t Defines::commentText_PF(Elf64_Word val, char *dst)

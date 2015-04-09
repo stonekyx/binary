@@ -1,14 +1,13 @@
 #!/bin/bash
 
 sed -e '/\/\*.*\*\//d' -e '/\/\*/,/\*\//d' |
-awk 'BEGIN{FS=", "; rangeCount=0; count=0;}
+awk 'BEGIN{FS=", "; OFS=", "; rangeCount=0; count=0;}
 {
+    if($1=="BINARY_PLUGIN_VALUE_TYPE") {$1=""; valueType=substr($0, 3); next;}
+    if($1=="BINARY_PLUGIN_NAMESPACE") {$1=""; namespace=substr($0, 3); next;}
+    if($1=="BINARY_PLUGIN_OBJECTNAME") {$1=""; objName=substr($0, 3); next;}
     if(NF>=3){rangeX[rangeCount]=$1;rangeY[rangeCount]=$2;rangeZ[rangeCount]=$3;rangeCount++;}
-    else if(NF>=2) {
-        if($1=="BINARY_PLUGIN_VALUE_TYPE") {valueType=$2; next;}
-        if($1=="BINARY_PLUGIN_NAMESPACE") {namespace=$2; next;}
-        if($1=="BINARY_PLUGIN_OBJECTNAME") {objName=$2; next;}
-        itemX[count]=$1;itemY[count]=$2;count++;}
+    else if(NF>=2) {itemX[count]=$1;itemY[count]=$2;count++;}
     else if(NF>=1) {itemX[count]=$1;itemY[count]="\"" $1 "\"";count++;}
 }
 END {
@@ -25,7 +24,7 @@ END {
     print "";
     print "BEGIN_PLUG_NAMESPACE(" namespace ")";
     print "";
-    print "PLUG_NAMESPACE(plugin_framework)::ExpandDefine<" valueType "> " objName ";";
+    print "PLUG_NAMESPACE(plugin_framework)::ExpandDefine<" valueType " > " objName ";";
     print "";
     print "static struct " className " {";
     print "    " className "();";
@@ -36,7 +35,7 @@ END {
     for(i=0; i<count; i++) {
         print "#ifdef " itemX[i];
         print "    do {";
-        print "        DefineInfo entry;";
+        print "        DefineInfo<ExpandDefine<" valueType " >::InfoType> entry;";
         print "        entry.name = \"" itemX[i] "\";";
         print "        entry.explain = " itemY[i] ";";
         print "        " objName ".defineMap[" itemX[i] "] = entry;";
@@ -51,7 +50,7 @@ END {
         if(commonX != commonY) continue;
         print "#if defined(" rangeX[i] ") && defined(" rangeY[i] ")";
         print "    do {";
-        print "        DefineInfo entry;";
+        print "        DefineInfo<ExpandDefine<" valueType " >::InfoType> entry;";
         print "        entry.name = \"" commonX "\";";
         print "        entry.explain = " rangeZ[i] ";";
         print "        " objName ".rangeMap[std::make_pair(" rangeX[i] ", " rangeY[i] ")] = entry;";

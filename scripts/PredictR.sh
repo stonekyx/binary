@@ -22,3 +22,5 @@ for i in `grep '^#define[ 	]*EM_' "$elf_header" | awk '{print $2;}'`; do
     grep -q '^#define[ 	]*R_'"${suffix}"'_' "$elf_header" &&
         echo "R_${suffix}.compact.h"
 done
+
+echo "EM_R_mapping.compact.h"

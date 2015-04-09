@@ -3,6 +3,7 @@
 #include "backend/File.h"
 #include "ui_MWTreeView.h"
 #include "DemangleWrap.h"
+#include "Defines.h"
 
 #include "MainWindow.h"
 
@@ -49,7 +50,8 @@ void MainWindow::updateInfo(File *file)
 bool MainWindow::scanShdr(File *file)
 {
     size_t shdrNum;
-    if(file->getShdrNum(&shdrNum) != 0) {
+    Elf64_Ehdr ehdr;
+    if(file->getShdrNum(&shdrNum) != 0 || !file->getEhdr(&ehdr)) {
         return false;
     }
     for(size_t i=0; i<shdrNum; i++) {
@@ -96,8 +98,14 @@ bool MainWindow::scanShdr(File *file)
                     .arg(demangled));
             _infoModel->buildMore(QString("\t\tOffset\t0x%1")
                     .arg(rel.rel.r_offset, 0, 16));
-            _infoModel->buildMore(QString("\t\tType\t%1")
-                    .arg(ELF64_R_TYPE(rel.rel.r_info)));
+            ExpandDefine<Elf64_Xword> *defines_R =
+                Defines::commentText(ehdr.e_machine, defines_EM_R_mapping);
+            Elf64_Xword r_type = ELF64_R_TYPE(rel.rel.r_info);
+            QString macro = Defines::macroText(r_type, *defines_R);
+            QString comment = Defines::commentText(r_type, *defines_R);
+            _infoModel->buildMore(QString("\t\tType\t%1 (%2)")
+                    .arg(ELF64_R_TYPE(rel.rel.r_info))
+                    .arg(macro!=comment? macro + ": " + comment: macro));
             if(shdr.sh_type == SHT_RELA) {
                 _infoModel->buildMore(QString("\t\tAddend\t%1")
                         .arg(rel.rela.r_addend));

@@ -66,6 +66,7 @@ FileImplLibelf::FileImplLibelf(const char *name,
     _ebl = NULL;
     prepareSymLookup();
     prepareRelocLookup();
+    preparePltSym();
 }
 
 bool FileImplLibelf::isValid()
@@ -266,6 +267,7 @@ bool FileImplLibelf::setArObj(size_t objIdx)
     resetDisasm();
     prepareSymLookup();
     prepareRelocLookup();
+    preparePltSym();
     _backend->signalFileChange(NULL);
     _backend->signalFileChange(this);
     return _elf;
@@ -799,6 +801,63 @@ void FileImplLibelf::prepareRelocLookup()
             if(ok && _relocNameMap.find(fileOff) == _relocNameMap.end())
             {
                 _relocNameMap[fileOff] = symName;
+            }
+        }
+    }
+}
+
+void FileImplLibelf::preparePltSym()
+{
+    Elf64_Ehdr ehdr;
+    size_t shdrNum;
+    if(getShdrNum(&shdrNum) != 0 || !getEhdr(&ehdr)) {
+        return;
+    }
+    ConvertAddr convertAddr(this);
+    Elf64_Off pltOff = 0;
+    Elf64_Xword pltEntSize = 0;
+    size_t pltIdx = 0;
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        if(!getShdr(i, &shdr)) { continue; }
+        //XXX: perhaps not portable
+        if(!strcmp(getScnName(&shdr), ".plt")) {
+            pltOff = shdr.sh_offset;
+            pltEntSize = shdr.sh_addralign;
+            pltIdx = i;
+            break;
+        }
+    }
+    for(size_t i=0; i<shdrNum; i++) {
+        Elf64_Shdr shdr;
+        //XXX: perhaps not portable
+        if(!getShdr(i, &shdr) || shdr.sh_info != pltIdx) {
+            continue;
+        }
+        for(size_t ent=0; ent<shdr.sh_size/shdr.sh_entsize; ent++) {
+            union {
+                Elf64_Rel rel;
+                Elf64_Rela rela;
+            } rel;
+            if(shdr.sh_type == SHT_REL) {
+                if(!getRel(i, ent, &rel.rel)) { continue; }
+            } else if(shdr.sh_type == SHT_RELA) {
+                if(!getRela(i, ent, &rel.rela)) { continue; }
+            } else {
+                continue;
+            }
+            Elf64_Sym sym;
+            if(!getSym(shdr.sh_link, ELF64_R_SYM(rel.rel.r_info), &sym)) {
+                continue;
+            }
+            Elf64_Shdr symShdr;
+            if(!getShdr(shdr.sh_link, &symShdr)) {
+                continue;
+            }
+            const char *symName = getStrPtr(symShdr.sh_link, sym.st_name);
+            pltOff += pltEntSize;
+            if(_symNameMap.find(pltOff) == _symNameMap.end()) {
+                _symNameMap[pltOff] = symName;
             }
         }
     }

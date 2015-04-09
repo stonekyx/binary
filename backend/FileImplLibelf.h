@@ -92,6 +92,7 @@ private:
     static int disasmOutput(char *, size_t, void *);
     bool checkScnData(size_t scnIdx, ScnDataCache *cache);
     void prepareRelocLookup();
+    void preparePltSym();
 };
 
 END_BIN_NAMESPACE

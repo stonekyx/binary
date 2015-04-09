@@ -20,7 +20,21 @@ if not conf.CheckHeader('elf.h'):
     Exit(1)
 baseEnv = conf.Finish()
 
-baseEnv.Append(CCFLAGS="-g -Wall -Wextra -Werror".split(' '))
+def clang_werror():
+    major = subprocess.check_output("echo | clang -dM -E - | grep __clang_major__", shell=True)
+    minor = subprocess.check_output("echo | clang -dM -E - | grep __clang_minor__", shell=True)
+    if len(major.split(' '))<3 or len(minor.split(' '))<3:
+        return False
+    if int(major.strip().split(' ')[2]) <= 3 and int(minor.strip().split(' ')[2]) <= 4:
+        return False
+    return True
+if baseEnv['CXX'].find('clang') != -1 and not clang_werror():
+    baseEnv.Append(CCFLAGS="-g -Wall -Wextra".split(' '))
+    # https://llvm.org/bugs/show_bug.cgi?id=13127
+    # Clang below 3.4 reports uninitialized variable in Qt4.
+else:
+    baseEnv.Append(CCFLAGS="-g -Wall -Wextra -Werror".split(' '))
+
 baseEnv.Append(CPPPATH='#inc')
 baseEnv['LOCAL_INSTALLDIR'] = os.path.join(Dir('#').abspath, '_install')
 baseEnv['LOCAL_BINDIR'] = os.path.join(baseEnv['LOCAL_INSTALLDIR'], 'bin')

@@ -53,7 +53,7 @@ baseEnv.Append(BUILDERS={'Test' : testBld})
 def build_or_run_test_dir(self, path, libs):
     program = self.Program(os.path.join(path, 'unittest'),
             Glob(os.path.join(path, '*.cpp')),
-            LIBS=['cppunit', testlib]+libs)
+            LIBS=self['LIBS'] + ['cppunit', testlib]+libs)
     self.AlwaysBuild(self.Alias('test', [program], program[0].abspath))
 baseEnv.AddMethod(build_or_run_test_dir, 'TestDir')
 

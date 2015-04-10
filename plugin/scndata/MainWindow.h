@@ -36,8 +36,6 @@ private:
     size_t _scnIndex;
     Elf64_Off _scnOffset;
     bool canUpdateHighlight;
-
-    Elf64_Off parseAddr(int);
 };
 
 #endif

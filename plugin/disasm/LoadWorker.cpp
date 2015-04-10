@@ -1,5 +1,3 @@
-#include <ctime>
-
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -220,16 +218,13 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
 
 void LoadWorker::stopTimer()
 {
-    struct timespec nowtime;
-    clock_gettime(CLOCK_MONOTONIC, &nowtime);
-    double start = _startTime.tv_sec + (double)_startTime.tv_nsec*1e-9;
-    double end = nowtime.tv_sec + (double)nowtime.tv_nsec*1e-9;
-    emit timerStopped(end-start, (end-start)/_instCnt);
+    _tm.end();
+    emit timerStopped(_tm.getDiff(), _tm.getDiff()/_instCnt);
 }
 
 void LoadWorker::run()
 {
-    clock_gettime(CLOCK_MONOTONIC, &_startTime);
+    _tm.start();
     QObject::connect(this, SIGNAL(finished()),
             this, SLOT(stopTimer()));
     QObject::connect(this, SIGNAL(terminated()),

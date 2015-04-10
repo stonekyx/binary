@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "backend/File.h"
+#include "backend/TimeMeasure.h"
 #include "InfoModel.h"
 
 BEGIN_PLUG_NAMESPACE(disasm)
@@ -39,7 +40,7 @@ private:
     size_t _begin, _end;
     size_t _instIndentLevel;
     size_t _noSleep;
-    struct timespec _startTime;
+    BIN_NAMESPACE(backend)::TimeMeasure _tm;
     size_t _instCnt;
     Elf64_Ehdr _ehdr;
 

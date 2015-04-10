@@ -151,8 +151,8 @@ void MainWindow::updateHighlight()
         widget->unmarkCursor();
     }
     if(widget == _ui->addrTextEdit) {
-        Elf64_Off startLine = (parseAddr(start)-_scnOffset)/16;
-        Elf64_Off endLine = (parseAddr(end)-_scnOffset)/16;
+        Elf64_Off startLine = (_ui->parseAddr(start)-_scnOffset)/16;
+        Elf64_Off endLine = (_ui->parseAddr(end)-_scnOffset)/16;
         if(start == end) {
             QTextCursor lineCursor(_ui->addrTextEdit->textCursor());
             lineCursor.movePosition(QTextCursor::StartOfLine);
@@ -232,21 +232,6 @@ void MainWindow::updateHighlight()
     }
     canUpdateHighlight = true;
     widget->verticalScrollBar()->setSliderPosition(sliderPosBkp);
-}
-
-Elf64_Off MainWindow::parseAddr(int cursorPos)
-{
-    ScnDataTextEdit *edit = _ui->addrTextEdit;
-    QTextDocument *doc = edit->document();
-    if(doc->characterCount() == 0) {
-        return 0;
-    }
-    QTextCursor cursor(doc);
-    cursor.setPosition(cursorPos);
-    cursor.movePosition(QTextCursor::StartOfLine);
-    cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-    cursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
-    return cursor.selectedText().toULong(NULL, 16);
 }
 
 END_PLUG_NAMESPACE

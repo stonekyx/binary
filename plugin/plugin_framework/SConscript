@@ -4,22 +4,22 @@ Import('baseEnv qtEnv')
 
 qtEnv = qtEnv.Clone()
 
-conf = Configure(qtEnv)
+conf = Configure(Environment())
 if conf.CheckCHeader('libiberty/demangle.h'):
-    conf.env.Append(CPPDEFINES=['LIBIBERTY_DEMANGLE'])
+    qtEnv.Append(CPPDEFINES=['LIBIBERTY_DEMANGLE'])
 elif conf.CheckCHeader('demangle.h'):
-    conf.env.Append(CPPDEFINES=['DEFAULT_DEMANGLE'])
+    qtEnv.Append(CPPDEFINES=['DEFAULT_DEMANGLE'])
 else:
     print 'demangle.h not found!'
     Exit(1)
 if conf.CheckLib('iberty_pic'):
-    conf.env.Append(LIBS=['iberty_pic'])
+    qtEnv.Append(LIBS=['iberty_pic'])
 elif conf.CheckLib('iberty'):
-    conf.env.Append(LIBS=['iberty'])
+    qtEnv.Append(LIBS=['iberty'])
 else:
     print 'libiberty not found!'
     Exit(1)
-qtEnv = conf.Finish()
+conf.Finish()
 
 qtEnv.EnableQt4Modules([
     'QtGui',
@@ -35,3 +35,5 @@ SConscript('defines/SConscript', duplicate=1)
 
 libTarget = qtEnv.SharedLibrary(target='plugin', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_LIBDIR'], libTarget)
+
+qtEnv.TestDir('test', [libTarget])

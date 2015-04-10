@@ -21,6 +21,11 @@ env.Moc4('mainwindow.h')
 env.Moc4('Plugin.h')
 env.Moc4('PluginManager.h')
 
-# env.Uic4(Glob('*.ui'))
-frontendTarget = env.Program('mainwindow', source=Glob('*.cpp')+Glob('*.cc'))
+libfrontend = env.SharedLibrary('frontend',
+        source=['PluginManager.cpp', 'moc_PluginManager.cc', 'moc_Plugin.cc'])
+Install(env['LOCAL_LIBDIR'], libfrontend)
+
+frontendTarget = env.Program('mainwindow',
+        source=['mainwindow.cpp', 'main.cpp', 'moc_mainwindow.cc'],
+        LIBS=env['LIBS']+['frontend'], LIBPATH=env['LIBPATH']+[Dir('.').abspath])
 Install(env['LOCAL_BINDIR'], frontendTarget)

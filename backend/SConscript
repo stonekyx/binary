@@ -7,10 +7,8 @@ Import('qtEnv')
 
 env = qtEnv.Clone()
 
-env.Append(CPPPATH=[env.HeaderDir('elfutils/libasm.h')])
-
 # Check necessary headers and libs
-conf = Configure(env)
+conf = Configure(Environment(CPPPATH=[env.HeaderDir('elfutils/libasm.h')]))
 if not conf.CheckHeader('libelf.h') or not conf.CheckHeader('gelf.h') or not conf.CheckLib('elf'):
     print 'libelf not found!'
     Exit(1)
@@ -20,8 +18,9 @@ if not conf.CheckHeader('elfutils/libasm.h') or \
         not conf.CheckLib('ebl'):
     print 'elfutils not found!'
     Exit(1)
-env = conf.Finish()
+conf.Finish()
 
+env.Append(CPPPATH=[env.HeaderDir('elfutils/libasm.h')])
 env.Append(LIBS=['elf', 'asm', 'ebl'])
 env.Append(RPATH=[env.LibraryDir('libasm.so')+'/elfutils'],
         LINKFLAGS=['-Wl,--enable-new-dtags']) # Generate RUNPATH

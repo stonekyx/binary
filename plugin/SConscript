@@ -15,13 +15,12 @@ baseEnv.Append(BUILDERS={'ExpandDefine' : expDefBld})
 
 baseEnv.Append(CPPPATH=['#backend'], LIBS=['backend'],
         LIBPATH=[baseEnv['LOCAL_LIBDIR']])
-qtEnv.Append(CPPPATH=['#', '#frontend'])
+qtEnv.Append(CPPPATH=['#', '#frontend'], LIBS=['backend', 'frontend'],
+        LIBPATH=[qtEnv['LOCAL_LIBDIR']], RPATH=[qtEnv['LOCAL_LIBDIR']])
 
 SConscript('plugin_framework/SConscript', duplicate=1)
 
-qtEnv.Append(CPPPATH=[Dir('plugin_framework').abspath],
-        LIBS=['plugin', 'backend'], LIBPATH=[qtEnv['LOCAL_LIBDIR']],
-        RPATH=[qtEnv['LOCAL_LIBDIR']])
+qtEnv.Append(CPPPATH=[Dir('plugin_framework').abspath], LIBS=['plugin'])
 
 srcpath = Dir('.').srcnode().abspath
 

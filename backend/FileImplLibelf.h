@@ -78,6 +78,7 @@ private:
         std::map<Elf64_Off, const char *> *relocNameMap;
         DisasmCB outputCB;
     };
+    std::vector<char *> _mallocStrings;
 
     bool readArhdr();
     bool rewindAr();

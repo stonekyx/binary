@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <sys/types.h>
@@ -499,6 +499,9 @@ FileImplLibelf::~FileImplLibelf()
         elf_end(_ar);
     }
     close(_fd);
+    for(size_t i=0; i<_mallocStrings.size(); i++) {
+        free(_mallocStrings[i]);
+    }
 }
 
 bool FileImplLibelf::readArhdr()
@@ -868,7 +871,10 @@ void FileImplLibelf::preparePltSym()
             const char *symName = getStrPtr(symShdr.sh_link, sym.st_name);
             pltOff += pltEntSize;
             if(_symNameMap.find(pltOff) == _symNameMap.end()) {
-                _symNameMap[pltOff] = symName;
+                char *save;
+                asprintf(&save, "%s@plt", symName);
+                _mallocStrings.push_back(save);
+                _symNameMap[pltOff] = save;
             }
         }
     }

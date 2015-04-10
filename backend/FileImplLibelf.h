@@ -42,6 +42,7 @@ public:
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *);
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*);
     virtual const char *getSymNameByFileOff(Elf64_Off);
+    virtual bool getLastSymDataByFileOff(Elf64_Off, Elf64_Sym *);
     virtual const char *getRelocNameByFileOff(Elf64_Off, Elf64_Off);
     virtual bool getRel(size_t scnIdx, int idx, Elf64_Rel *);
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);

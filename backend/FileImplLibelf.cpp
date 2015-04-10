@@ -376,6 +376,17 @@ const char *FileImplLibelf::getSymNameByFileOff(Elf64_Off offset)
     return NULL;
 }
 
+bool FileImplLibelf::getLastSymDataByFileOff(Elf64_Off off, Elf64_Sym *dst)
+{
+    map<Elf64_Off, Elf64_Sym>::iterator it = _symDataMap.upper_bound(off);
+    if(it != _symDataMap.begin()) {
+        it --;
+        if(dst) *dst = it->second;
+        return true;
+    }
+    return false;
+}
+
 const char *FileImplLibelf::getRelocNameByFileOff(
         Elf64_Off start, Elf64_Off end)
 {

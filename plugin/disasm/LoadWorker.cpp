@@ -78,6 +78,20 @@ static QStringList splitArgs(const QString &args, char sep)
     return res;
 }
 
+static bool sameSymbol(Elf64_Addr addr, File::DisasmCBInfo *info)
+{
+    Elf64_Sym lastSym;
+    if(!info->file->getLastSymDataByFileOff(
+            (char*)info->last - info->file->getRawData(0), &lastSym))
+    {
+        return false;
+    }
+    if(ELF64_ST_TYPE(lastSym.st_info) != STT_FUNC) { return false; }
+    return lastSym.st_value + lastSym.st_size > info->vaddr &&
+            addr >= lastSym.st_value &&
+            addr < lastSym.st_value + lastSym.st_size;
+}
+
 QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
 {
     QStringList fields = QString(buf).split('\t', QString::SkipEmptyParts);
@@ -120,7 +134,9 @@ QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
                 (symName = info->file->getSymNameByFileOff(fileOff)))
         {
             labels.push_back(symName);
-        } else if(((LoadWorker*)info->data)->_ehdr.e_type != ET_REL) {
+        } else if(((LoadWorker*)info->data)->_ehdr.e_type != ET_REL &&
+                !sameSymbol(addr, info))
+        {
             char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
             if(buf) {
                 labels.push_back(buf);

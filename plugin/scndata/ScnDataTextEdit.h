@@ -23,12 +23,10 @@ public:
     void setOffsetMapper(OffsetMapper *);
     void listenGroup(const QList<ScnDataTextEdit*> &);
     void setBlockOM(bool);
-protected:
-    virtual void focusOutEvent(QFocusEvent *e);
 protected slots:
     void calcCursorPos();
 public slots:
-    void changeCursorPos(int, int);
+    void changeCursorPos(int, int, bool = false);
 signals:
     void offsetMapped(int, int);
 private:

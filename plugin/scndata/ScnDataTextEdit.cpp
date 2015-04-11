@@ -74,26 +74,22 @@ void ScnDataTextEdit::setBlockOM(bool block)
     _blockOM = block;
 }
 
-void ScnDataTextEdit::focusOutEvent(QFocusEvent *e)
-{
-    bool oldState = blockSignals(true);
-    unmarkCursor();
-    blockSignals(oldState);
-    QTextEdit::focusOutEvent(e);
-}
-
 void ScnDataTextEdit::calcCursorPos()
 {
     if(_blockOM || !_om) {
         return;
     }
     int sliderPosBkp = verticalScrollBar()->sliderPosition();
-    QTextCursor cursor(textCursor());
+    int cursor = textCursor().selectionStart();
+    int cursorE = textCursor().selectionEnd();
     int offset, offsetE;
-    _om->toOffset(offset, offsetE,
-            cursor.selectionStart(), cursor.selectionEnd());
+    _om->toOffset(offset, offsetE, cursor, cursorE);
     emit offsetMapped(offset, offsetE);
-    markCursor(cursor.selectionStart(), cursor.selectionEnd(), true);
+    if(cursor == cursorE) {
+        changeCursorPos(offset, offsetE, true);
+    } else {
+        unmarkCursor();
+    }
     verticalScrollBar()->setSliderPosition(sliderPosBkp);
 }
 
@@ -104,7 +100,7 @@ int ScnDataTextEdit::lastPos()
     return cursor.position();
 }
 
-void ScnDataTextEdit::changeCursorPos(int offset, int offsetE)
+void ScnDataTextEdit::changeCursorPos(int offset, int offsetE, bool rec)
 {
     if(_blockOM || !_om) {
         return;
@@ -114,7 +110,7 @@ void ScnDataTextEdit::changeCursorPos(int offset, int offsetE)
     int max = lastPos();
     if(cursor>max) { cursor = max; }
     if(cursorE>max) { cursorE = max; }
-    markCursor(cursor, cursorE);
+    markCursor(cursor, cursorE, rec);
 }
 
 END_PLUG_NAMESPACE

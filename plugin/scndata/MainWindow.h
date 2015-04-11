@@ -32,6 +32,10 @@ public:
 private:
     Ui::MainWindow *_ui;
     size_t _scnIndex;
+    const char *_data;
+    size_t _dataSize;
+private slots:
+    void showDataValues(int, int);
 };
 
 #endif

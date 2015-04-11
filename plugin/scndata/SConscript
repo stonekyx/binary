@@ -13,6 +13,8 @@ qtEnv.EnableQt4Modules([
 qtEnv.Moc4('MainWindow.h')
 qtEnv.Moc4('ui_MainWindow.h')
 qtEnv.Moc4('ScnDataTextEdit.h')
+qtEnv.Moc4('DataValue.h')
+qtEnv.Moc4('ui_DataValue.h')
 
 pluginTarget = qtEnv.SharedLibrary(target='scndata', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

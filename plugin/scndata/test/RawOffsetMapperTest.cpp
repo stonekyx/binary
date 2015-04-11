@@ -1,3 +1,5 @@
+#include <QtGui/QTextDocument>
+
 #include "../RawOffsetMapper.h"
 #include "RawOffsetMapperTest.h"
 
@@ -145,6 +147,17 @@ void RawOffsetMapperTest::testFromOffsetSel()
             offset, offsetE);
     CPPUNIT_ASSERT_EQUAL( 17, cursor );
     CPPUNIT_ASSERT_EQUAL( 52, cursorE );
+}
+
+void RawOffsetMapperTest::testToOffsetDocument()
+{
+    int cursor=19, cursorE=19;
+    int offset, offsetE;
+    QTextDocument doc("0123456789abcdef\nabc");
+    RawOffsetMapper(&doc).toOffset(offset, offsetE,
+            cursor, cursorE);
+    CPPUNIT_ASSERT_EQUAL( 18, offset );
+    CPPUNIT_ASSERT_EQUAL( 19, offsetE );
 }
 
 END_PLUG_NAMESPACE

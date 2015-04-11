@@ -6,9 +6,11 @@
 #include <QtCore/QList>
 #include <QtGui/QScrollBar>
 #include <QtGui/QAbstractSlider>
+#include <QtGui/QGridLayout>
 
 #include "ui_MWBase.h"
 #include "ScnDataTextEdit.h"
+#include "DataValue.h"
 
 BEGIN_PLUG_NAMESPACE(scndata)
 
@@ -26,11 +28,15 @@ class binary::plugin::scndata::Ui::MainWindow :
     Q_OBJECT
 public:
     MainWindow() : MWBase("PluginScnDataMainWindow", "Section data") {}
+    ~MainWindow();
 
     ScnDataTextEdit *hexTextEdit;
     ScnDataTextEdit *rawTextEdit;
     ScnDataTextEdit *addrTextEdit;
     QList<ScnDataTextEdit*> textEdits;
+
+    QGridLayout *dataAreaLayout;
+    QList<DataValue*> dataValues;
 
     virtual bool switchMode(bool file);
 
@@ -38,6 +44,10 @@ public:
     void retranslateUi(QMainWindow *) { }
     void connectTE();
     void disconnectTE();
+public slots:
+    void setDataValue(const char *, size_t);
+signals:
+    void signalDataValue(const char *, size_t);
 };
 
 #endif

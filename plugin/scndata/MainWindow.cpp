@@ -23,6 +23,11 @@ MainWindow::MainWindow(Plugin *plugin, map<string, string> param,
     } else {
         _scnIndex = 1;
     }
+    _data = NULL; _dataSize = 0;
+    foreach(ScnDataTextEdit *p, _ui->textEdits) {
+        QObject::connect(p, SIGNAL(offsetMapped(int, int)),
+                this, SLOT(showDataValues(int, int)));
+    }
     updateInfo();
 }
 
@@ -31,11 +36,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateInfo(File *file)
 {
+    _ui->disconnectTE();
+
     if(!_ui->switchMode(file)) {
         return;
     }
-
-    _ui->disconnectTE();
 
     QTextCursor cursor(_ui->hexTextEdit->textCursor());
     cursor.movePosition(QTextCursor::Start);
@@ -60,9 +65,9 @@ void MainWindow::updateInfo(File *file)
         if(!file->getShdr(_scnIndex, &shdr)) {
             return;
         }
-        char *buf = new char[shdr.sh_size];
-        ssize_t got = file->getScnData(_scnIndex, buf, shdr.sh_size);
-        if(got == -1 || (size_t)got != shdr.sh_size) {
+        _data = file->getRawData(shdr.sh_offset);
+        _dataSize = shdr.sh_size;
+        if(!_data) {
             return;
         }
         Elf64_Off offset = shdr.sh_offset;
@@ -92,14 +97,13 @@ void MainWindow::updateInfo(File *file)
                 hexDataStream << " ";
             }
             hexDataStream <<
-                    QString("%1").arg((unsigned char)buf[i], 2, 16, QChar('0')).toUpper();
+                    QString("%1").arg((unsigned char)_data[i], 2, 16, QChar('0')).toUpper();
             rawDataStream <<
-                    QString("%1").arg(isprint(buf[i])?buf[i]:'.');
+                    QString("%1").arg(isprint(_data[i])?_data[i]:'.');
         }
         cursor.insertText(hexData, format);
         rawCursor.insertText(rawData, rawFormat);
         addrCursor.insertText(addrData, addrFormat);
-        delete[] buf;
     }
     foreach(ScnDataTextEdit *p, _ui->textEdits) {
         QTextCursor cursor(p->textCursor());
@@ -108,6 +112,14 @@ void MainWindow::updateInfo(File *file)
     }
     _ui->hexTextEdit->setFocus();
     _ui->connectTE();
+}
+
+void MainWindow::showDataValues(int offset, int)
+{
+    if(!_data || (size_t)offset>_dataSize) {
+        return;
+    }
+    _ui->setDataValue(_data+offset, _dataSize - offset);
 }
 
 END_PLUG_NAMESPACE

@@ -9,6 +9,7 @@ BEGIN_PLUG_NAMESPACE(scndata)
 
 class RawOffsetMapper : public OffsetMapper {
 public:
+    virtual ~RawOffsetMapper() {}
     virtual void toOffset(int &offStart, int &offEnd,
             int curStart, int curEnd);
     virtual void fromOffset(int &curStart, int &curEnd,

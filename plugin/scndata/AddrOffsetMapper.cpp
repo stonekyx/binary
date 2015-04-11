@@ -23,7 +23,7 @@ void AddrOffsetMapper::fromOffset(int &curStart, int &curEnd,
         int offStart, int offEnd)
 {
     int startLine = offStart/16;
-    int endLine = offEnd/16;
+    int endLine = (offEnd-1)/16;
     QTextCursor addrCursor(_td->findBlockByLineNumber(startLine));
     QTextCursor addrEndCursor(_td->findBlockByLineNumber(endLine));
     addrEndCursor.movePosition(QTextCursor::EndOfLine);

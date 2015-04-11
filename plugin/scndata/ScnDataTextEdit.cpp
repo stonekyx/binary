@@ -1,8 +1,13 @@
+#include <QtGui/QTextCursor>
+#include <QtGui/QScrollBar>
+
+#include "OffsetMapper.h"
 #include "ScnDataTextEdit.h"
 
 BEGIN_PLUG_NAMESPACE(scndata)
 
-ScnDataTextEdit::ScnDataTextEdit(QWidget *parent) : QTextEdit(parent)
+ScnDataTextEdit::ScnDataTextEdit(OffsetMapper *om, QWidget *parent) :
+    QTextEdit(parent), _om(om)
 {
     QObject::connect(this, SIGNAL(cursorPositionChanged()),
             this, SLOT(calcCursorPos()));
@@ -10,8 +15,16 @@ ScnDataTextEdit::ScnDataTextEdit(QWidget *parent) : QTextEdit(parent)
             this, SLOT(calcCursorPos()));
 }
 
+ScnDataTextEdit::~ScnDataTextEdit()
+{
+    if(_om) {
+        delete _om;
+    }
+}
+
 void ScnDataTextEdit::markCursor(int start, int end, bool recover)
 {
+    setBlockOM(true);
     QTextCursor bkp(textCursor());
     if(!_mark.isNull()) {
         setTextCursor(_mark);
@@ -25,16 +38,40 @@ void ScnDataTextEdit::markCursor(int start, int end, bool recover)
     if(recover) {
         setTextCursor(bkp);
     }
+    setBlockOM(false);
 }
 
 void ScnDataTextEdit::unmarkCursor()
 {
+    setBlockOM(true);
     QTextCursor bkp(textCursor());
     if(!_mark.isNull()) {
         setTextCursor(_mark);
         setTextBackgroundColor(Qt::white);
     }
     setTextCursor(bkp);
+    setBlockOM(false);
+}
+
+void ScnDataTextEdit::setOffsetMapper(OffsetMapper *om)
+{
+    _om = om;
+}
+
+void ScnDataTextEdit::listenGroup(const QList<ScnDataTextEdit*> &group)
+{
+    foreach(const ScnDataTextEdit *m, group) {
+        if(m == this) {
+            continue;
+        }
+        QObject::connect(m, SIGNAL(offsetMapped(int, int)),
+                this, SLOT(changeCursorPos(int, int)));
+    }
+}
+
+void ScnDataTextEdit::setBlockOM(bool block)
+{
+    _blockOM = block;
 }
 
 void ScnDataTextEdit::focusOutEvent(QFocusEvent *e)
@@ -47,6 +84,37 @@ void ScnDataTextEdit::focusOutEvent(QFocusEvent *e)
 
 void ScnDataTextEdit::calcCursorPos()
 {
+    if(_blockOM || !_om) {
+        return;
+    }
+    int sliderPosBkp = verticalScrollBar()->sliderPosition();
+    QTextCursor cursor(textCursor());
+    int offset, offsetE;
+    _om->toOffset(offset, offsetE,
+            cursor.selectionStart(), cursor.selectionEnd());
+    emit offsetMapped(offset, offsetE);
+    markCursor(cursor.selectionStart(), cursor.selectionEnd(), true);
+    verticalScrollBar()->setSliderPosition(sliderPosBkp);
+}
+
+int ScnDataTextEdit::lastPos()
+{
+    QTextCursor cursor(textCursor());
+    cursor.movePosition(QTextCursor::End);
+    return cursor.position();
+}
+
+void ScnDataTextEdit::changeCursorPos(int offset, int offsetE)
+{
+    if(_blockOM || !_om) {
+        return;
+    }
+    int cursor, cursorE;
+    _om->fromOffset(cursor, cursorE, offset, offsetE);
+    int max = lastPos();
+    if(cursor>max) { cursor = max; }
+    if(cursorE>max) { cursorE = max; }
+    markCursor(cursor, cursorE);
 }
 
 END_PLUG_NAMESPACE

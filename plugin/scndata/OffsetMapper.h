@@ -7,11 +7,14 @@ BEGIN_PLUG_NAMESPACE(scndata)
 
 class OffsetMapper {
 public:
+    virtual ~OffsetMapper() = 0;
     virtual void toOffset(int &offStart, int &offEnd,
             int curStart, int curEnd) = 0;
     virtual void fromOffset(int &curStart, int &curEnd,
             int offStart, int offEnd) = 0;
 };
+
+inline OffsetMapper::~OffsetMapper() {}
 
 END_PLUG_NAMESPACE
 

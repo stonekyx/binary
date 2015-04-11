@@ -52,7 +52,7 @@ void AddrOffsetMapperTest::testToOffset()
 
 void AddrOffsetMapperTest::testFromOffset()
 {
-    QTextDocument doc("0x1\n0x23\n0x4567");
+    QTextDocument doc("0x1\n0x23\n0x4567\n0x1234567");
     int offset = 0, offsetE = 4;
     int cursor, cursorE;
     AddrOffsetMapper(&doc).fromOffset(cursor, cursorE,
@@ -65,6 +65,24 @@ void AddrOffsetMapperTest::testFromOffset()
             offset, offsetE);
     CPPUNIT_ASSERT_EQUAL( 4, cursor );
     CPPUNIT_ASSERT_EQUAL( 15, cursorE );
+
+    offset = 16; offsetE = 32;
+    AddrOffsetMapper(&doc).fromOffset(cursor, cursorE,
+            offset, offsetE);
+    CPPUNIT_ASSERT_EQUAL( 4, cursor );
+    CPPUNIT_ASSERT_EQUAL( 8, cursorE );
+
+    offset = 63; offsetE = 64;
+    AddrOffsetMapper(&doc).fromOffset(cursor, cursorE,
+            offset, offsetE);
+    CPPUNIT_ASSERT_EQUAL( 16, cursor );
+    CPPUNIT_ASSERT_EQUAL( 25, cursorE );
+
+    offset = 0; offsetE = 64;
+    AddrOffsetMapper(&doc).fromOffset(cursor, cursorE,
+            offset, offsetE);
+    CPPUNIT_ASSERT_EQUAL( 0, cursor );
+    CPPUNIT_ASSERT_EQUAL( 25, cursorE );
 }
 
 END_PLUG_NAMESPACE

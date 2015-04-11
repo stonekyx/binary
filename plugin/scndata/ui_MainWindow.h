@@ -36,8 +36,8 @@ public:
 
     virtual void setupUi(QMainWindow *);
     void retranslateUi(QMainWindow *) { }
-
-    Elf64_Off parseAddr(int);
+    void connectTE();
+    void disconnectTE();
 };
 
 #endif

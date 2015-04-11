@@ -12,6 +12,7 @@ BEGIN_PLUG_NAMESPACE(scndata)
 class AddrOffsetMapper : public OffsetMapper {
 public:
     AddrOffsetMapper(QTextDocument *td);
+    virtual ~AddrOffsetMapper() {}
     virtual void toOffset(int &offStart, int &offEnd,
             int curStart, int curEnd);
     virtual void fromOffset(int &curStart, int &curEnd,

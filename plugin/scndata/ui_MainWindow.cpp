@@ -1,3 +1,7 @@
+#include "AddrOffsetMapper.h"
+#include "HexOffsetMapper.h"
+#include "RawOffsetMapper.h"
+
 #include "ui_MainWindow.h"
 
 BEGIN_PLUG_NAMESPACE(scndata)
@@ -34,7 +38,7 @@ void MainWindow::setupUi(QMainWindow *window)
     window->setMinimumWidth(650);
     window->setMinimumHeight(360);
 
-    hexTextEdit = new ScnDataTextEdit(centralWidget);
+    hexTextEdit = new ScnDataTextEdit(new HexOffsetMapper(), centralWidget);
     OBJNAME(hexTextEdit);
     QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     sizePolicy.setHorizontalStretch(5);
@@ -46,7 +50,7 @@ void MainWindow::setupUi(QMainWindow *window)
             hexTextEdit->textInteractionFlags() |
             Qt::TextSelectableByKeyboard);
 
-    rawTextEdit = new ScnDataTextEdit(centralWidget);
+    rawTextEdit = new ScnDataTextEdit(new RawOffsetMapper(), centralWidget);
     OBJNAME(rawTextEdit);
     sizePolicy.setHorizontalStretch(2);
     sizePolicy.setVerticalStretch(2);
@@ -57,8 +61,9 @@ void MainWindow::setupUi(QMainWindow *window)
             rawTextEdit->textInteractionFlags() |
             Qt::TextSelectableByKeyboard);
 
-    addrTextEdit = new ScnDataTextEdit(centralWidget);
+    addrTextEdit = new ScnDataTextEdit(NULL, centralWidget);
     OBJNAME(addrTextEdit);
+    addrTextEdit->setOffsetMapper(new AddrOffsetMapper(addrTextEdit->document()));
     sizePolicy.setHorizontalStretch(1);
     sizePolicy.setVerticalStretch(1);
     sizePolicy.setHeightForWidth(addrTextEdit->sizePolicy().hasHeightForWidth());
@@ -89,24 +94,24 @@ void MainWindow::setupUi(QMainWindow *window)
     }
     foreach(ScnDataTextEdit *p, textEdits) {
         p->ensureCursorVisible();
+        p->listenGroup(textEdits);
     }
 
     retranslateUi(window);
 }
 
-Elf64_Off MainWindow::parseAddr(int cursorPos)
+void MainWindow::connectTE()
 {
-    ScnDataTextEdit *edit = addrTextEdit;
-    QTextDocument *doc = edit->document();
-    if(doc->characterCount() == 0) {
-        return 0;
+    foreach(ScnDataTextEdit *p, textEdits) {
+        p->setBlockOM(false);
     }
-    QTextCursor cursor(doc);
-    cursor.setPosition(cursorPos);
-    cursor.movePosition(QTextCursor::StartOfLine);
-    cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-    cursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
-    return cursor.selectedText().toULong(NULL, 16);
+}
+
+void MainWindow::disconnectTE()
+{
+    foreach(ScnDataTextEdit *p, textEdits) {
+        p->setBlockOM(true);
+    }
 }
 
 }

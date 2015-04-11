@@ -29,13 +29,9 @@ public:
 public:
     virtual void updateInfo(binary::backend::File *);
     using MWBase::updateInfo;
-public slots:
-    virtual void updateHighlight();
 private:
     Ui::MainWindow *_ui;
     size_t _scnIndex;
-    Elf64_Off _scnOffset;
-    bool canUpdateHighlight;
 };
 
 #endif

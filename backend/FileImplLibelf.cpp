@@ -842,10 +842,16 @@ void FileImplLibelf::preparePltSym()
             break;
         }
     }
+    if(pltIdx == 0) {
+        return;
+    }
     for(size_t i=0; i<shdrNum; i++) {
         Elf64_Shdr shdr;
         //XXX: perhaps not portable
-        if(!getShdr(i, &shdr) || shdr.sh_info != pltIdx) {
+        if(!getShdr(i, &shdr) || shdr.sh_info != pltIdx ||
+                (shdr.sh_type != SHT_REL && shdr.sh_type != SHT_RELA) ||
+                shdr.sh_entsize == 0)
+        {
             continue;
         }
         for(size_t ent=0; ent<shdr.sh_size/shdr.sh_entsize; ent++) {

@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ui_MWBase.h"
 #include "InfoModel.h"
+#include "CtxAction.h"
 
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
@@ -159,6 +160,10 @@ public slots:
     virtual void ctxMenuTreeView(const QPoint &pos) {
         foreach(QAction *p, ctxMenu->actions()) {
             p->setData(pos);
+            CtxAction *ca = dynamic_cast<CtxAction*>(p);
+            if(ca) {
+                ca->setVisible(ca->judgeVisible(infoTree->indexAt(pos)));
+            }
         }
         ctxMenu->exec(infoTree->mapToGlobal(pos));
     }

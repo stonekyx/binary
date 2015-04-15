@@ -57,11 +57,14 @@ public:
 
     void addChild(const QList<QVariant> &);
     bool setData(int, const QVariant &);
+    QVariant getUserData();
+    void setUserData(const QVariant &);
 private:
     QList<InfoTree*> _child;
     InfoTree *_parent;
     QList<QVariant> _data;
     QList<QVariant> _tooltip;
+    QVariant _userData;
 
     void setDataRow(const QList<QVariant> &);
     void setDataCol(int, const QVariant &);

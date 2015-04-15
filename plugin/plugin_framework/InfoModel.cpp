@@ -41,7 +41,9 @@ QVariant InfoModel::data(const QModelIndex &index, int role) const
     if(role == Qt::TextAlignmentRole) {
         return Qt::AlignTop;
     }
-    if(role != Qt::DisplayRole && role != Qt::ToolTipRole) {
+    if(role != Qt::DisplayRole && role != Qt::ToolTipRole &&
+            role != Qt::UserRole)
+    {
         return QVariant();
     }
     InfoTree *node = static_cast<InfoTree*>(index.internalPointer());
@@ -49,8 +51,10 @@ QVariant InfoModel::data(const QModelIndex &index, int role) const
         QVariant res;
         if(role == Qt::DisplayRole) {
             res = node->data(index.column());
-        } else {
+        } else if(role == Qt::ToolTipRole) {
             res = node->tooltip(index.column());
+        } else {
+            res = node->getUserData();
         }
         if(isVariable(res)) {
             return QVariant(QString("N/A"));
@@ -63,11 +67,17 @@ QVariant InfoModel::data(const QModelIndex &index, int role) const
 
 bool InfoModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if(role != Qt::DisplayRole || !index.isValid()) {
+    if((role != Qt::DisplayRole && role != Qt::UserRole)
+            || !index.isValid())
+    {
         return false;
     }
     InfoTree *node = static_cast<InfoTree*>(index.internalPointer());
-    node->setData(index.column(), value);
+    if(role == Qt::DisplayRole) {
+        node->setData(index.column(), value);
+    } else {
+        node->setUserData(value);
+    }
     emit dataChanged(index, index);
     return true;
 }
@@ -269,6 +279,16 @@ bool InfoTree::setData(int col, const QVariant &value)
     }
     setDataCol(col, value);
     return true;
+}
+
+QVariant InfoTree::getUserData()
+{
+    return _userData;
+}
+
+void InfoTree::setUserData(const QVariant &data)
+{
+    _userData = data;
 }
 
 void InfoTree::setDataRow(const QList<QVariant> &data)

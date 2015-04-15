@@ -1,3 +1,5 @@
+#include "InstData.h"
+
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -88,14 +90,22 @@ static bool pushSecOffFromVaddr(const File::DisasmCBInfo &info,
 }
 
 QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
-        const File::DisasmCBInfo &info)
+        const File::DisasmCBInfo &info, InstData &saveData)
 {
+    saveData.comm = inst.comm;
+    saveData.args = inst.args;
+    saveData.addrType = InstData::AT_NONE;
+
     QStringList labels, tooltips;
 
     //----------Label
     if(inst.hasLabel) {
-        pushSymNameFromVaddr(info, labels, tooltips, inst.label) ||
-            pushSecOffFromVaddr(info, labels, tooltips, inst.label);
+        saveData.addr = inst.label;
+        if(pushSymNameFromVaddr(info, labels, tooltips, inst.label)) {
+            saveData.addrType = InstData::AT_SYMBOL;
+        } else if(pushSecOffFromVaddr(info, labels, tooltips, inst.label)) {
+            saveData.addrType = InstData::AT_VADDR;
+        }
     }
 
     //----------New label from arguments
@@ -108,11 +118,22 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
             addr = arg.toULong(&ok, 0);
         }
         if(!ok) continue;
-        if(((LoadWorker*)info.data)->_ehdr.e_type != ET_REL &&
-                !sameSymbol(addr, info) &&
-                !pushSymNameFromVaddr(info, labels, tooltips, addr))
-        {
-            pushSecOffFromVaddr(info, labels, tooltips, addr);
+        if(saveData.addrType == InstData::AT_NONE) {
+            saveData.addr = addr;
+        }
+        if(sameSymbol(addr, info)) {
+            saveData.addrType = InstData::AT_VADDR_INSYM;
+            continue;
+        }
+        if(((LoadWorker*)info.data)->_ehdr.e_type == ET_REL) {
+            continue;
+        }
+        if(pushSymNameFromVaddr(info, labels, tooltips, addr)) {
+            if(saveData.addrType == InstData::AT_NONE)
+                saveData.addrType = InstData::AT_SYMBOL;
+        } else if(pushSecOffFromVaddr(info, labels, tooltips, addr)) {
+            if(saveData.addrType == InstData::AT_NONE)
+                saveData.addrType = InstData::AT_VADDR;
         }
     }
 
@@ -125,6 +146,12 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         labels.push_back(relocName);
         tooltips.push_back(getTooltip(labels.last()));
         labels.last().prepend("Reloc: ");
+
+        saveData.addrRelocStart =
+            (const char*)info.last - info.file->getRawData(0);
+        saveData.addrRelocEnd =
+            (const char*)info.cur - info.file->getRawData(0);
+        saveData.addrType = InstData::AT_RELOC;
     }
 
     //----------Compile
@@ -171,11 +198,16 @@ int LoadWorker::disasmCallback(const File::DisasmInstInfo &inst,
     }
 
     //-----------Compile
-    infoModel->buildMore(QString("\t").repeated(worker->_instIndentLevel)+
-            QString("0x%1\t%2\t%3")
-            .arg(info.vaddr, 0, 16)
-            .arg(bytes)
-            .arg(processBuffer(inst, info)));
+    InstData instData;
+    QModelIndex inserted =
+        infoModel->buildMore(QString("\t").repeated(worker->_instIndentLevel)+
+                QString("0x%1\t%2\t%3")
+                .arg(info.vaddr, 0, 16)
+                .arg(bytes)
+                .arg(processBuffer(inst, info, instData)));
+    QVariant userData;
+    userData.setValue(instData);
+    infoModel->setData(inserted, userData, Qt::UserRole);
 
     //-----------After work
     worker->_noSleep += info.cur - info.last;

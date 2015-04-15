@@ -10,6 +10,7 @@
 
 BEGIN_PLUG_NAMESPACE(disasm)
 
+class InstData;
 class LoadWorker;
 
 END_PLUG_NAMESPACE
@@ -46,7 +47,8 @@ private:
 
     static QString processBuffer(
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
-            const BIN_NAMESPACE(backend)::File::DisasmCBInfo &);
+            const BIN_NAMESPACE(backend)::File::DisasmCBInfo &,
+            InstData &);
     static int disasmCallback(
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
             BIN_NAMESPACE(backend)::File::DisasmCBInfo &);

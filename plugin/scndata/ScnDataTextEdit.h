@@ -23,6 +23,7 @@ public:
     void setOffsetMapper(OffsetMapper *);
     void listenGroup(const QList<ScnDataTextEdit*> &);
     void setBlockOM(bool);
+    void changeCursorPosInit(int, int);
 protected slots:
     void calcCursorPos();
 public slots:

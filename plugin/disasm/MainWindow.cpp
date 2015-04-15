@@ -4,6 +4,7 @@
 #include "backend/Backend.h"
 #include "frontend/PluginManager.h"
 #include "backend/ConvertAddr.h"
+#include "InstData.h"
 #include "ui_MainWindow.h"
 
 #include "MainWindow.h"
@@ -173,6 +174,27 @@ void MainWindow::setVaddrRange(size_t begin, size_t end)
         _begin = fBegin;
         _end = fEnd;
         updateInfo();
+    }
+}
+
+void MainWindow::openScnData()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    const InstData &instData = action->data().value<InstData>();
+    size_t scnIdx;
+    Elf64_Off scnOff;
+    ConvertAddr convertAddr(_plugin->manager->getBackend()->getFile());
+    convertAddr.vaddrToSecOff(scnIdx, scnOff, instData.addr);
+    map<string, string> param;
+    param["scnIndex"] = QString::number(scnIdx).toUtf8().constData();
+    param["scnOffset"] = QString::number(scnOff).toUtf8().constData();
+    BIN_NAMESPACE(frontend)::Plugin *plugin =
+        _plugin->manager->getPlugin("ScnData");
+    if(plugin) {
+        plugin->createView(param);
     }
 }
 

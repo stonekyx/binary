@@ -17,7 +17,7 @@ CtxAction::~CtxAction()
 
 bool CtxAction::judgeVisible(const QModelIndex &index)
 {
-    if(!_judge || (*_judge)(index)) {
+    if(!_judge || (*_judge)(this, index)) {
         return true;
     }
     return false;

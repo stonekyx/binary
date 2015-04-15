@@ -23,6 +23,11 @@ MainWindow::MainWindow(Plugin *plugin, map<string, string> param,
     } else {
         _scnIndex = 1;
     }
+    if(param.find("scnOffset") != param.end()) {
+        _scnOffset = QString(param["scnOffset"].c_str()).toULong();
+    } else {
+        _scnOffset = 0;
+    }
     _data = NULL; _dataSize = 0;
     foreach(ScnDataTextEdit *p, _ui->textEdits) {
         QObject::connect(p, SIGNAL(offsetMapped(int, int)),
@@ -112,6 +117,7 @@ void MainWindow::updateInfo(File *file)
     }
     _ui->hexTextEdit->setFocus();
     _ui->connectTE();
+    _ui->hexTextEdit->changeCursorPosInit(_scnOffset, _scnOffset);
 }
 
 void MainWindow::showDataValues(int offset, int)

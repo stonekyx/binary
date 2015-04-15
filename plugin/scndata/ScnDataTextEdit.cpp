@@ -74,6 +74,12 @@ void ScnDataTextEdit::setBlockOM(bool block)
     _blockOM = block;
 }
 
+void ScnDataTextEdit::changeCursorPosInit(int start, int end)
+{
+    changeCursorPos(start, end);
+    calcCursorPos();
+}
+
 void ScnDataTextEdit::calcCursorPos()
 {
     if(_blockOM || !_om) {

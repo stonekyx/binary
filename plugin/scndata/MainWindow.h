@@ -32,6 +32,7 @@ public:
 private:
     Ui::MainWindow *_ui;
     size_t _scnIndex;
+    Elf64_Off _scnOffset;
     const char *_data;
     size_t _dataSize;
 private slots:

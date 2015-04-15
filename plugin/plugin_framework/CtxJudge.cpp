@@ -10,10 +10,10 @@ CtxJudge::~CtxJudge()
 {
 }
 
-bool CtxJudge::operator()(const QModelIndex &index)
+bool CtxJudge::operator()(CtxAction *action, const QModelIndex &index)
 {
     if(_func) {
-        _func(index);
+        return _func(action, index);
     }
     return true;
 }

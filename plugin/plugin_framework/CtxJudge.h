@@ -9,12 +9,13 @@ class QModelIndex;
 
 BEGIN_PLUG_NAMESPACE(plugin_framework)
 
+class CtxAction;
 class CtxJudge {
 public:
-    typedef bool (*JudgeFunc)(const QModelIndex &);
+    typedef bool (*JudgeFunc)(CtxAction *, const QModelIndex &);
     CtxJudge(JudgeFunc = NULL);
     virtual ~CtxJudge();
-    virtual bool operator()(const QModelIndex &);
+    virtual bool operator()(CtxAction *, const QModelIndex &);
 private:
     JudgeFunc _func;
 };

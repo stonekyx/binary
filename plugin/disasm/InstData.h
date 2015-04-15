@@ -25,6 +25,7 @@ public:
         AT_VADDR_INSYM
     } AddrType;
     AddrType addrType;
+    QString symName;
 };
 
 END_PLUG_NAMESPACE

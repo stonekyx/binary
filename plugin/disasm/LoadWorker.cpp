@@ -103,6 +103,7 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         saveData.addr = inst.label;
         if(pushSymNameFromVaddr(info, labels, tooltips, inst.label)) {
             saveData.addrType = InstData::AT_SYMBOL;
+            saveData.symName = labels.last();
         } else if(pushSecOffFromVaddr(info, labels, tooltips, inst.label)) {
             saveData.addrType = InstData::AT_VADDR;
         }
@@ -129,8 +130,10 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
             continue;
         }
         if(pushSymNameFromVaddr(info, labels, tooltips, addr)) {
-            if(saveData.addrType == InstData::AT_NONE)
+            if(saveData.addrType == InstData::AT_NONE) {
                 saveData.addrType = InstData::AT_SYMBOL;
+                saveData.symName = labels.last();
+            }
         } else if(pushSecOffFromVaddr(info, labels, tooltips, addr)) {
             if(saveData.addrType == InstData::AT_NONE)
                 saveData.addrType = InstData::AT_VADDR;

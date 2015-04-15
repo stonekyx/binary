@@ -484,6 +484,20 @@ size_t FileImplLibelf::detectDynSymCnt()
     return cnt;
 }
 
+bool FileImplLibelf::getSymFileOff(Elf64_Off *dst, const Elf64_Sym *sym)
+{
+    ConvertAddr convertAddr(this);
+    Elf64_Ehdr ehdr;
+    if(!getEhdr(&ehdr)) {
+        return false;
+    }
+    if(ehdr.e_type == ET_REL) {
+        return convertAddr.secOffToFileOff(*dst, sym->st_shndx, sym->st_value);
+    } else {
+        return convertAddr.vaddrToFileOff(*dst, sym->st_value);
+    }
+}
+
 FileImplLibelf::~FileImplLibelf()
 {
     resetDisasm();

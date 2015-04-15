@@ -54,6 +54,13 @@ public:
         switch(instData.addrType) {
             case InstData::AT_NONE:
                 return false;
+            case InstData::AT_SYMBOL:
+                action->setText(QString("Jump to symbol %1")
+                        .arg(instData.symName));
+                action->setData(idx.data(Qt::UserRole));
+                QObject::connect(action, SIGNAL(triggered()),
+                        _mw, SLOT(jumpOrOpenSym()));
+                break;
             case InstData::AT_VADDR:
                 action->setText(QString("Data on address 0x%1")
                         .arg(instData.addr, 0, 16));

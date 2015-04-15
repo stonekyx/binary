@@ -198,4 +198,40 @@ void MainWindow::openScnData()
     }
 }
 
+void MainWindow::jumpOrOpenSym()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    const InstData &instData = action->data().value<InstData>();
+
+    //---------get file
+    File *file = _plugin->manager->getBackend()->getFile();
+    if(!file) return;
+
+    //---------convert to file offset
+    Elf64_Off fileOff;
+    ConvertAddr convertAddr(file);
+    if(!convertAddr.vaddrToFileOff(fileOff, instData.addr)) return;
+
+    //---------get and check symbol
+    Elf64_Sym sym;
+    if(!file->getLastSymDataByFileOff(fileOff, &sym)) return;
+    Elf64_Off symFileOff;
+    if(!file->getSymFileOff(&symFileOff, &sym) || symFileOff != fileOff)
+        return;
+
+    //---------assemble param
+    map<string, string> param;
+    param["vBegin"] = QString::number(sym.st_value).toUtf8().constData();
+    param["vEnd"] = QString::number(sym.st_value+sym.st_size).toUtf8().constData();
+    param["scnIndex"] = QString::number(sym.st_shndx).toUtf8().constData();
+    BIN_NAMESPACE(frontend)::Plugin *plugin =
+        _plugin->manager->getPlugin("Disasm");
+    if(plugin) {
+        plugin->createView(param);
+    }
+}
+
 END_PLUG_NAMESPACE

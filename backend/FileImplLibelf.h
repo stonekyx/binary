@@ -48,6 +48,7 @@ public:
     virtual bool getRela(size_t scnIdx, int idx, Elf64_Rela *);
     virtual char *findDynTag(Elf64_Sxword);
     virtual size_t detectDynSymCnt();
+    virtual bool getSymFileOff(Elf64_Off *, const Elf64_Sym *);
     virtual ~FileImplLibelf();
 private:
     int _fd;

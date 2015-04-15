@@ -11,9 +11,6 @@
 #include <gelf.h>
 #include <elfutils/libebl.h>
 
-#include <QtCore/QString>
-#include <QtCore/QStringList>
-
 #include "File.h"
 #include "Backend.h"
 #include "ForkPipe.h"
@@ -341,7 +338,7 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
         if(!_ebl) {
             return -1;
         }
-        _disasmCtx = disasm_begin(_ebl, _elf, disasmGetSym);
+        _disasmCtx = disasm_begin(_ebl, _elf, NULL);
         if(!_disasmCtx) {
             return -1;
         }
@@ -356,14 +353,13 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
     }
     cbInfo.file = this;
     cbInfo.data = cbData;
-    cbInfo.labelBuf = NULL;
     cbInfo.convertAddr = &convertAddr;
     cbInfo.callerData = &callerData;
     callerData.symNameMap = &_symNameMap;
     callerData.symDataMap = &_symDataMap;
     callerData.relocNameMap = &_relocNameMap;
     callerData.outputCB = cb;
-    const char *fmt = "%m\t%.1o,%.2o,%.3o\t%l";
+    const char *fmt = "%m\x1e%.1o\x1f%.2o\x1f%.3o\x1e%l";
     return disasm_cb(_disasmCtx, &cbInfo.cur, cbInfo.cur+(end-begin),
             cbInfo.vaddr, fmt, disasmOutput, &cbInfo, &cbInfo);
 }
@@ -632,27 +628,6 @@ void FileImplLibelf::resetDisasm()
     _ebl = NULL;
 }
 
-int FileImplLibelf::disasmGetSym(GElf_Addr, Elf32_Word,
-        GElf_Addr val, char **buf, size_t *size, void *arg)
-{
-    DisasmCBInfo *info = (DisasmCBInfo *)arg;
-    DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
-    if(info->labelBuf) {
-        free(info->labelBuf);
-        info->labelBuf = NULL;
-    }
-    map<Elf64_Off, const char *> *symNameMap = priv->symNameMap;
-    Elf64_Off fileOff = 0;
-    if(info->convertAddr->vaddrToFileOff(fileOff, val) &&
-            symNameMap->find(fileOff) != symNameMap->end())
-    {
-        info->labelBuf = strdup((*symNameMap)[fileOff]);
-        *size = strlen(info->labelBuf);
-    }
-    *buf = info->labelBuf;
-    return 0;
-}
-
 void FileImplLibelf::prepareSymLookup()
 {
     _symNameMap.clear();
@@ -742,7 +717,26 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
 {
     DisasmCBInfo *info = (DisasmCBInfo *)arg;
     DisasmPrivData *priv = (DisasmPrivData *)info->callerData;
-    return priv->outputCB(buf, len, arg);
+    DisasmInstInfo instInfo;
+    QStringList fields = QString::fromLatin1(buf, len)
+        .split("\x1e", QString::SkipEmptyParts);
+    if(fields.size()>0) {
+        instInfo.comm = fields.at(0);
+    }
+    if(fields.size()>1) {
+        instInfo.args = fields.at(1).split("\x1f", QString::SkipEmptyParts);
+    }
+    instInfo.hasLabel = false;
+    if(fields.size()>2) {
+        bool ok;
+        instInfo.label =
+            fields[2].right(fields[2].length()-2).toULong(&ok,  0);
+        if(!ok) instInfo.label = 0;
+        else instInfo.hasLabel = true;
+    } else {
+        instInfo.label = 0;
+    }
+    return priv->outputCB(instInfo, *info);
 }
 
 bool FileImplLibelf::checkScnData(size_t scnIdx, ScnDataCache *cache)

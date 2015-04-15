@@ -37,87 +37,69 @@ static QString getTooltip(const QString &orig)
     return res;
 }
 
-static QString getTooltip(Elf64_Addr addr, File::DisasmCBInfo *info)
+static QString getTooltip(Elf64_Addr addr, const File::DisasmCBInfo &info)
 {
-    char *buf = info->convertAddr->vaddrToSecOffStrWithData(addr, 50);
+    char *buf = info.convertAddr->vaddrToSecOffStrWithData(addr, 50);
     QString res(buf);
     free(buf);
     return res;
 }
 
-static QStringList splitArgs(const QString &args, char sep)
-{
-    QStringList res;
-    int paran=0, bracket=0, brace=0, sharp=0;
-    size_t last = 0;
-    for(int i=0; i<args.length(); i++) {
-        args[i] == '(' && (paran++);
-        args[i] == ')' && (paran--);
-        args[i] == '[' && (bracket++);
-        args[i] == ']' && (bracket--);
-        args[i] == '{' && (brace++);
-        args[i] == '}' && (brace--);
-        args[i] == '<' && (sharp++);
-        args[i] == '>' && (sharp--);
-        if(paran || bracket || brace || sharp) {
-            continue;
-        }
-        if(args[i] == sep) {
-            if(i-last) {
-                res.push_back(args.mid(last, i-last));
-            }
-            last = i+1;
-        } else if(i==args.length()-1) {
-            if(i-last+1) {
-                res.push_back(args.mid(last, i-last+1));
-            }
-        }
-    }
-    return res;
-}
-
-static bool sameSymbol(Elf64_Addr addr, File::DisasmCBInfo *info)
+static bool sameSymbol(Elf64_Addr addr, const File::DisasmCBInfo &info)
 {
     Elf64_Sym lastSym;
-    if(!info->file->getLastSymDataByFileOff(
-            (char*)info->last - info->file->getRawData(0), &lastSym))
+    if(!info.file->getLastSymDataByFileOff(
+            (char*)info.last - info.file->getRawData(0), &lastSym))
     {
         return false;
     }
     if(ELF64_ST_TYPE(lastSym.st_info) != STT_FUNC) { return false; }
-    return lastSym.st_value + lastSym.st_size > info->vaddr &&
+    return lastSym.st_value + lastSym.st_size > info.vaddr &&
             addr >= lastSym.st_value &&
             addr < lastSym.st_value + lastSym.st_size;
 }
 
-QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
+static bool pushSymNameFromVaddr(const File::DisasmCBInfo &info,
+        QStringList &labels, QStringList &tooltips, Elf64_Addr addr)
 {
-    QStringList fields = QString(buf).split('\t', QString::SkipEmptyParts);
-    QString comm;
-    QStringList args, labels, tooltips;
-    QMap<QString, QString> toolTipMap;
-    if(fields.size()>0) comm = fields.at(0);
-    if(fields.size()>1) args = splitArgs(fields.at(1), ',');
-    if(fields.size()>2) labels = splitArgs(fields.at(2), ' ');
-    if(labels.startsWith("#")) {
-        labels.removeFirst();
+    Elf64_Off fileOff;
+    const char *symName;
+    if(info.convertAddr->vaddrToFileOff(fileOff, addr) &&
+            (symName = info.file->getSymNameByFileOff(fileOff)))
+    {
+        labels.push_back(symName);
+        tooltips.push_back(getTooltip(labels.last()));
+        return true;
     }
-    for(int i=0; i<labels.size(); i++) {
-        if(labels[i].startsWith('<') && labels[i].endsWith('>')) {
-            labels[i] = labels[i].mid(1, labels[i].length()-2);
-        }
-        bool ok;
-        Elf64_Addr addr = labels[i].toULong(&ok, 0);
-        if(ok) {
-            char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
-            if(buf) {
-                labels[i] = buf;
-                toolTipMap[labels[i]] = getTooltip(addr, info);
-                free(buf);
-            }
-        }
+    return false;
+}
+
+static bool pushSecOffFromVaddr(const File::DisasmCBInfo &info,
+        QStringList &labels, QStringList &tooltips, Elf64_Addr addr)
+{
+    char *buf = info.convertAddr->vaddrToSecOffStrWithOrig(addr);
+    if(buf) {
+        labels.push_back(buf);
+        tooltips.push_back(getTooltip(addr, info));
+        free(buf);
+        return true;
     }
-    foreach(QString arg, args) {
+    return false;
+}
+
+QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
+        const File::DisasmCBInfo &info)
+{
+    QStringList labels, tooltips;
+
+    //----------Label
+    if(inst.hasLabel) {
+        pushSymNameFromVaddr(info, labels, tooltips, inst.label) ||
+            pushSecOffFromVaddr(info, labels, tooltips, inst.label);
+    }
+
+    //----------New label from arguments
+    foreach(const QString &arg, inst.args) {
         bool ok;
         Elf64_Addr addr;
         if(arg.startsWith('$')) {
@@ -126,43 +108,29 @@ QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
             addr = arg.toULong(&ok, 0);
         }
         if(!ok) continue;
-        Elf64_Off fileOff;
-        const char *symName;
-        if(info->convertAddr->vaddrToFileOff(fileOff, addr) &&
-                (symName = info->file->getSymNameByFileOff(fileOff)))
+        if(((LoadWorker*)info.data)->_ehdr.e_type != ET_REL &&
+                !sameSymbol(addr, info) &&
+                !pushSymNameFromVaddr(info, labels, tooltips, addr))
         {
-            labels.push_back(symName);
-        } else if(((LoadWorker*)info->data)->_ehdr.e_type != ET_REL &&
-                !sameSymbol(addr, info))
-        {
-            char *buf = info->convertAddr->vaddrToSecOffStrWithOrig(addr);
-            if(buf) {
-                labels.push_back(buf);
-                toolTipMap[labels.last()] = getTooltip(addr, info);
-                free(buf);
-            }
+            pushSecOffFromVaddr(info, labels, tooltips, addr);
         }
     }
+
+    //----------.o relocs
     const char *relocName;
-    if((relocName = info->file->getRelocNameByFileOff(
-                    (const char*)info->last - info->file->getRawData(0),
-                    (const char*)info->cur - info->file->getRawData(0))))
+    if((relocName = info.file->getRelocNameByFileOff(
+                    (const char*)info.last - info.file->getRawData(0),
+                    (const char*)info.cur - info.file->getRawData(0))))
     {
         labels.push_back(relocName);
-    }
-    foreach(QString label, labels) {
-        if(toolTipMap.find(label) != toolTipMap.end()) {
-            tooltips.push_back(toolTipMap[label]);
-        } else {
-            tooltips.push_back(getTooltip(label));
-        }
-    }
-    if(relocName) {
+        tooltips.push_back(getTooltip(labels.last()));
         labels.last().prepend("Reloc: ");
     }
-    QString res = comm;
-    if(!args.isEmpty()) {
-        res += "\t" + args.join(",");
+
+    //----------Compile
+    QString res = inst.comm;
+    if(!inst.args.isEmpty()) {
+        res += "\t" + inst.args.join(",");
     }
     if(!labels.isEmpty()) {
         res += "\t# <" + labels.join("> <") + ">";
@@ -173,20 +141,24 @@ QString LoadWorker::processBuffer(const char *buf, File::DisasmCBInfo *info)
     return res;
 }
 
-int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
+int LoadWorker::disasmCallback(const File::DisasmInstInfo &inst,
+        File::DisasmCBInfo &info)
 {
-    File::DisasmCBInfo *info = (File::DisasmCBInfo*)arg;
-    LoadWorker *worker = (LoadWorker*)info->data;
+    LoadWorker *worker = (LoadWorker*)info.data;
     InfoModel *infoModel = worker->_infoModel;
+
+    //-----------Raw bytes
     QString bytes;
-    for(const uint8_t *p=info->last; p != info->cur; p++) {
+    for(const uint8_t *p=info.last; p != info.cur; p++) {
         if(!bytes.isEmpty()) {
             bytes += " ";
         }
         bytes += QString("%1").arg(*p, 2, 16, QChar('0'));
     }
-    const char *symName = info->file->getSymNameByFileOff(
-            info->last - (const uint8_t*)info->file->getRawData(0));
+
+    //-----------Detect symbol start
+    const char *symName = info.file->getSymNameByFileOff(
+            info.last - (const uint8_t*)info.file->getRawData(0));
     if(symName) {
         char *demangled = cplus_demangle(symName);
         QModelIndex inserted = infoModel->buildMore(
@@ -197,17 +169,18 @@ int LoadWorker::disasmCallback(char *buf, size_t , void *arg)
         worker->symbolStarted(inserted);
         free(demangled);
     }
+
+    //-----------Compile
     infoModel->buildMore(QString("\t").repeated(worker->_instIndentLevel)+
             QString("0x%1\t%2\t%3")
-            .arg(info->vaddr, 0, 16)
+            .arg(info.vaddr, 0, 16)
             .arg(bytes)
-            .arg(processBuffer(buf, info)));
-    worker->_noSleep += info->cur - info->last;
-    info->vaddr += info->cur - info->last;
-    info->last = info->cur;
-    if(info->labelBuf) {
-        info->labelBuf[0] = 0;
-    }
+            .arg(processBuffer(inst, info)));
+
+    //-----------After work
+    worker->_noSleep += info.cur - info.last;
+    info.vaddr += info.cur - info.last;
+    info.last = info.cur;
     if(worker->_noSleep > 0x1000) {
         msleep(100);
         worker->_noSleep = 0;

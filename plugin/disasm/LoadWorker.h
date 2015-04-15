@@ -44,9 +44,12 @@ private:
     size_t _instCnt;
     Elf64_Ehdr _ehdr;
 
-    static QString processBuffer(const char *,
-            BIN_NAMESPACE(backend)::File::DisasmCBInfo *);
-    static int disasmCallback(char *, size_t, void *);
+    static QString processBuffer(
+            const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
+            const BIN_NAMESPACE(backend)::File::DisasmCBInfo &);
+    static int disasmCallback(
+            const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
+            BIN_NAMESPACE(backend)::File::DisasmCBInfo &);
     void runAll();
 };
 

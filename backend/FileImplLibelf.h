@@ -88,8 +88,6 @@ private:
     bool loadDeps(const char *);
     void resetDeps();
     void resetDisasm();
-    static int disasmGetSym(GElf_Addr, Elf32_Word, GElf_Addr, char **,
-            size_t *, void *);
     void prepareSymLookup();
     static int disasmOutput(char *, size_t, void *);
     bool checkScnData(size_t scnIdx, ScnDataCache *cache);

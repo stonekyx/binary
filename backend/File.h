@@ -6,6 +6,8 @@
 #include <cstring>
 #include <set>
 #include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 
 #include "common.h"
 #include "Arhdr.h"
@@ -52,17 +54,22 @@ public:
     virtual char *getRawData(size_t offset) = 0;
     virtual bool queryDynSym(const char *, Elf64_Sym *dst) = 0;
     virtual const char *queryDynSymDeps(const char *, Elf64_Sym *) = 0;
-    typedef int (*DisasmCB)(char *, size_t, void *);
+    struct DisasmInstInfo {
+        QString comm;
+        QStringList args;
+        bool hasLabel;
+        Elf64_Addr label;
+    };
     struct DisasmCBInfo {
         const uint8_t *cur;
         const uint8_t *last;
         Elf64_Addr vaddr;
         File *file;
         void *data;
-        char *labelBuf;
         ConvertAddr *convertAddr;
         void *callerData;
     };
+    typedef int (*DisasmCB)(const DisasmInstInfo &, DisasmCBInfo &);
     virtual int disasm(Elf64_Off, Elf64_Off, DisasmCB, void*) = 0;
     virtual const char *getSymNameByFileOff(Elf64_Off) = 0;
     virtual bool getLastSymDataByFileOff(Elf64_Off, Elf64_Sym *) = 0;

@@ -103,7 +103,9 @@ public:
         menuView->addAction(actionViewExpandTo);
         menuView->addAction(actionViewCollapse);
 
-        infoTree = new QTreeView(centralWidget);
+        if(!infoTree) {
+            infoTree = new QTreeView(centralWidget);
+        }
         OBJNAME(infoTree);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(0);

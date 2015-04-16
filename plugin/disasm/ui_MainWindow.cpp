@@ -3,6 +3,7 @@
 
 #include "CtxJudge.h"
 #include "InstData.h"
+#include "DisasmTree.h"
 
 #include "ui_MainWindow.h"
 
@@ -78,7 +79,11 @@ private:
 };
 
 void MainWindow::setupUi(QMainWindow *window) {
+    infoTree = new DisasmTree();
+
     MWTreeView::setupUi(window);
+    infoTree->setParent(centralWidget);
+    infoTree->setMouseTracking(true);
     window->resize(600, 600);
 
     menuDisasm = new QMenu(menuBar);

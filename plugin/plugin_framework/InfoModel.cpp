@@ -192,6 +192,16 @@ QModelIndex InfoModel::nextRow(const QModelIndex &cur)
     }
 }
 
+QVariant &InfoModel::metadata()
+{
+    return _metadata;
+}
+
+const QVariant &InfoModel::metadata() const
+{
+    return _metadata;
+}
+
 void InfoModel::buildTree(const QStringList &data)
 {
     for(int i=0; i<data.size(); i++) {

@@ -5,6 +5,7 @@
 #include "frontend/PluginManager.h"
 #include "backend/ConvertAddr.h"
 #include "InstData.h"
+#include "DisasmMetadata.h"
 #include "ui_MainWindow.h"
 
 #include "MainWindow.h"
@@ -56,6 +57,9 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
 MainWindow::~MainWindow()
 {
     resetWorker();
+    if(_infoModel->metadata().isValid()) {
+        delete _infoModel->metadata().value<DisasmMetadata*>();
+    }
     if(_infoModel) {
         delete _infoModel;
     }

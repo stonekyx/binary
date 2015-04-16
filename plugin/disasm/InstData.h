@@ -15,6 +15,7 @@ public:
     QStringList args;
     Elf64_Addr addr;
     Elf64_Addr addrRelocStart, addrRelocEnd;
+    Elf64_Off fileOff;
     QStringList labels;
     typedef enum {
         AT_NONE,

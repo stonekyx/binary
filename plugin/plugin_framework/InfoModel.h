@@ -31,6 +31,9 @@ public:
 
     QModelIndex buildMore(const QString &line);
     QModelIndex nextRow(const QModelIndex &cur);
+
+    QVariant &metadata();
+    const QVariant &metadata() const;
 private:
     void buildTree(const QStringList &data);
     InfoTree *_root;
@@ -39,6 +42,8 @@ private:
 
     int _currentLevel;
     InfoTree *_currentNode;
+
+    QVariant _metadata;
 };
 
 class InfoTree {

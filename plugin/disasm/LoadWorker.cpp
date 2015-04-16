@@ -1,4 +1,5 @@
 #include "InstData.h"
+#include "DisasmMetadata.h"
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -119,11 +120,19 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
             addr = arg.toULong(&ok, 0);
         }
         if(!ok) continue;
-        if(saveData.addrType == InstData::AT_NONE) {
-            saveData.addr = addr;
-        }
         if(sameSymbol(addr, info)) {
             saveData.addrType = InstData::AT_VADDR_INSYM;
+            saveData.addr = addr;
+            if(((LoadWorker*)info.data)->_ehdr.e_type == ET_REL) {
+                size_t shndx;
+                Elf64_Off shOff;
+                info.convertAddr->fileOffToSecOff(shndx, shOff,
+                        info.last - (const uint8_t*)info.file->getRawData(0));
+                info.convertAddr->secOffToFileOff(saveData.fileOff,
+                        shndx, addr);
+            } else {
+                info.convertAddr->vaddrToFileOff(saveData.fileOff, addr);
+            }
             continue;
         }
         if(((LoadWorker*)info.data)->_ehdr.e_type == ET_REL) {
@@ -131,12 +140,15 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         }
         if(pushSymNameFromVaddr(info, labels, tooltips, addr)) {
             if(saveData.addrType == InstData::AT_NONE) {
+                saveData.addr = addr;
                 saveData.addrType = InstData::AT_SYMBOL;
                 saveData.symName = labels.last();
             }
         } else if(pushSecOffFromVaddr(info, labels, tooltips, addr)) {
-            if(saveData.addrType == InstData::AT_NONE)
+            if(saveData.addrType == InstData::AT_NONE) {
+                saveData.addr = addr;
                 saveData.addrType = InstData::AT_VADDR;
+            }
         }
     }
 
@@ -211,6 +223,8 @@ int LoadWorker::disasmCallback(const File::DisasmInstInfo &inst,
     QVariant userData;
     userData.setValue(instData);
     infoModel->setData(inserted, userData, Qt::UserRole);
+    infoModel->metadata().value<DisasmMetadata*>()->instMap[
+        info.last - (const uint8_t*)info.file->getRawData(0)] = inserted;
 
     //-----------After work
     worker->_noSleep += info.cur - info.last;
@@ -242,6 +256,10 @@ void LoadWorker::run()
     if(!_file->getEhdr(&_ehdr)) {
         return;
     }
+    if(_infoModel->metadata().isValid()) {
+        delete _infoModel->metadata().value<DisasmMetadata*>();
+    }
+    _infoModel->metadata().setValue(new DisasmMetadata());
     if(_restricted) {
         _instIndentLevel = 0;
         _file->disasm(_begin, _end, disasmCallback, this);

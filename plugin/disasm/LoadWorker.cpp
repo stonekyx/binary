@@ -56,7 +56,6 @@ static bool sameSymbol(Elf64_Addr addr, const File::DisasmCBInfo &info)
     {
         return false;
     }
-    if(ELF64_ST_TYPE(lastSym.st_info) != STT_FUNC) { return false; }
     return lastSym.st_value + lastSym.st_size > info.vaddr &&
             addr >= lastSym.st_value &&
             addr < lastSym.st_value + lastSym.st_size;

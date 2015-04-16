@@ -890,6 +890,12 @@ void FileImplLibelf::preparePltSym()
                 _mallocStrings.push_back(save);
                 _symNameMap[pltOff] = save;
             }
+            convertAddr.fileOffToVaddr(sym.st_value, pltOff);
+            sym.st_size = pltEntSize;
+            sym.st_shndx = pltIdx;
+            if(_symDataMap.find(pltOff) == _symDataMap.end()) {
+                _symDataMap[pltOff] = sym;
+            }
         }
     }
 }

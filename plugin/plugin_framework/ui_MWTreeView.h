@@ -52,7 +52,9 @@ public:
 
     MWTreeView(const char *context, const char *title) :
         MWBase(context, title)
-    {}
+    {
+        infoTree = NULL;
+    }
     virtual ~MWTreeView() {}
 
     virtual bool switchMode(bool file) {

@@ -69,6 +69,13 @@ public:
                 QObject::connect(action, SIGNAL(triggered()),
                         _mw, SLOT(openScnData()));
                 break;
+            case InstData::AT_RELOC:
+                action->setText(QString("Reloc info of %1")
+                        .arg(instData.symName));
+                action->setData(idx.data(Qt::UserRole));
+                QObject::connect(action, SIGNAL(triggered()),
+                        _mw, SLOT(openReloc()));
+                break;
             default:
                 return false;
         }

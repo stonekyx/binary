@@ -28,6 +28,9 @@ public:
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;
+    bool _setFocus;
+    Elf64_Off _relocStart, _relocEnd;
+    QModelIndex _focus;
 
     bool scanShdr(binary::backend::File *);
 };

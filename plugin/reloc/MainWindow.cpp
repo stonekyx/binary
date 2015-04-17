@@ -24,6 +24,14 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
     } else {
         _scnIndex = 0;
     }
+    _setFocus = false;
+    if(param.find("relocStart") != param.end() &&
+            param.find("relocEnd") != param.end())
+    {
+        _setFocus = true;
+        _relocStart = QString(param["relocStart"].c_str()).toULong();
+        _relocEnd = QString(param["relocEnd"].c_str()).toULong();
+    }
     updateInfo();
 }
 
@@ -45,6 +53,11 @@ void MainWindow::updateInfo(File *file)
     _infoModel = new InfoModel(QString(), 2, NULL);
     scanShdr(file);
     _ui->infoTree->setModel(_infoModel);
+    if(_setFocus && _focus.isValid()) {
+        _ui->infoTree->scrollTo(_focus, QAbstractItemView::PositionAtCenter);
+        _ui->infoTree->selectionModel()->select(_focus,
+                QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    }
 }
 
 bool MainWindow::scanShdr(File *file)
@@ -96,8 +109,12 @@ bool MainWindow::scanShdr(File *file)
             _infoModel->buildMore(QString("\tSymbol\t%1\x1f%2")
                     .arg(symName)
                     .arg(demangled));
-            _infoModel->buildMore(QString("\t\tOffset\t0x%1")
+            free(demangled);
+
+            QModelIndex inserted = _infoModel->buildMore(
+                    QString("\t\tOffset\t0x%1")
                     .arg(rel.rel.r_offset, 0, 16));
+
             ExpandDefine<Elf64_Xword> *defines_R =
                 Defines::commentText(ehdr.e_machine, defines_EM_R_mapping);
             Elf64_Xword r_type = ELF64_R_TYPE(rel.rel.r_info);
@@ -106,13 +123,23 @@ bool MainWindow::scanShdr(File *file)
             _infoModel->buildMore(QString("\t\tType\t%1 (%2)")
                     .arg(ELF64_R_TYPE(rel.rel.r_info))
                     .arg(macro!=comment? macro + ": " + comment: macro));
+
             if(shdr.sh_type == SHT_RELA) {
                 _infoModel->buildMore(QString("\t\tAddend\t%1")
                         .arg(rel.rela.r_addend));
             }
             _infoModel->buildMore(QString("\t\tLibrary\t%1")
                     .arg(file->queryDynSymDeps(symName, NULL)));
-            free(demangled);
+
+            Elf64_Off symFileOff;
+            sym.st_value = rel.rel.r_offset;
+            sym.st_shndx = shdr.sh_info;
+            if(file->getSymFileOff(&symFileOff, &sym) &&
+                    symFileOff >= _relocStart &&
+                    symFileOff < _relocEnd)
+            {
+                _focus = inserted;
+            }
         }
     }
     return true;

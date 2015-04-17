@@ -252,4 +252,27 @@ void MainWindow::jumpOrOpenSym()
     }
 }
 
+void MainWindow::openReloc()
+{
+    QAction *action = dynamic_cast<QAction*>(sender());
+    if(!action) {
+        return;
+    }
+    const InstData &instData = action->data().value<InstData>();
+
+    //---------get file
+    File *file = _plugin->manager->getBackend()->getFile();
+    if(!file) return;
+
+    //---------assemble param
+    map<string, string> param;
+    param["relocStart"] = QString::number(instData.addrRelocStart).toUtf8().constData();
+    param["relocEnd"] = QString::number(instData.addrRelocEnd).toUtf8().constData();
+    BIN_NAMESPACE(frontend)::Plugin *plugin =
+        _plugin->manager->getPlugin("Reloc");
+    if(plugin) {
+        plugin->createView(param);
+    }
+}
+
 END_PLUG_NAMESPACE

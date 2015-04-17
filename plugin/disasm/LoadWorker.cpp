@@ -76,6 +76,22 @@ static bool pushSymNameFromVaddr(const File::DisasmCBInfo &info,
     return false;
 }
 
+static bool pushRelocNameFromVaddr(const File::DisasmCBInfo &info,
+        QStringList &labels, QStringList &tooltips, Elf64_Addr addr)
+{
+    Elf64_Off fileOff;
+    const char *relocName;
+    if(info.convertAddr->vaddrToFileOff(fileOff, addr) &&
+            (relocName = info.file->getRelocNameByFileOff(fileOff, fileOff+1)))
+    {
+        labels.push_back(relocName);
+        tooltips.push_back(getTooltip(labels.last()));
+        labels.last().prepend("Reloc: ");
+        return true;
+    }
+    return false;
+}
+
 static bool pushSecOffFromVaddr(const File::DisasmCBInfo &info,
         QStringList &labels, QStringList &tooltips, Elf64_Addr addr)
 {
@@ -89,6 +105,34 @@ static bool pushSecOffFromVaddr(const File::DisasmCBInfo &info,
     return false;
 }
 
+static void translateAddrToLabels(const File::DisasmCBInfo &info,
+        QStringList &labels, QStringList &tooltips, Elf64_Addr addr,
+        InstData &saveData)
+{
+    if(pushSymNameFromVaddr(info, labels, tooltips, addr)) {
+        if(saveData.addrType == InstData::AT_NONE) {
+            saveData.addr = addr;
+            saveData.addrType = InstData::AT_SYMBOL;
+            saveData.symName = labels.last();
+        }
+    } else if(pushRelocNameFromVaddr(info, labels, tooltips, addr)) {
+        if(saveData.addrType == InstData::AT_NONE) {
+            saveData.addr = addr;
+            Elf64_Off fileOff;
+            info.convertAddr->vaddrToFileOff(fileOff, addr);
+            saveData.addrRelocStart = fileOff;
+            saveData.addrRelocEnd = fileOff+1;
+            saveData.addrType = InstData::AT_RELOC;
+            saveData.symName = labels.last();
+        }
+    } else if(pushSecOffFromVaddr(info, labels, tooltips, addr)) {
+        if(saveData.addrType == InstData::AT_NONE) {
+            saveData.addr = addr;
+            saveData.addrType = InstData::AT_VADDR;
+        }
+    }
+}
+
 QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         const File::DisasmCBInfo &info, InstData &saveData)
 {
@@ -100,13 +144,7 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
 
     //----------Label
     if(inst.hasLabel) {
-        saveData.addr = inst.label;
-        if(pushSymNameFromVaddr(info, labels, tooltips, inst.label)) {
-            saveData.addrType = InstData::AT_SYMBOL;
-            saveData.symName = labels.last();
-        } else if(pushSecOffFromVaddr(info, labels, tooltips, inst.label)) {
-            saveData.addrType = InstData::AT_VADDR;
-        }
+        translateAddrToLabels(info, labels, tooltips, inst.label, saveData);
     }
 
     //----------New label from arguments
@@ -137,18 +175,7 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         if(((LoadWorker*)info.data)->_ehdr.e_type == ET_REL) {
             continue;
         }
-        if(pushSymNameFromVaddr(info, labels, tooltips, addr)) {
-            if(saveData.addrType == InstData::AT_NONE) {
-                saveData.addr = addr;
-                saveData.addrType = InstData::AT_SYMBOL;
-                saveData.symName = labels.last();
-            }
-        } else if(pushSecOffFromVaddr(info, labels, tooltips, addr)) {
-            if(saveData.addrType == InstData::AT_NONE) {
-                saveData.addr = addr;
-                saveData.addrType = InstData::AT_VADDR;
-            }
-        }
+        translateAddrToLabels(info, labels, tooltips, addr, saveData);
     }
 
     //----------.o relocs
@@ -166,6 +193,7 @@ QString LoadWorker::processBuffer(const File::DisasmInstInfo &inst,
         saveData.addrRelocEnd =
             (const char*)info.cur - info.file->getRawData(0);
         saveData.addrType = InstData::AT_RELOC;
+        saveData.symName = labels.last();
     }
 
     //----------Compile

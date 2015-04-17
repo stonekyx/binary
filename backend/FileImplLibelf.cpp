@@ -349,7 +349,7 @@ int FileImplLibelf::disasm(Elf64_Off begin, Elf64_Off end,
     cbInfo.cur = (const uint8_t *)getRawData(begin);
     cbInfo.last = cbInfo.cur;
     if(!convertAddr.fileOffToVaddr(cbInfo.vaddr, begin)) {
-        cbInfo.vaddr = begin;
+        cbInfo.vaddr = 0;
     }
     cbInfo.file = this;
     cbInfo.data = cbData;

@@ -38,6 +38,7 @@ public slots:
     void setVaddrRange(size_t, size_t);
     void openScnData();
     void jumpOrOpenSym();
+    void openReloc();
 private:
     PLUG_NAMESPACE(plugin_framework)::InfoModel *_infoModel;
     size_t _scnIndex;

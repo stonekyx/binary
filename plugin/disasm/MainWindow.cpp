@@ -226,6 +226,20 @@ void MainWindow::jumpOrOpenSym()
     if(!file->getSymFileOff(&symFileOff, &sym) || symFileOff != fileOff)
         return;
 
+    //---------check current window
+    DisasmMetadata *dm = _infoModel->metadata().value<DisasmMetadata*>();
+    if(dm && dm->instMap.find(fileOff) != dm->instMap.end()) {
+        QModelIndex target = dm->instMap[fileOff];
+        QModelIndex symSpan = target.sibling(target.row()-1, 0);
+        if(symSpan.isValid() && _ui->infoTree->isFirstColumnSpanned(symSpan.row(), symSpan.parent())) {
+            target = symSpan;
+        }
+        _ui->infoTree->scrollTo(target, QAbstractItemView::PositionAtCenter);
+        _ui->infoTree->selectionModel()->select(target,
+                QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        return;
+    }
+
     //---------assemble param
     map<string, string> param;
     param["vBegin"] = QString::number(sym.st_value).toUtf8().constData();

@@ -83,7 +83,6 @@ void MainWindow::setupUi(QMainWindow *window) {
 
     MWTreeView::setupUi(window);
     infoTree->setParent(centralWidget);
-    infoTree->setMouseTracking(true);
     window->resize(600, 600);
 
     menuDisasm = new QMenu(menuBar);

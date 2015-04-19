@@ -59,6 +59,7 @@ public:
         QStringList args;
         bool hasLabel;
         Elf64_Addr label;
+        Elf64_Xword size;
     };
     struct DisasmCBInfo {
         const uint8_t *cur;

@@ -750,6 +750,7 @@ int FileImplLibelf::disasmOutput(char *buf, size_t len, void *arg)
     } else {
         instInfo.label = 0;
     }
+    instInfo.size = info->cur - info->last;
     return priv->outputCB(instInfo, *info);
 }
 

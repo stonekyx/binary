@@ -23,6 +23,9 @@ public:
         struct { Elf64_Off start;
                  char *symName;
                  Elf64_Off end;         } reloc;
+
+        struct { Elf64_Off off;
+                 char *symName;         } start;
     } d;
     typedef enum {
         AT_NONE,
@@ -30,7 +33,8 @@ public:
         AT_PLT,
         AT_SYMBOL,
         AT_VADDR,
-        AT_VADDR_INSYM
+        AT_VADDR_INSYM,
+        AT_SYMBOL_START
     } AddrType;
     AddrType addrType;
     InstData();

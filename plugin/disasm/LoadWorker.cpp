@@ -233,6 +233,15 @@ int LoadWorker::disasmCallback(const File::DisasmInstInfo &inst,
                 QString("%1\x1f%2")
                 .arg(symName)
                 .arg(demangled));
+
+        InstData instData;
+        instData.addrType = InstData::AT_SYMBOL_START;
+        instData.d.start.off = info.last - (uint8_t*)info.file->getRawData(0);
+        instData.d.start.symName = strdup(symName);
+        QVariant userData;
+        userData.setValue(instData);
+        infoModel->setData(inserted, userData, Qt::UserRole);
+
         worker->symbolStarted(inserted);
         free(demangled);
     }

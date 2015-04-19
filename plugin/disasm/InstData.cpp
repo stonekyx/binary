@@ -25,6 +25,8 @@ InstData &InstData::operator=(const InstData &o)
         d.symbol.symName = strdup(o.d.symbol.symName); break;
     case AT_RELOC:
         d.reloc.symName = strdup(o.d.reloc.symName); break;
+    case AT_SYMBOL_START:
+        d.start.symName = strdup(o.d.start.symName); break;
     default:
         break;
     }
@@ -38,6 +40,8 @@ InstData::~InstData()
         free(d.symbol.symName); break;
     case AT_RELOC:
         free(d.reloc.symName); break;
+    case AT_SYMBOL_START:
+        free(d.start.symName); break;
     default:
         break;
     }

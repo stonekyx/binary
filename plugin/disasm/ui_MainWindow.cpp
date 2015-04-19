@@ -76,6 +76,13 @@ public:
                 QObject::connect(action, SIGNAL(triggered()),
                         _mw, SLOT(openReloc()));
                 break;
+            case InstData::AT_SYMBOL_START:
+                action->setText(QString("Flow diagram of %1")
+                        .arg(instData.d.start.symName));
+                action->setData(idx.data(Qt::UserRole));
+                QObject::connect(action, SIGNAL(triggered()),
+                        _mw, SLOT(openFlowDgm()));
+                break;
             default:
                 return false;
         }

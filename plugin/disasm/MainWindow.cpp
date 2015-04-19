@@ -191,7 +191,7 @@ void MainWindow::openScnData()
     size_t scnIdx;
     Elf64_Off scnOff;
     ConvertAddr convertAddr(_plugin->manager->getBackend()->getFile());
-    convertAddr.vaddrToSecOff(scnIdx, scnOff, instData.addr);
+    convertAddr.vaddrToSecOff(scnIdx, scnOff, instData.d.vaddr.addr);
     map<string, string> param;
     param["scnIndex"] = QString::number(scnIdx).toUtf8().constData();
     param["scnOffset"] = QString::number(scnOff).toUtf8().constData();
@@ -217,7 +217,7 @@ void MainWindow::jumpOrOpenSym()
     //---------convert to file offset
     Elf64_Off fileOff;
     ConvertAddr convertAddr(file);
-    if(!convertAddr.vaddrToFileOff(fileOff, instData.addr)) return;
+    if(!convertAddr.vaddrToFileOff(fileOff, instData.d.symbol.addr)) return;
 
     //---------get and check symbol
     Elf64_Sym sym;
@@ -266,8 +266,8 @@ void MainWindow::openReloc()
 
     //---------assemble param
     map<string, string> param;
-    param["relocStart"] = QString::number(instData.addrRelocStart).toUtf8().constData();
-    param["relocEnd"] = QString::number(instData.addrRelocEnd).toUtf8().constData();
+    param["relocStart"] = QString::number(instData.d.reloc.start).toUtf8().constData();
+    param["relocEnd"] = QString::number(instData.d.reloc.end).toUtf8().constData();
     BIN_NAMESPACE(frontend)::Plugin *plugin =
         _plugin->manager->getPlugin("Reloc");
     if(plugin) {

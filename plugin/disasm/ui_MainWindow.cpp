@@ -57,21 +57,21 @@ public:
                 return false;
             case InstData::AT_SYMBOL:
                 action->setText(QString("Jump to symbol %1")
-                        .arg(instData.symName));
+                        .arg(instData.d.symbol.symName));
                 action->setData(idx.data(Qt::UserRole));
                 QObject::connect(action, SIGNAL(triggered()),
                         _mw, SLOT(jumpOrOpenSym()));
                 break;
             case InstData::AT_VADDR:
                 action->setText(QString("Data on address 0x%1")
-                        .arg(instData.addr, 0, 16));
+                        .arg(instData.d.vaddr.addr, 0, 16));
                 action->setData(idx.data(Qt::UserRole));
                 QObject::connect(action, SIGNAL(triggered()),
                         _mw, SLOT(openScnData()));
                 break;
             case InstData::AT_RELOC:
                 action->setText(QString("Reloc info of %1")
-                        .arg(instData.symName));
+                        .arg(instData.d.reloc.symName));
                 action->setData(idx.data(Qt::UserRole));
                 QObject::connect(action, SIGNAL(triggered()),
                         _mw, SLOT(openReloc()));

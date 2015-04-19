@@ -36,10 +36,10 @@ void DisasmTree::mouseMoveEvent(QMouseEvent *e)
     DisasmMetadata *dm = infoModel->metadata().value<DisasmMetadata*>();
 
     //----------select target
-    if(dm->instMap.find(instData.fileOff) == dm->instMap.end()) {
+    if(dm->instMap.find(instData.d.insym.off) == dm->instMap.end()) {
         return;
     }
-    setSelection(visualRect(dm->instMap[instData.fileOff]),
+    setSelection(visualRect(dm->instMap[instData.d.insym.off]),
             QItemSelectionModel::Select | QItemSelectionModel::Rows);
 }
 

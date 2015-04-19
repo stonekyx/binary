@@ -11,12 +11,19 @@ BEGIN_PLUG_NAMESPACE(disasm)
 
 class InstData {
 public:
-    QString comm;
-    QStringList args;
-    Elf64_Addr addr;
-    Elf64_Addr addrRelocStart, addrRelocEnd;
-    Elf64_Off fileOff;
-    QStringList labels;
+    union {
+        struct { Elf64_Addr addr;       } vaddr;
+
+        struct { Elf64_Addr addr;
+                 Elf64_Off off;         } insym;
+
+        struct { Elf64_Addr addr;
+                 char *symName;         } symbol;
+
+        struct { Elf64_Off start;
+                 char *symName;
+                 Elf64_Off end;         } reloc;
+    } d;
     typedef enum {
         AT_NONE,
         AT_RELOC,
@@ -26,7 +33,10 @@ public:
         AT_VADDR_INSYM
     } AddrType;
     AddrType addrType;
-    QString symName;
+    InstData();
+    InstData(const InstData &);
+    InstData &operator=(const InstData &);
+    ~InstData();
 };
 
 END_PLUG_NAMESPACE

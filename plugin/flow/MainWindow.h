@@ -44,6 +44,8 @@ private:
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
             BIN_NAMESPACE(backend)::File::DisasmCBInfo &);
     void generateBlocks();
+    void outputBlocks(const char *);
+    int getBlockByStartAddr(Elf64_Addr);
 };
 
 #endif

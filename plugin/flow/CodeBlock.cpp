@@ -6,7 +6,8 @@ using namespace std;
 USE_BIN_NAMESPACE(backend);
 BEGIN_PLUG_NAMESPACE(flow)
 
-CodeBlock::CodeBlock(Elf64_Addr addr) : _endAddr(addr), _reprAddr(0)
+CodeBlock::CodeBlock(Elf64_Addr addr, Elf64_Addr raddr) :
+    _startAddr(addr), _endAddr(addr), _reprAddr(raddr)
 {
 }
 
@@ -31,17 +32,15 @@ static Elf64_Addr calcAddr(const File::DisasmInstInfo &inst)
 
 bool CodeBlock::addInst(const File::DisasmInstInfo &inst)
 {
-    if(!_repr.isEmpty()) { _repr += "\n"; }
-    _repr += QString("0x%1:\t%2\t%3")
-        .arg(_reprAddr).arg(inst.comm).arg(inst.args.join(", "));
+    _repr += QString("0x%1:\t%2\t%3\\l")
+        .arg(_reprAddr, 0, 16).arg(inst.comm).arg(inst.args.join(", "));
     _endAddr += inst.size;
     _reprAddr += inst.size;
+    _jumpCond = false;
+    _jumpTarget = _endAddr;
     if(inst.comm.startsWith("j")) {
-        if(inst.comm.startsWith("jmp")) {
-            _jumpTarget = _endAddr;
-        } else {
-            _jumpTarget = calcAddr(inst);
-        }
+        _jumpCond = !inst.comm.startsWith("jmp");
+        _jumpTarget = calcAddr(inst);
         return false;
     }
     return true;
@@ -55,6 +54,16 @@ const QString &CodeBlock::getRepr() const
 Elf64_Addr CodeBlock::getJumpTarget() const
 {
     return _jumpTarget;
+}
+
+bool CodeBlock::getJumpCond() const
+{
+    return _jumpCond;
+}
+
+Elf64_Addr CodeBlock::getStartAddr() const
+{
+    return _startAddr;
 }
 
 END_PLUG_NAMESPACE

@@ -10,15 +10,19 @@ BEGIN_PLUG_NAMESPACE(flow)
 
 class CodeBlock {
 public:
-    CodeBlock(Elf64_Addr);
+    CodeBlock(Elf64_Addr, Elf64_Addr raddr = 0);
     bool addInst(const BIN_NAMESPACE(backend)::File::DisasmInstInfo &);
     const QString &getRepr() const;
     Elf64_Addr getJumpTarget() const;
+    bool getJumpCond() const;
+    Elf64_Addr getStartAddr() const;
 private:
+    Elf64_Addr _startAddr;
     Elf64_Addr _endAddr;
     Elf64_Addr _reprAddr;
     QString _repr;
     Elf64_Addr _jumpTarget;
+    bool _jumpCond;
 };
 
 END_PLUG_NAMESPACE

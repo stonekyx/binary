@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <elf.h>
 
 #include <QtGui/QMessageBox>
@@ -77,7 +78,8 @@ void MainWindow::updateInfo(File *file)
 
     _blocks.clear();
     generateBlocks();
-    cout<<_blocks.size()<<endl;
+
+    outputBlocks("/tmp/binary_plugin_flow.dot");
 }
 
 int MainWindow::disasmCallback(const File::DisasmInstInfo &inst,
@@ -104,18 +106,67 @@ int MainWindow::disasmCallback(const File::DisasmInstInfo &inst,
 void MainWindow::generateBlocks()
 {
     Elf64_Addr vaddr = _vBegin;
+    Elf64_Addr raddr = _vBegin;
     foreach(const File::DisasmInstInfo &inst, _inst) {
         if(_blocks.empty()) {
-            _blocks.push_back(CodeBlock(vaddr));
+            _blocks.push_back(CodeBlock(vaddr, raddr));
         }
 
         vaddr += inst.size;
+        raddr += inst.size;
 
         CodeBlock &last = _blocks.back();
         if(!last.addInst(inst) || _breaks.find(vaddr) != _breaks.end()) {
-            _blocks.push_back(CodeBlock(vaddr));
+            _blocks.push_back(CodeBlock(vaddr, raddr));
         }
     }
+    if(_blocks.back().getRepr().isEmpty()) {
+        _blocks.removeLast();
+    }
+}
+
+void MainWindow::outputBlocks(const char *filename)
+{
+    ofstream ofs(filename);
+    ofs << "digraph G {"<<endl;
+    ofs << "node [fontname=Courier, group=a]" << endl;
+    int nodeId = 0;
+    foreach(const CodeBlock &block, _blocks) {
+        ofs << nodeId << " [shape=box, label=\"" <<
+            block.getRepr().toStdString() << "\"]" << endl;
+        int targetBlk = getBlockByStartAddr(block.getJumpTarget());
+        if(targetBlk < _blocks.size()) {
+            ofs << nodeId << "->" << targetBlk << " [constraint=false";
+            if(block.getJumpCond() && targetBlk != nodeId+1) {
+                ofs << ", label=jump";
+            }
+            ofs << "]" << endl;
+        }
+        if(targetBlk != nodeId+1 && block.getJumpCond() && nodeId < _blocks.size()) {
+            ofs << nodeId << "->" << nodeId+1 << " [constraint=false, label=normal]" << endl;
+        }
+        nodeId ++;
+    }
+    ofs << "edge [style=invis]" << endl;
+    if(_blocks.size()>1) ofs << "0";
+    for(int i=1; i<_blocks.size(); i++) {
+        ofs << "->" << i;
+    }
+    ofs << endl;
+    ofs << "}" << endl;
+    ofs.close();
+}
+
+int MainWindow::getBlockByStartAddr(Elf64_Addr addr)
+{
+    int nodeId = 0;
+    foreach(const CodeBlock &block, _blocks) {
+        if(block.getStartAddr() == addr) {
+            return nodeId;
+        }
+        nodeId ++;
+    }
+    return nodeId;
 }
 
 END_PLUG_NAMESPACE

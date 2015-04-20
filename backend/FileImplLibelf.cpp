@@ -611,7 +611,10 @@ bool FileImplLibelf::loadDeps(const char *name)
             continue;
         }
         s.replace(QRegExp(".*=> (.*) \\(.*"), "\\1");
-        _deps.push_back(_backend->openFilePrivate(s.toUtf8().constData()));
+        File *depFile = _backend->openFilePrivate(s.toUtf8().constData());
+        if(depFile) {
+            _deps.push_back(depFile);
+        }
     }
     delete forkPipe;
     return true;

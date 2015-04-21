@@ -23,14 +23,21 @@ bool MainWindow::switchMode(bool file)
 {
     if(file) {
         defaultLabel->hide();
+        graphicsView->show();
         return true;
     }
+    graphicsView->hide();
     defaultLabel->show();
     return false;
 }
 
 void MainWindow::setupUi(QMainWindow *window) {
     MWBase::setupUi(window);
+
+    graphicsView = new QGraphicsView(centralWidget);
+    OBJNAME(graphicsView);
+    graphicsView->resetTransform();
+    gridLayout->addWidget(graphicsView, 0, 0, 1, 1);
 
     retranslateUi(window);
 }

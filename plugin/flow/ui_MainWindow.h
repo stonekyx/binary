@@ -1,6 +1,8 @@
 #ifndef PLUGIN_FLOW_UI_MAINWINDOW_H
 #define PLUGIN_FLOW_UI_MAINWINDOW_H
 
+#include <QtGui/QGraphicsView>
+
 #include "ui_MWBase.h"
 
 BEGIN_PLUG_NAMESPACE(flow)
@@ -15,6 +17,8 @@ class binary::plugin::flow::Ui::MainWindow :
     public binary::plugin::plugin_framework::Ui::MWBase
 {
 public:
+    QGraphicsView *graphicsView;
+
     MainWindow();
     ~MainWindow();
 

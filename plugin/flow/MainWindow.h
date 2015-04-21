@@ -6,6 +6,7 @@
 #include "MWBase.h"
 #include "CodeBlock.h"
 
+#include <QtGui/QGraphicsScene>
 #include <QtGui/QMainWindow>
 #include <QtCore/QSet>
 #include <QtCore/QList>
@@ -39,12 +40,13 @@ private:
     QSet<Elf64_Addr> _breaks;
     QList<BIN_NAMESPACE(backend)::File::DisasmInstInfo> _inst;
     Elf64_Addr _vBegin;
+    QGraphicsScene *_scene;
 
     static int disasmCallback(
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,
             BIN_NAMESPACE(backend)::File::DisasmCBInfo &);
     void generateBlocks();
-    void outputBlocks(const char *);
+    std::string outputBlocks();
     int getBlockByStartAddr(Elf64_Addr);
 };
 

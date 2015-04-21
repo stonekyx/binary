@@ -1,5 +1,4 @@
-#include <iostream>
-#include <fstream>
+#include <sstream>
 #include <elf.h>
 
 #include <QtGui/QMessageBox>
@@ -7,6 +6,7 @@
 #include "backend/File.h"
 #include "backend/ConvertAddr.h"
 #include "ui_MainWindow.h"
+#include "FlowDrawer.h"
 
 #include "MainWindow.h"
 
@@ -20,7 +20,8 @@ BEGIN_PLUG_NAMESPACE(flow)
 MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param, QWidget *parent) :
     MWBase(new Ui::MainWindow(), plugin, param, parent),
-    _ui(dynamic_cast<Ui::MainWindow*>(MWBase::_ui))
+    _ui(dynamic_cast<Ui::MainWindow*>(MWBase::_ui)),
+    _scene(NULL)
 {
     _noArg = true;
     _scnIndex = 0;
@@ -79,7 +80,10 @@ void MainWindow::updateInfo(File *file)
     _blocks.clear();
     generateBlocks();
 
-    outputBlocks("/tmp/binary_plugin_flow.dot");
+    if(_scene) { _scene->deleteLater(); }
+    _scene = new QGraphicsScene(_ui->graphicsView);
+    FlowDrawer(_ui->graphicsView).draw(_scene, outputBlocks());
+    _ui->graphicsView->setScene(_scene);
 }
 
 int MainWindow::disasmCallback(const File::DisasmInstInfo &inst,
@@ -125,36 +129,37 @@ void MainWindow::generateBlocks()
     }
 }
 
-void MainWindow::outputBlocks(const char *filename)
+string MainWindow::outputBlocks()
 {
-    ofstream ofs(filename);
-    ofs << "digraph G {"<<endl;
-    ofs << "node [fontname=Courier, group=a]" << endl;
+    stringstream ss;
+    ss << "digraph G {"<<endl;
+    ss << "node [fontname=Courier, group=a]" << endl;
+    ss << "splines=ortho" << endl;
     int nodeId = 0;
-    foreach(const CodeBlock &block, _blocks) {
-        ofs << nodeId << " [shape=box, label=\"" <<
+    foreach(CodeBlock block, _blocks) {
+        ss << nodeId << " [shape=box, label=\"" <<
             block.getRepr().toStdString() << "\"]" << endl;
         int targetBlk = getBlockByStartAddr(block.getJumpTarget());
         if(targetBlk < _blocks.size()) {
-            ofs << nodeId << "->" << targetBlk << " [constraint=false";
+            ss << nodeId << "->" << targetBlk << " [constraint=false";
             if(block.getJumpCond() && targetBlk != nodeId+1) {
-                ofs << ", label=jump";
+                ss << ", taillabel=jump";
             }
-            ofs << "]" << endl;
+            ss << "]" << endl;
         }
         if(targetBlk != nodeId+1 && block.getJumpCond() && nodeId < _blocks.size()) {
-            ofs << nodeId << "->" << nodeId+1 << " [constraint=false, label=normal]" << endl;
+            ss << nodeId << "->" << nodeId+1 << " [constraint=false, taillabel=normal]" << endl;
         }
         nodeId ++;
     }
-    ofs << "edge [style=invis]" << endl;
-    if(_blocks.size()>1) ofs << "0";
+    ss << "edge [style=invis]" << endl;
+    if(_blocks.size()>1) ss << "0";
     for(int i=1; i<_blocks.size(); i++) {
-        ofs << "->" << i;
+        ss << "->" << i;
     }
-    ofs << endl;
-    ofs << "}" << endl;
-    ofs.close();
+    ss << endl;
+    ss << "}" << endl;
+    return ss.str();
 }
 
 int MainWindow::getBlockByStartAddr(Elf64_Addr addr)

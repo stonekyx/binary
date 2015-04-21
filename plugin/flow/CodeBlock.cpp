@@ -9,6 +9,9 @@ BEGIN_PLUG_NAMESPACE(flow)
 CodeBlock::CodeBlock(Elf64_Addr addr, Elf64_Addr raddr) :
     _startAddr(addr), _endAddr(addr), _reprAddr(raddr)
 {
+    _jumpCond = false;
+    _jumpTarget = _endAddr;
+    _changed = false;
 }
 
 static Elf64_Addr calcAddr(const File::DisasmInstInfo &inst)
@@ -32,8 +35,11 @@ static Elf64_Addr calcAddr(const File::DisasmInstInfo &inst)
 
 bool CodeBlock::addInst(const File::DisasmInstInfo &inst)
 {
-    _repr += QString("0x%1:\t%2\t%3\\l")
-        .arg(_reprAddr, 0, 16).arg(inst.comm).arg(inst.args.join(", "));
+    _addrs.push_back(QString("0x%1").arg(_reprAddr, 0, 16));
+    _comms.push_back(inst.comm);
+    _args.push_back(inst.args.join(", "));
+    _changed = true;
+
     _endAddr += inst.size;
     _reprAddr += inst.size;
     _jumpCond = false;
@@ -46,8 +52,30 @@ bool CodeBlock::addInst(const File::DisasmInstInfo &inst)
     return true;
 }
 
-const QString &CodeBlock::getRepr() const
+const QString &CodeBlock::getRepr()
 {
+    if(!_changed) {
+        return _repr;
+    }
+    int maxAddrLen = 0;
+    int maxCommLen = 0;
+    for(int i=0; i<_addrs.size(); i++) {
+        if(maxAddrLen < _addrs[i].length()) {
+            maxAddrLen = _addrs[i].length();
+        }
+        if(maxCommLen < _comms[i].length()) {
+            maxCommLen = _comms[i].length();
+        }
+    }
+    for(int i=0; i<_addrs.size(); i++) {
+        _repr += QString("%1:%2 %3%4   %5\\l")
+            .arg(_addrs[i])
+            .arg(QString(" ").repeated(maxAddrLen - _addrs[i].length()))
+            .arg(_comms[i])
+            .arg(QString(" ").repeated(maxCommLen - _comms[i].length()))
+            .arg(_args[i]);
+    }
+    _changed = false;
     return _repr;
 }
 

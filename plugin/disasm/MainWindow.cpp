@@ -28,10 +28,10 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             this, SLOT(resetWorker()));
     QObject::connect(_ui, SIGNAL(signalRefreshDisasm()),
             this, SLOT(updateInfo()));
-    QObject::connect(_ui, SIGNAL(signalRangeChange(size_t, size_t)),
-            this, SLOT(setRange(size_t, size_t)));
-    QObject::connect(_ui, SIGNAL(signalVaddrRangeChange(size_t, size_t)),
-            this, SLOT(setVaddrRange(size_t, size_t)));
+    QObject::connect(_ui, SIGNAL(signalRangeChange(Elf64_Off, Elf64_Off)),
+            this, SLOT(setRange(Elf64_Off, Elf64_Off)));
+    QObject::connect(_ui, SIGNAL(signalVaddrRangeChange(Elf64_Addr, Elf64_Addr)),
+            this, SLOT(setVaddrRange(Elf64_Addr, Elf64_Addr)));
     if(param.find("scnIndex") != param.end()) {
         _scnIndex = QString(param["scnIndex"].c_str()).toULong();
     } else {
@@ -85,7 +85,7 @@ void MainWindow::updateInfo(File *file)
 
     if(_useRange) {
         if(_useVRange) {
-            size_t fBegin=0, fEnd=0;
+            Elf64_Off fBegin=0, fEnd=0;
             if(ehdr.e_type == ET_REL) {
                 convertAddr.secOffToFileOff(fBegin, _scnIndex, _begin);
                 convertAddr.secOffToFileOff(fEnd, _scnIndex, _end);
@@ -98,7 +98,7 @@ void MainWindow::updateInfo(File *file)
             _useVRange = false;
         }
         _ui->setRange(_begin, _end);
-        size_t _vBegin=0, _vEnd=0;
+        Elf64_Addr _vBegin=0, _vEnd=0;
         convertAddr.fileOffToVaddr(_vBegin, _begin);
         convertAddr.fileOffToVaddr(_vEnd, _end);
         _ui->setVaddrRange(_vBegin, _vEnd);
@@ -155,7 +155,7 @@ void MainWindow::resetWorker()
     _loadWorker = NULL;
 }
 
-void MainWindow::setRange(size_t begin, size_t end)
+void MainWindow::setRange(Elf64_Off begin, Elf64_Off end)
 {
     if(!_useRange || begin != _begin || end != _end) {
         _useRange = true;
@@ -166,9 +166,9 @@ void MainWindow::setRange(size_t begin, size_t end)
     }
 }
 
-void MainWindow::setVaddrRange(size_t begin, size_t end)
+void MainWindow::setVaddrRange(Elf64_Addr begin, Elf64_Addr end)
 {
-    size_t fBegin = 0, fEnd = 0;
+    Elf64_Off fBegin = 0, fEnd = 0;
     ConvertAddr convertAddr(_plugin->manager->getBackend()->getFile());
     convertAddr.vaddrToFileOff(fBegin, begin);
     convertAddr.vaddrToFileOff(fEnd, end);

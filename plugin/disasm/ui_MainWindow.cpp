@@ -212,12 +212,12 @@ void MainWindow::changeStatus() {
     }
 }
 
-void MainWindow::setRange(size_t begin, size_t end) {
+void MainWindow::setRange(Elf64_Off begin, Elf64_Off end) {
     leFileOffBegin->setText(QString("0x%1").arg(begin, 0, 16));
     leFileOffEnd->setText(QString("0x%1").arg(end, 0, 16));
 }
 
-void MainWindow::setVaddrRange(size_t begin, size_t end) {
+void MainWindow::setVaddrRange(Elf64_Addr begin, Elf64_Addr end) {
     leVaddrBegin->setText(QString("0x%1").arg(begin, 0, 16));
     leVaddrEnd->setText(QString("0x%1").arg(end, 0, 16));
 }
@@ -225,16 +225,16 @@ void MainWindow::setVaddrRange(size_t begin, size_t end) {
 void MainWindow::updateRange() {
     if(sender() == leFileOffBegin || sender() == leFileOffEnd) {
         bool ok;
-        size_t begin = leFileOffBegin->text().toULong(&ok, 0);
+        Elf64_Off begin = leFileOffBegin->text().toULong(&ok, 0);
         if(!ok) { return; }
-        size_t end = leFileOffEnd->text().toULong(&ok, 0);
+        Elf64_Off end = leFileOffEnd->text().toULong(&ok, 0);
         if(!ok) { return; }
         emit signalRangeChange(begin, end);
     } else {
         bool ok;
-        size_t begin = leVaddrBegin->text().toULong(&ok, 0);
+        Elf64_Addr begin = leVaddrBegin->text().toULong(&ok, 0);
         if(!ok) { return; }
-        size_t end = leVaddrEnd->text().toULong(&ok, 0);
+        Elf64_Addr end = leVaddrEnd->text().toULong(&ok, 0);
         if(!ok) { return; }
         emit signalVaddrRangeChange(begin, end);
     }

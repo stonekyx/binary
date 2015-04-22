@@ -1,3 +1,4 @@
+#include <QtCore/QString>
 #include <cstdio>
 
 #include "ConvertAddr.h"
@@ -126,17 +127,17 @@ bool ConvertAddr::secOffToFileOff(Elf64_Off &dst,
 
 char *ConvertAddr::secOffStr(size_t scnIdx, Elf64_Off scnOff)
 {
-    char *res;
     if(!_file || scnIdx >= _shdrs.size() || scnOff > _shdrs[scnIdx].sh_size) {
         return NULL;
     }
+    QString str;
     if(_shdrStrRaw && _shdrStrRaw[_shdrs[scnIdx].sh_name]) {
-        asprintf(&res, "%s+0x%lx",
-                _shdrStrRaw + _shdrs[scnIdx].sh_name, scnOff);
+        str = QString("%1+0x%2").arg(_shdrStrRaw + _shdrs[scnIdx].sh_name)
+            .arg(scnOff, 0, 16);
     } else {
-        asprintf(&res, "section[%lu]+0x%lx", scnIdx, scnOff);
+        str = QString("section[%1]+0x%2").arg(scnIdx).arg(scnOff, 0, 16);
     }
-    return res;
+    return strdup(str.toUtf8().constData());
 }
 
 char *ConvertAddr::vaddrToSecOffStr(Elf64_Addr addr)
@@ -156,10 +157,9 @@ char *ConvertAddr::vaddrToSecOffStrWithOrig(Elf64_Addr addr)
     Elf64_Off scnOff;
     if(vaddrToSecOff(scnIdx, scnOff, addr)) {
         char *str = secOffStr(scnIdx, scnOff);
-        char *res;
-        asprintf(&res, "%#lx: %s", addr, str);
+        QString res = QString("0x%1: %2").arg(addr, 0, 16).arg(str);
         free(str);
-        return res;
+        return strdup(res.toUtf8().constData());
     } else {
         return NULL;
     }

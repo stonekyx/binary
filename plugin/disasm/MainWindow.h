@@ -34,8 +34,8 @@ public:
 public slots:
     void spanFirstColumn(QModelIndex);
     void resetWorker();
-    void setRange(size_t, size_t);
-    void setVaddrRange(size_t, size_t);
+    void setRange(Elf64_Off, Elf64_Off);
+    void setVaddrRange(Elf64_Addr, Elf64_Addr);
     void openScnData();
     void jumpOrOpenSym();
     void openReloc();
@@ -46,7 +46,7 @@ private:
     LoadWorker *_loadWorker;
     Ui::MainWindow *_ui;
     bool _useRange, _useVRange;
-    size_t _begin, _end;
+    Elf64_Off _begin, _end;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef PLUGIN_DISASM_UI_MAINWINDOW_H
 #define PLUGIN_DISASM_UI_MAINWINDOW_H
 
+#include <elf.h>
+
 #include <QtGui/QLineEdit>
 #include <QtGui/QHBoxLayout>
 #include <QtGui/QStatusBar>
@@ -47,15 +49,15 @@ public slots:
     void stopDisasm();
     void refreshDisasm();
     void changeStatus();
-    void setRange(size_t begin, size_t end);
-    void setVaddrRange(size_t begin, size_t end);
+    void setRange(Elf64_Off begin, Elf64_Off end);
+    void setVaddrRange(Elf64_Addr begin, Elf64_Addr end);
     void updateRange();
     void showLoadTime(double sec, double per);
 signals:
     void signalStopDisasm();
     void signalRefreshDisasm();
-    void signalRangeChange(size_t, size_t);
-    void signalVaddrRangeChange(size_t, size_t);
+    void signalRangeChange(Elf64_Off, Elf64_Off);
+    void signalVaddrRangeChange(Elf64_Addr, Elf64_Addr);
 };
 
 #endif

@@ -436,7 +436,7 @@ char *FileImplLibelf::findDynTag(Elf64_Sxword val)
             continue;
         }
         char *dynRaw = getRawData(phdr.p_offset);
-        size_t resOff;
+        Elf64_Off resOff;
         size_t entSize = getClass()==ELFCLASS32 ?
             sizeof(Elf32_Dyn) : sizeof(Elf64_Dyn);
         size_t entNum = phdr.p_filesz/entSize;

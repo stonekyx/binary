@@ -29,8 +29,8 @@ if not conf.CheckPKGConfig('0.15.0'):
     print 'pkg-config >= 0.15.0 not found.'
     Exit(1)
 
-if not conf.CheckPKG('libgvc >= 2.30'):
-    print 'libgvc >= 2.30 not found.'
+if not conf.CheckPKG('libgvc >= 2.26'):
+    print 'libgvc >= 2.26 not found.'
     Exit(1)
 
 conf.Finish()

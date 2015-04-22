@@ -13,6 +13,7 @@ Binary analysis and exhibition of ELF.
 + python-2.7.5
 + binutils-devel-2.23.52 (提供libiberty。有的平台上是gcc或gcc-multilib提供)
 + cppunit-1.12.1 (如果平台上有的话，还需要同版本的cppunit-devel)
++ graphviz-2.26.0 (如果平台上有的话，还需要同版本的graphviz-dev)
 
 对于Ubuntu，依赖情况更加复杂。请参考如下列表：
 
@@ -26,6 +27,7 @@ Binary analysis and exhibition of ELF.
 + binutils
 + binutils-dev
 + libcppunit-dev
++ graphviz-dev
 
 # Compile
 编译命令如下：

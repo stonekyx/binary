@@ -1,11 +1,18 @@
+#include <cmath>
+
 #include <types.h>
 
 #include <QtCore/QStringList>
+#include <QtGui/QFontMetrics>
 
 #include "GVWrapper.h"
 #include "GVGraph.h"
 
 BEGIN_PLUG_NAMESPACE(flow)
+
+static inline double sqr(double x) {
+    return x*x;
+}
 
 /*! Dot uses a 72 DPI value for converting it's position coordinates from points to pixels
     while we display at 96 DPI on most operating systems. */
@@ -30,6 +37,32 @@ void GVGraph::parseDot(const QString &src)
 {
     agclose(_graph);
     _graph = agmemread(src.toUtf8().constData());
+    QMap<Agnode_t*, QString> nameMap;
+    QMap<Agedge_t*, QPair<Agnode_t*, Agnode_t*> > edgeMap;
+    int nodeCnt = 0;
+    for(Agnode_t *node = agfstnode(_graph);
+            node; node = agnxtnode(_graph, node))
+    {
+        nameMap[node] = QString::number(nodeCnt++);
+        for(Agedge_t *edge = agfstout(_graph, node);
+                edge; edge = agnxtout(_graph, edge))
+        {
+            edgeMap[edge] = QPair<Agnode_t*, Agnode_t*>(node, edge->node);
+        }
+    }
+    for(QMap<Agedge_t*, QPair<Agnode_t*, Agnode_t*> >::const_iterator
+            it = edgeMap.begin(); it != edgeMap.end(); it++)
+    {
+        QPair<QString, QString> key(
+                nameMap[it.value().first],
+                nameMap[it.value().second]);
+        _edges.insert(key, it.key());
+    }
+    for(QMap<Agnode_t*, QString>::const_iterator it = nameMap.begin();
+            it != nameMap.end(); it++)
+    {
+        _nodes[it.value()] = it.key();
+    }
 }
 
 void GVGraph::addNode(const QString& name)
@@ -79,8 +112,7 @@ void GVGraph::addEdge(const QString &source, const QString &target)
     if(_nodes.contains(source) && _nodes.contains(target))
     {
         QPair<QString, QString> key(source, target);
-        if(!_edges.contains(key))
-            _edges.insert(key, _agedge(_graph, _nodes[source], _nodes[target]));
+        _edges.insert(key, _agedge(_graph, _nodes[source], _nodes[target]));
     }
 }
 
@@ -93,8 +125,11 @@ void GVGraph::removeEdge(const QPair<QString, QString>& key)
 {
     if(_edges.contains(key))
     {
-        agdelete(_graph, _edges[key]);
-        _edges.remove(key);
+        while(_edges.contains(key)) {
+            Agedge_t *edge = _edges.find(key).value();
+            agdelete(_graph, edge);
+            _edges.remove(key, edge);
+        }
     }
 }
 
@@ -154,6 +189,8 @@ QList<GVNode> GVGraph::nodes() const
         object.height=ND_height(node)*dpiY;
         object.width=ND_width(node)*dpiX;
 
+        object.label = ND_label(node)->text;
+
         list << object;
     }
 
@@ -166,10 +203,10 @@ QList<GVEdge> GVGraph::edges() const
     qreal dpiX=_pd->logicalDpiX();
     qreal dpiY=_pd->logicalDpiY();
 
-    for(QMap<QPair<QString, QString>, Agedge_t*>::const_iterator it=_edges.begin();
-        it!=_edges.end();++it)
+    for(QMultiMap<QPair<QString, QString>, Agedge_t*>::const_iterator
+            it=_edges.begin(); it!=_edges.end();++it)
     {
-        Agedge_t *edge=it.value();
+        Agedge_t *edge = it.value();
         GVEdge object;
 
         //Fill the source and target node names
@@ -179,7 +216,8 @@ QList<GVEdge> GVGraph::edges() const
         //Calculate the path from the spline (only one spline, as the graph is strict. If it
         //wasn't, we would have to iterate over the first list too)
         //Calculate the path from the spline (only one as the graph is strict)
-        if((ED_spl(edge)->list!=0) && (ED_spl(edge)->list->size%3 == 1))
+        if((ED_spl(edge)->list!=0) && (ED_spl(edge)->list->size%3 == 1) &&
+                _agget(edge, "style") != "invis")
         {
             //If there is a starting point, draw a line from it to the first curve point
             if(ED_spl(edge)->list->sflag)
@@ -213,11 +251,61 @@ QList<GVEdge> GVGraph::edges() const
                         *(dpiY/DotDefaultDPI));
 
             //If there is an ending point, draw a line to it
-            if(ED_spl(edge)->list->eflag)
+            if(ED_spl(edge)->list->eflag) {
+                QPointF top(ED_spl(edge)->list->ep.x*(dpiX/DotDefaultDPI),
+                        (GD_bb(_graph).UR.y - ED_spl(edge)->list->ep.y)
+                        *(dpiY/DotDefaultDPI));
+                QPointF back(object.path.currentPosition());
+                const double halfWidth = 5;
+                double dist =
+                    sqrt(sqr(top.x()-back.x()) + sqr(top.y()-back.y()));
+                double cosVal = (top.x()-back.x()) / dist;
+                double sinVal = (back.y()-top.y()) / dist;
+                double dx = sinVal*halfWidth;
+                double dy = cosVal*halfWidth;
+                QPointF sideA(back);
+                sideA.setX(sideA.x() + dx);
+                sideA.setY(sideA.y() + dy);
+                QPointF sideB(back);
+                sideB.setX(sideB.x() - dx);
+                sideB.setY(sideB.y() - dy);
+                object.arrowhead << top << sideA << sideB << top;
                 object.path.lineTo(
                         ED_spl(edge)->list->ep.x*(dpiX/DotDefaultDPI),
                         (GD_bb(_graph).UR.y - ED_spl(edge)->list->ep.y)
                         *(dpiY/DotDefaultDPI));
+            }
+        }
+
+        if(ED_head_label(edge)) {
+            textlabel_t *label = ED_head_label(edge);
+            object.head_label.font = QFont("Times", label->fontsize);
+            object.head_label.text = label->text;
+            QFontMetrics fontMetrics(object.head_label.font);
+            qreal x = label->pos.x;
+            qreal y = GD_bb(_graph).UR.y - label->pos.y;
+            x *= dpiX/DotDefaultDPI;
+            y *= dpiY/DotDefaultDPI;
+            x += label->space.x/2;
+            y += label->space.y/2 - label->u.txt.span->yoffset_centerline;
+            x -= fontMetrics.width(object.head_label.text);
+            y -= fontMetrics.height();
+            object.head_label.pos = QPointF(x, y);
+        }
+        if(ED_tail_label(edge)) {
+            textlabel_t *label = ED_tail_label(edge);
+            object.tail_label.font = QFont("Times", label->fontsize);
+            object.tail_label.text = label->text;
+            QFontMetrics fontMetrics(object.tail_label.font);
+            qreal x = label->pos.x;
+            qreal y = GD_bb(_graph).UR.y - label->pos.y;
+            x *= dpiX/DotDefaultDPI;
+            y *= dpiY/DotDefaultDPI;
+            x += label->space.x/2;
+            y += label->space.y/2 - label->u.txt.span->yoffset_centerline;
+            x -= fontMetrics.width(object.tail_label.text);
+            y -= fontMetrics.height();
+            object.tail_label.pos = QPointF(x, y);
         }
 
         list << object;

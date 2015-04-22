@@ -7,6 +7,7 @@
 #include "backend/ConvertAddr.h"
 #include "ui_MainWindow.h"
 #include "FlowDrawer.h"
+#include "GraphicsView.h"
 
 #include "MainWindow.h"
 

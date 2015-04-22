@@ -36,6 +36,9 @@ if not conf.CheckPKG('libgvc >= 2.30'):
 conf.Finish()
 
 qtEnv.ParseConfig('pkg-config --cflags --libs libgvc')
+qtEnv.Append(LIBS=['m'])
+
+qtEnv.Moc4('GraphicsView.h')
 
 pluginTarget = qtEnv.SharedLibrary(target='flow', source=Glob('*.cpp')+Glob('*.cc'))
 Install(qtEnv['LOCAL_DATADIR'], pluginTarget)

@@ -1,3 +1,5 @@
+#include "GraphicsView.h"
+
 #include "ui_MainWindow.h"
 
 #define OBJNAME(widget) \
@@ -24,9 +26,11 @@ bool MainWindow::switchMode(bool file)
     if(file) {
         defaultLabel->hide();
         graphicsView->show();
+        statusBar->show();
         return true;
     }
     graphicsView->hide();
+    statusBar->hide();
     defaultLabel->show();
     return false;
 }
@@ -34,10 +38,21 @@ bool MainWindow::switchMode(bool file)
 void MainWindow::setupUi(QMainWindow *window) {
     MWBase::setupUi(window);
 
-    graphicsView = new QGraphicsView(centralWidget);
+    graphicsView = new GraphicsView(centralWidget);
     OBJNAME(graphicsView);
     graphicsView->resetTransform();
     gridLayout->addWidget(graphicsView, 0, 0, 1, 1);
+
+    statusBar = new QStatusBar(window);
+    OBJNAME(statusBar);
+    window->setStatusBar(statusBar);
+
+    lblMousePos = new QLabel(statusBar);
+    OBJNAME(lblMousePos);
+    statusBar->addPermanentWidget(lblMousePos);
+
+    QObject::connect(graphicsView, SIGNAL(mouseScenePos(const QString&)),
+            lblMousePos, SLOT(setText(const QString&)));
 
     retranslateUi(window);
 }

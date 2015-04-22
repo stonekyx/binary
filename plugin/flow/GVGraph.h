@@ -1,7 +1,7 @@
 #ifndef PLUGIN_FLOW_GVGRAPH_H
 #define PLUGIN_FLOW_GVGRAPH_H
 
-#include <QtCore/QMap>
+#include <QtCore/QMultiMap>
 #include <QtCore/QString>
 #include <QtCore/QPair>
 #include <QtGui/QFont>
@@ -26,6 +26,8 @@ struct GVNode
 
     /// The size of the node in pixels
     double height, width;
+
+    QString label;
 };
 
 /// A struct containing the information for a GVGraph's edge
@@ -37,6 +39,13 @@ struct GVEdge
 
     /// Path of the edge's line
     QPainterPath path;
+
+    struct label {
+        QString text;
+        QPointF pos;
+        QFont font;
+    } head_label, tail_label;
+    QPolygonF arrowhead;
 };
 
 /// An object containing a libgraph graph and its associated nodes and edges
@@ -81,7 +90,7 @@ private:
     Agraph_t *_graph;
     QFont _font;
     QMap<QString, Agnode_t*> _nodes;
-    QMap<QPair<QString, QString>, Agedge_t*> _edges;
+    QMultiMap<QPair<QString, QString>, Agedge_t*> _edges;
     QPaintDevice *_pd;
 };
 

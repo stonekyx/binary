@@ -9,7 +9,6 @@
 #include <QtGui/QPaintDevice>
 
 #include <gvc.h>
-#include <cgraph.h>
 
 #include "common.h"
 

@@ -1,7 +1,7 @@
 #ifndef PLUGIN_FLOW_GVWRAPPER_H
 #define PLUGIN_FLOW_GVWRAPPER_H
 
-#include <cgraph.h>
+#include <gvc.h>
 
 #include <QtCore/QString>
 
@@ -10,9 +10,19 @@
 BEGIN_PLUG_NAMESPACE(flow)
 
 /// The agopen method for opening a graph
-static inline Agraph_t* _agopen(QString name, Agdesc_t kind)
+static inline Agraph_t* _agopen(QString name,
+#ifdef WITH_CGRAPH
+        Agdesc_t kind
+#else
+        int kind
+#endif
+        )
 {
-    return agopen(const_cast<char *>(qPrintable(name)), kind, 0);
+    return agopen(const_cast<char *>(qPrintable(name)), kind
+#ifdef WITH_CGRAPH
+            , 0
+#endif
+            );
 }
 
 /// Add an alternative value parameter to the method for getting an object's attribute
@@ -36,27 +46,54 @@ static inline int _agset(void *object, QString attr, QString value)
 
 static inline Agsym_t *_agnodeattr(Agraph_t *g, QString name, QString value)
 {
+#ifdef WITH_CGRAPH
     return agattr(g, AGNODE,
             const_cast<char*>(qPrintable(name)),
             const_cast<char*>(qPrintable(value)));
+#else
+    return agnodeattr(g,
+            const_cast<char*>(qPrintable(name)),
+            const_cast<char*>(qPrintable(value)));
+#endif
 }
 
 static inline Agsym_t *_agedgeattr(Agraph_t *g, QString name, QString value)
 {
+#ifdef WITH_CGRAPH
     return agattr(g, AGEDGE,
             const_cast<char*>(qPrintable(name)),
             const_cast<char*>(qPrintable(value)));
+#else
+    return agedgeattr(g,
+            const_cast<char*>(qPrintable(name)),
+            const_cast<char*>(qPrintable(value)));
+#endif
 }
 
-static inline Agnode_t *_agnode(Agraph_t *g, QString name, int createflag=0)
+static inline Agnode_t *_agnode(Agraph_t *g, QString name
+#ifdef WITH_CGRAPH
+        , int createflag=0
+#endif
+        )
 {
-    return agnode(g, const_cast<char*>(qPrintable(name)), createflag);
+    return agnode(g, const_cast<char*>(qPrintable(name))
+#ifdef WITH_CGRAPH
+            , createflag
+#endif
+            );
 }
 
-static inline Agedge_t *_agedge(Agraph_t * g, Agnode_t * t, Agnode_t * h,
-        QString name = QString(), int createflag = 0)
+static inline Agedge_t *_agedge(Agraph_t * g, Agnode_t * t, Agnode_t * h
+#ifdef WITH_CGRAPH
+        , QString name = QString(), int createflag = 0
+#endif
+        )
 {
-    return agedge(g, t, h, const_cast<char*>(qPrintable(name)), createflag);
+    return agedge(g, t, h
+#ifdef WITH_CGRAPH
+            , const_cast<char*>(qPrintable(name)), createflag
+#endif
+            );
 }
 
 END_PLUG_NAMESPACE

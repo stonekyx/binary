@@ -1,5 +1,4 @@
 #include <gvc.h>
-#include <cgraph.h>
 
 #include <QtGui/QGraphicsTextItem>
 #include <QtGui/QFontMetrics>

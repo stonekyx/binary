@@ -20,7 +20,11 @@ const qreal GVGraph::DotDefaultDPI=72.0;
 
 GVGraph::GVGraph(QString name, QFont font, QPaintDevice *pd) :
         _context(gvContext()),
+#ifdef WITH_CGRAPH
         _graph(_agopen(name, Agdirected)),
+#else
+        _graph(_agopen(name, AGDIGRAPH)),
+#endif
         _pd(pd)
 {
     setFont(font);
@@ -36,7 +40,7 @@ GVGraph::~GVGraph()
 void GVGraph::parseDot(const QString &src)
 {
     agclose(_graph);
-    _graph = agmemread(src.toUtf8().constData());
+    _graph = agmemread(src.toUtf8().data());
     QMap<Agnode_t*, QString> nameMap;
     QMap<Agedge_t*, QPair<Agnode_t*, Agnode_t*> > edgeMap;
     int nodeCnt = 0;
@@ -47,7 +51,13 @@ void GVGraph::parseDot(const QString &src)
         for(Agedge_t *edge = agfstout(_graph, node);
                 edge; edge = agnxtout(_graph, edge))
         {
-            edgeMap[edge] = QPair<Agnode_t*, Agnode_t*>(node, edge->node);
+            edgeMap[edge] = QPair<Agnode_t*, Agnode_t*>(
+#ifdef WITH_CGRAPH
+                    node, edge->node
+#else
+                    edge->head, edge->tail
+#endif
+                    );
         }
     }
     for(QMap<Agedge_t*, QPair<Agnode_t*, Agnode_t*> >::const_iterator
@@ -287,7 +297,12 @@ QList<GVEdge> GVGraph::edges() const
             x *= dpiX/DotDefaultDPI;
             y *= dpiY/DotDefaultDPI;
             x += label->space.x/2;
-            y += label->space.y/2 - label->u.txt.span->yoffset_centerline;
+            y += label->space.y/2;
+#ifdef TEXTPARA_H
+            y -= label->u.txt.para->yoffset_centerline;
+#elif defined(TEXTSPAN_H)
+            y -= label->u.txt.span->yoffset_centerline;
+#endif
             x -= fontMetrics.width(object.head_label.text);
             y -= fontMetrics.height();
             object.head_label.pos = QPointF(x, y);
@@ -302,7 +317,12 @@ QList<GVEdge> GVGraph::edges() const
             x *= dpiX/DotDefaultDPI;
             y *= dpiY/DotDefaultDPI;
             x += label->space.x/2;
-            y += label->space.y/2 - label->u.txt.span->yoffset_centerline;
+            y += label->space.y/2;
+#ifdef TEXTPARA_H
+            y -= label->u.txt.para->yoffset_centerline;
+#elif defined(TEXTSPAN_H)
+            y -= label->u.txt.span->yoffset_centerline;
+#endif
             x -= fontMetrics.width(object.tail_label.text);
             y -= fontMetrics.height();
             object.tail_label.pos = QPointF(x, y);

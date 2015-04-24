@@ -3,6 +3,10 @@
 
 #include <QtGui/QStatusBar>
 #include <QtGui/QLabel>
+#include <QtGui/QSlider>
+#include <QtGui/QPushButton>
+#include <QtGui/QRadioButton>
+#include <QtGui/QButtonGroup>
 
 #include "ui_MWBase.h"
 
@@ -18,10 +22,15 @@ END_PLUG_NAMESPACE
 class binary::plugin::flow::Ui::MainWindow :
     public binary::plugin::plugin_framework::Ui::MWBase
 {
+    Q_OBJECT
 public:
     GraphicsView *graphicsView;
     QStatusBar *statusBar;
     QLabel *lblMousePos;
+    QButtonGroup *btnGrpAlgo;
+    QRadioButton *rbtnAlgoFdp, *rbtnAlgoDot;
+    QSlider *scaleSlider;
+    QPushButton *btnResetSlider;
 
     MainWindow();
     ~MainWindow();
@@ -31,6 +40,11 @@ public:
     virtual void setupUi(QMainWindow *window);
 
     void retranslateUi(QMainWindow *);
+public slots:
+    void resetSlider();
+    void scaleView(int);
+private:
+    int _sliderMin, _sliderMax;
 };
 
 #endif

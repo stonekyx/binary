@@ -18,14 +18,15 @@ static inline double sqr(double x) {
     while we display at 96 DPI on most operating systems. */
 const qreal GVGraph::DotDefaultDPI=72.0;
 
-GVGraph::GVGraph(QString name, QFont font, QPaintDevice *pd) :
+GVGraph::GVGraph(GVAlgoType algo, QString name, QFont font, QPaintDevice *pd) :
         _context(gvContext()),
 #ifdef WITH_CGRAPH
         _graph(_agopen(name, Agdirected)),
 #else
         _graph(_agopen(name, AGDIGRAPH)),
 #endif
-        _pd(pd)
+        _pd(pd),
+        _algo(algo)
 {
     setFont(font);
 }
@@ -160,7 +161,16 @@ void GVGraph::setFont(QFont font)
 void GVGraph::applyLayout()
 {
     gvFreeLayout(_context, _graph);
-    gvLayout(_context, _graph, "fdp");
+    switch(_algo) {
+    case GV_FDP:
+        gvLayout(_context, _graph, "fdp");
+        break;
+    case GV_DOT:
+        gvLayout(_context, _graph, "dot");
+        break;
+    default:
+        break;
+    }
 }
 
 QRectF GVGraph::boundingRect() const

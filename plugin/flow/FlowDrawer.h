@@ -6,15 +6,17 @@
 #include <QtGui/QPaintDevice>
 
 #include "common.h"
+#include "GVGraph.h"
 
 BEGIN_PLUG_NAMESPACE(flow)
 
 class FlowDrawer {
 public:
-    FlowDrawer(QPaintDevice *);
+    FlowDrawer(GVGraph::GVAlgoType algo, QPaintDevice *);
     void draw(QGraphicsScene *, const std::string &);
 private:
     QPaintDevice *_pd;
+    GVGraph::GVAlgoType _algo;
 };
 
 END_PLUG_NAMESPACE

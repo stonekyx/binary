@@ -22,8 +22,11 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         map<string, string> param, QWidget *parent) :
     MWBase(new Ui::MainWindow(), plugin, param, parent),
     _ui(dynamic_cast<Ui::MainWindow*>(MWBase::_ui)),
-    _scene(NULL)
+    _scene(NULL),
+    _algo(GVGraph::GV_FDP)
 {
+    QObject::connect(_ui->btnGrpAlgo, SIGNAL(buttonClicked(int)),
+            this, SLOT(setAlgo(int)));
     _noArg = true;
     _scnIndex = 0;
     if(param.find("scnIndex") != param.end()) {
@@ -76,6 +79,7 @@ void MainWindow::updateInfo(File *file)
 
     _blocks.clear();
     _breaks.clear();
+    _inst.clear();
     file->disasm(_begin, _end, disasmCallback, this);
 
     _blocks.clear();
@@ -83,8 +87,14 @@ void MainWindow::updateInfo(File *file)
 
     if(_scene) { _scene->deleteLater(); }
     _scene = new QGraphicsScene(_ui->graphicsView);
-    FlowDrawer(_ui->graphicsView).draw(_scene, outputBlocks());
+    FlowDrawer(_algo, _ui->graphicsView).draw(_scene, outputBlocks());
     _ui->graphicsView->setScene(_scene);
+}
+
+void MainWindow::setAlgo(int algo)
+{
+    _algo = (GVGraph::GVAlgoType)algo;
+    updateInfo();
 }
 
 int MainWindow::disasmCallback(const File::DisasmInstInfo &inst,

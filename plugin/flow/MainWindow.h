@@ -5,6 +5,7 @@
 #include "common.h"
 #include "MWBase.h"
 #include "CodeBlock.h"
+#include "GVGraph.h"
 
 #include <QtGui/QGraphicsScene>
 #include <QtGui/QMainWindow>
@@ -23,6 +24,7 @@ END_PLUG_NAMESPACE
 class binary::plugin::flow::MainWindow :
     public binary::plugin::plugin_framework::MWBase
 {
+    Q_OBJECT
 public:
     explicit MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
             std::map<std::string, std::string> = std::map<std::string, std::string>(),
@@ -31,6 +33,8 @@ public:
 public:
     virtual void updateInfo(binary::backend::File *);
     using MWBase::updateInfo;
+public slots:
+    void setAlgo(int);
 private:
     bool _noArg;
     size_t _scnIndex;
@@ -41,6 +45,7 @@ private:
     QList<BIN_NAMESPACE(backend)::File::DisasmInstInfo> _inst;
     Elf64_Addr _vBegin;
     QGraphicsScene *_scene;
+    GVGraph::GVAlgoType _algo;
 
     static int disasmCallback(
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,

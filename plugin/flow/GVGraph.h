@@ -51,6 +51,11 @@ struct GVEdge
 class GVGraph
 {
 public:
+    typedef enum {
+        GV_FDP,
+        GV_DOT,
+    } GVAlgoType;
+
     /// Default DPI value used by dot (which uses points instead of pixels for coordinates)
     static const qreal DotDefaultDPI;
 
@@ -60,7 +65,7 @@ public:
      * \param font The font to use for the graph
      * \param node_size The size in pixels of each node
      */
-    GVGraph(QString name, QFont font, QPaintDevice *);
+    GVGraph(GVAlgoType algo, QString name, QFont font, QPaintDevice *);
     ~GVGraph();
     void parseDot(const QString &);
 
@@ -91,6 +96,7 @@ private:
     QMap<QString, Agnode_t*> _nodes;
     QMultiMap<QPair<QString, QString>, Agedge_t*> _edges;
     QPaintDevice *_pd;
+    GVAlgoType _algo;
 };
 
 END_PLUG_NAMESPACE

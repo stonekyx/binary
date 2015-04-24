@@ -3,21 +3,21 @@
 #include <QtGui/QGraphicsTextItem>
 #include <QtGui/QFontMetrics>
 
-#include "GVGraph.h"
-
 #include "FlowDrawer.h"
 
 using namespace std;
 BEGIN_PLUG_NAMESPACE(flow)
 
-FlowDrawer::FlowDrawer(QPaintDevice *pd) : _pd(pd)
+FlowDrawer::FlowDrawer(GVGraph::GVAlgoType algo, QPaintDevice *pd) :
+    _pd(pd),
+    _algo(algo)
 {
 }
 
 void FlowDrawer::draw(QGraphicsScene *scene, const string &src)
 {
     QFont font("Courier", 14.0);
-    GVGraph graph("G", font, _pd);
+    GVGraph graph(_algo, "G", font, _pd);
     QString qsrc = QString::fromStdString(src);
     graph.parseDot(qsrc);
     graph.applyLayout();

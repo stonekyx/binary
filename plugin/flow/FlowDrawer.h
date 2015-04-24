@@ -14,6 +14,11 @@ class FlowDrawer {
 public:
     FlowDrawer(GVGraph::GVAlgoType algo, QPaintDevice *);
     void draw(QGraphicsScene *, const std::string &);
+    typedef enum {
+        ITEMKEY_NB,
+        ITEMKEY_COLOR,
+        ITEMKEY_RECT,
+    } ItemKey;
 private:
     QPaintDevice *_pd;
     GVGraph::GVAlgoType _algo;

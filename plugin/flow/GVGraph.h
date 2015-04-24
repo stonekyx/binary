@@ -33,6 +33,7 @@ struct GVNode
 /// A struct containing the information for a GVGraph's edge
 struct GVEdge
 {
+    bool visible;
     /// The source and target nodes of the edge
     QString source;
     QString target;

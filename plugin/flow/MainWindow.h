@@ -39,6 +39,7 @@ private:
     bool _noArg;
     size_t _scnIndex;
     Elf64_Off _begin, _end;
+    bool _useVaddr;
     Ui::MainWindow *_ui;
     QList<CodeBlock> _blocks;
     QSet<Elf64_Addr> _breaks;

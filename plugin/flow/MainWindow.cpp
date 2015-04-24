@@ -41,6 +41,7 @@ MainWindow::MainWindow(BIN_NAMESPACE(frontend)::Plugin *plugin,
         _end = QString(param["vEnd"].c_str()).toULong();
         _noArg = false;
     }
+    _useVaddr = true;
     updateInfo();
 }
 
@@ -62,20 +63,23 @@ void MainWindow::updateInfo(File *file)
         return;
     }
 
-    Elf64_Ehdr ehdr;
-    if(!file->getEhdr(&ehdr)) { return; }
-    ConvertAddr convertAddr(file);
-    Elf64_Off fBegin=0, fEnd=0;
-    if(ehdr.e_type == ET_REL) {
-        convertAddr.secOffToFileOff(fBegin, _scnIndex, _begin);
-        convertAddr.secOffToFileOff(fEnd, _scnIndex, _end);
-    } else {
-        convertAddr.vaddrToFileOff(fBegin, _begin);
-        convertAddr.vaddrToFileOff(fEnd, _end);
+    if(_useVaddr) {
+        Elf64_Ehdr ehdr;
+        if(!file->getEhdr(&ehdr)) { return; }
+        ConvertAddr convertAddr(file);
+        Elf64_Off fBegin=0, fEnd=0;
+        if(ehdr.e_type == ET_REL) {
+            convertAddr.secOffToFileOff(fBegin, _scnIndex, _begin);
+            convertAddr.secOffToFileOff(fEnd, _scnIndex, _end);
+        } else {
+            convertAddr.vaddrToFileOff(fBegin, _begin);
+            convertAddr.vaddrToFileOff(fEnd, _end);
+        }
+        _vBegin = _begin;
+        _begin = fBegin;
+        _end = fEnd;
+        _useVaddr = false;
     }
-    _vBegin = _begin;
-    _begin = fBegin;
-    _end = fEnd;
 
     _blocks.clear();
     _breaks.clear();

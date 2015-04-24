@@ -36,6 +36,7 @@ void FlowDrawer::draw(QGraphicsScene *scene, const string &src)
             maxAddr = addr; maxName = node.name;
         }
     }
+    QMap<QString, QGraphicsItem*> nodeMap;
     foreach(GVNode node, nodes) {
         QPointF topleft(node.centerPos);
         topleft.setX(topleft.x() - node.width/2.0);
@@ -45,11 +46,19 @@ void FlowDrawer::draw(QGraphicsScene *scene, const string &src)
             pen.setColor(Qt::red);
         } else if(maxName == node.name) {
             pen.setColor(Qt::green);
+        } else {
+            pen.setColor(Qt::black);
         }
-        scene->addRect(topleft.x(), topleft.y(),
+        nodeMap[node.name] = scene->addRect(topleft.x(), topleft.y(),
                 node.width, node.height, pen);
-        scene->addText(node.label.replace("\\l", "\n"), font)
-            ->setPos(topleft);
+        nodeMap[node.name]->setData(ITEMKEY_NB, QVariant(QList<QVariant>()));
+        nodeMap[node.name]->setData(ITEMKEY_COLOR, pen.color());
+        QGraphicsItem *txtItem =
+            scene->addText(node.label.replace("\\l", "\n"), font);
+        txtItem->setPos(topleft);
+        QVariant nodeVariant;
+        nodeVariant.setValue(nodeMap[node.name]);
+        txtItem->setData(ITEMKEY_RECT, nodeVariant);
     }
     QList<GVEdge> edges = graph.edges();
     foreach(const GVEdge &edge, edges) {
@@ -63,6 +72,15 @@ void FlowDrawer::draw(QGraphicsScene *scene, const string &src)
                 ->setPos(edge.tail_label.pos);
         }
         scene->addPolygon(edge.arrowhead, QPen(), QBrush(Qt::black));
+
+        if(edge.visible) {
+            QList<QVariant> neighbor =
+                nodeMap[edge.source]->data(ITEMKEY_NB).toList();
+            QVariant next;
+            next.setValue(nodeMap[edge.target]);
+            neighbor << next;
+            nodeMap[edge.source]->setData(ITEMKEY_NB, QVariant(neighbor));
+        }
     }
 }
 

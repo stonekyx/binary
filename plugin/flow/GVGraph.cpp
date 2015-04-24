@@ -230,9 +230,11 @@ QList<GVEdge> GVGraph::edges() const
         Agedge_t *edge = it.value();
         GVEdge object;
 
+        object.visible = true;
+
         //Fill the source and target node names
-        object.source=ED_tail_port(edge).name;
-        object.target=ED_head_port(edge).name;
+        object.source=it.key().first;
+        object.target=it.key().second;
 
         //Calculate the path from the spline (only one spline, as the graph is strict. If it
         //wasn't, we would have to iterate over the first list too)
@@ -296,6 +298,8 @@ QList<GVEdge> GVGraph::edges() const
                         (GD_bb(_graph).UR.y - ED_spl(edge)->list->ep.y)
                         *(dpiY/DotDefaultDPI));
             }
+        } else {
+            object.visible = false;
         }
 
         if(ED_head_label(edge)) {

@@ -61,6 +61,10 @@ void MainWindow::setupUi(QMainWindow *window) {
     OBJNAME(lblMousePos);
     statusBar->addPermanentWidget(lblMousePos);
 
+    lblLoopCnt = new QLabel(statusBar);
+    OBJNAME(lblLoopCnt);
+    statusBar->addPermanentWidget(lblLoopCnt);
+
     btnGrpAlgo = new QButtonGroup(centralWidget);
     OBJNAME(btnGrpAlgo);
 
@@ -112,6 +116,11 @@ void MainWindow::scaleView(int value)
 {
     graphicsView->resetTransform();
     graphicsView->scale(value/(double)_sliderMax, value/(double)_sliderMax);
+}
+
+void MainWindow::setLoopCnt(int loopCnt)
+{
+    lblLoopCnt->setText(QString::number(loopCnt) + " loops");
 }
 
 }

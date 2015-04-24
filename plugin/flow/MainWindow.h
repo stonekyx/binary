@@ -46,6 +46,7 @@ private:
     Elf64_Addr _vBegin;
     QGraphicsScene *_scene;
     GVGraph::GVAlgoType _algo;
+    int _loopCnt;
 
     static int disasmCallback(
             const BIN_NAMESPACE(backend)::File::DisasmInstInfo &,

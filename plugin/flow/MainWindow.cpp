@@ -80,7 +80,9 @@ void MainWindow::updateInfo(File *file)
     _blocks.clear();
     _breaks.clear();
     _inst.clear();
+    _loopCnt = 0;
     file->disasm(_begin, _end, disasmCallback, this);
+    _ui->setLoopCnt(_loopCnt);
 
     _blocks.clear();
     generateBlocks();
@@ -112,6 +114,9 @@ int MainWindow::disasmCallback(const File::DisasmInstInfo &inst,
 
     CodeBlock &block = window->_blocks.back();
     if(!block.addInst(inst)) {
+        if(block.getJumpTarget() < info.vaddr) {
+            window->_loopCnt ++;
+        }
         window->_breaks.insert(block.getJumpTarget());
         window->_blocks.clear();
     }

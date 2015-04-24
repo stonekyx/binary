@@ -27,6 +27,7 @@ public:
     GraphicsView *graphicsView;
     QStatusBar *statusBar;
     QLabel *lblMousePos;
+    QLabel *lblLoopCnt;
     QButtonGroup *btnGrpAlgo;
     QRadioButton *rbtnAlgoFdp, *rbtnAlgoDot;
     QSlider *scaleSlider;
@@ -43,6 +44,7 @@ public:
 public slots:
     void resetSlider();
     void scaleView(int);
+    void setLoopCnt(int);
 private:
     int _sliderMin, _sliderMax;
 };

@@ -27,6 +27,7 @@ struct GVNode
     double height, width;
 
     QString label;
+    QString comment;
 };
 
 /// A struct containing the information for a GVGraph's edge

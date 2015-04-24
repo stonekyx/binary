@@ -1,3 +1,4 @@
+#include <elf.h>
 #include <gvc.h>
 
 #include <QtGui/QGraphicsTextItem>
@@ -21,12 +22,32 @@ void FlowDrawer::draw(QGraphicsScene *scene, const string &src)
     QString qsrc = QString::fromStdString(src);
     graph.parseDot(qsrc);
     graph.applyLayout();
+    QString minName, maxName;
+    Elf64_Addr minAddr=0x7fffffffffffffffll, maxAddr=0;
     QList<GVNode> nodes = graph.nodes();
+    foreach(GVNode node, nodes) {
+        bool ok;
+        Elf64_Addr addr = node.comment.toULongLong(&ok);
+        if(!ok) continue;
+        if(minAddr > addr) {
+            minAddr = addr; minName = node.name;
+        }
+        if(maxAddr < addr) {
+            maxAddr = addr; maxName = node.name;
+        }
+    }
     foreach(GVNode node, nodes) {
         QPointF topleft(node.centerPos);
         topleft.setX(topleft.x() - node.width/2.0);
         topleft.setY(topleft.y() - node.height/2.0);
-        scene->addRect(topleft.x(), topleft.y(), node.width, node.height);
+        QPen pen;
+        if(minName == node.name) {
+            pen.setColor(Qt::red);
+        } else if(maxName == node.name) {
+            pen.setColor(Qt::green);
+        }
+        scene->addRect(topleft.x(), topleft.y(),
+                node.width, node.height, pen);
         scene->addText(node.label.replace("\\l", "\n"), font)
             ->setPos(topleft);
     }

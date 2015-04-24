@@ -210,6 +210,7 @@ QList<GVNode> GVGraph::nodes() const
         object.width=ND_width(node)*dpiX;
 
         object.label = ND_label(node)->text;
+        object.comment = _agget(node, "comment");
 
         list << object;
     }

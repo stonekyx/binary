@@ -154,7 +154,8 @@ string MainWindow::outputBlocks()
     int nodeId = 0;
     foreach(CodeBlock block, _blocks) {
         ss << nodeId << " [shape=box, label=\"" <<
-            block.getRepr().toStdString() << "\"]" << endl;
+            block.getRepr().toStdString() << "\", comment=" <<
+            block.getStartAddr() << "]" << endl;
         int targetBlk = getBlockByStartAddr(block.getJumpTarget());
         if(targetBlk < _blocks.size()) {
             ss << nodeId << "->" << targetBlk << " [constraint=false";

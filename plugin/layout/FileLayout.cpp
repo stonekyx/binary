@@ -1,7 +1,27 @@
+/*
+ * Copyright 2015 KANG Yuxuan
+ *
+ * FileLayout.cpp by KANG Yuxuan <stonekyx@gmail.com>
+ *
+ * This file is part of Binary.
+ *
+ * Binary is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Binary is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Binary.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <algorithm>
 
 #include <QtGui/QPainter>
-#include <QtGui/QColor>
 #include <QtGui/QPaintEvent>
 #include <QtGui/QToolTip>
 
@@ -15,13 +35,15 @@ USE_PLUG_NAMESPACE(plugin_framework);
 BEGIN_PLUG_NAMESPACE(layout)
 
 FileLayout::FileLayout(LayoutType type, FileLayout *ref, QWidget *parent) :
-    QWidget(parent), _whole(0,0), _type(type), _ref(ref), _highlight(0,0)
+    QWidget(parent), _whole(0,0), _type(type), _ref(ref), _highlight(0,0),
+    _colors(new Colors())
 {
     setMouseTracking(true);
 }
 
 FileLayout::~FileLayout()
 {
+    delete _colors;
 }
 
 void FileLayout::updateInfo(File *file)
@@ -74,7 +96,7 @@ void FileLayout::paintEvent(QPaintEvent *e)
     int top = 0;
     int bottom = height();
 
-    QColor hlColor = colors[_highlight.colorIdx];
+    QColor hlColor = _highlight.color;
     hlColor.setAlpha(125);
     painter.fillRect(left, top, right-left, bottom-top, hlColor);
 }
@@ -171,7 +193,7 @@ FileLayout::SegInfo FileLayout::arrange()
             if(currEnd<=it->begin) {
                 currEnd = it->end;
                 it->level = level;
-                it->colorIdx = rand()%(sizeof(colors)/sizeof(QColor));
+                it->color = _colors->next();
                 save.push_back(*it);
                 if(whole.begin>it->begin) {
                     whole.begin = it->begin;
@@ -200,8 +222,7 @@ void FileLayout::draw(const SegInfo &info, const SegInfo &whole)
     int top = levelHeight*info.level;
     int bottom = levelHeight*(info.level+1);
 
-    painter.fillRect(left, top, right-left, bottom-top,
-            colors[info.colorIdx]);
+    painter.fillRect(left, top, right-left, bottom-top, info.color);
 }
 
 double FileLayout::segHPosToScr(int pos)

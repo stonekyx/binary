@@ -1,7 +1,7 @@
 /*
  * Copyright 2015 KANG Yuxuan
  *
- * STT.compact.h by KANG Yuxuan <stonekyx@gmail.com>
+ * Colors.cpp by KANG Yuxuan <stonekyx@gmail.com>
  *
  * This file is part of Binary.
  *
@@ -19,18 +19,37 @@
  * along with Binary.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-BINARY_PLUGIN_VALUE_TYPE, int
-BINARY_PLUGIN_NAMESPACE, plugin_framework
-BINARY_PLUGIN_OBJECTNAME, defines_STT
+#include <cstdlib>
+#include <ctime>
 
-STT_NOTYPE, "Symbol type is unspecified"
-STT_OBJECT, "Symbol is a data object"
-STT_FUNC, "Symbol is a code object"
-STT_SECTION, "Symbol associated with a section"
-STT_FILE, "Symbol's name is file name"
-STT_COMMON, "Symbol is a common data object"
-STT_TLS, "Symbol is thread-local data object"
-STT_NUM, "Number of defined types."
-STT_LOOS, STT_HIOS, "OS-specific"
-STT_GNU_IFUNC, "Symbol is indirect code object"
-STT_LOPROC, STT_HIPROC, "Processor-specific"
+#include "Colors.h"
+
+BEGIN_PLUG_NAMESPACE(layout)
+
+static int randRange(int min, int max)
+{
+    return rand()%(max-min+1)+min;
+}
+
+Colors::Colors(int level) : _level(level)
+{
+    static bool inited = false;
+    if(!inited) {
+        srand(time(NULL));
+        inited = true;
+    }
+    _s = randRange(80,170);
+    _l = randRange(80,170);
+}
+
+QColor Colors::next()
+{
+    int h = randRange(0, _level);
+    h = 150.0/_level * h;
+    if(h<0) h=0;
+    if(h>149) h=149;
+    h += randRange(0, 210);
+    return QColor::fromHsl(h, _s, _l);
+}
+
+END_PLUG_NAMESPACE

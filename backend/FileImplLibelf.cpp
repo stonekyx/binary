@@ -619,7 +619,6 @@ bool FileImplLibelf::loadDeps(const char *name)
 {
     _depsLoaded = true;
     _deps.clear();
-    _deps.push_back(this);
     const char *argv[] = {"ldd", name, NULL};
     ForkPipe *forkPipe = new ForkPipe("ldd", argv);
     if(forkPipe->execAndWait() != 0) {
@@ -638,6 +637,7 @@ bool FileImplLibelf::loadDeps(const char *name)
         }
     }
     delete forkPipe;
+    _deps.push_back(this);
     return true;
 }
 
